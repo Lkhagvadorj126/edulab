@@ -1,9 +1,9 @@
-import Login from "../components/Login";
+import Energy from "../components/Energy";
 
 export default function Home() {
   return (
     <div>
-      <Login />
+      <Energy />
     </div>
   );
 }

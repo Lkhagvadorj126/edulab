@@ -1,9 +1,9 @@
-import Login from "../components/Login";
+import Sound from "../components/Sound";
 
 export default function Home() {
   return (
     <div>
-      <Login />
+      <Sound />
     </div>
   );
 }

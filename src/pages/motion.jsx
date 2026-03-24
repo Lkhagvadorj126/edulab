@@ -1,9 +1,9 @@
-import Login from "../components/Login";
+import Motion from "../components/Motion";
 
 export default function Home() {
   return (
     <div>
-      <Login />
+      <Motion />
     </div>
   );
 }

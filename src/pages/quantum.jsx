@@ -1,9 +1,9 @@
-import Login from "../components/Login";
+import Quantum from "../components/Quantum";
 
 export default function Home() {
   return (
     <div>
-      <Login />
+      <Quantum />
     </div>
   );
 }
