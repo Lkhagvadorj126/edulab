@@ -1,8 +1,7 @@
 import clientPromise from "@/lib/mongodb";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST")
-    return res.status(405).json({ message: "POST only" });
+  if (req.method !== "POST") return res.status(405).end();
 
   try {
     const { email, password, role } = req.body;
@@ -15,25 +14,23 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: "И-мэйл эсвэл нууц үг буруу" });
     }
 
-    // Role шалгалт: Сурагч багшийн эрхээр, багш сурагчийн эрхээр орохоос сэргийлнэ
     if (user.role !== role) {
-      return res.status(403).json({
-        message: `Та ${user.role === "teacher" ? "Багш" : "Сурагч"} төрлөөр бүртгүүлсэн байна. Сонголтоо шалгана уу.`,
-      });
+      return res.status(403).json({ message: "Нэвтрэх төрөл буруу байна." });
     }
 
+    // БҮХ ДАТА-Г БУЦААХ (Энэ хэсэг маш чухал)
     return res.status(200).json({
-      message: "Амжилттай",
       user: {
         id: user._id.toString(),
         email: user.email,
+        name: user.name, // Нэмсэн
+        school: user.school, // Нэмсэн
+        grade: user.grade, // Нэмсэн
         role: user.role,
         totalXp: user.totalXp || 0,
       },
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Сервер алдаа", error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 }

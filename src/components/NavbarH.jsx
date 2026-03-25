@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, LayoutGrid, Trophy, NotebookPen } from "lucide-react";
 
-export default function Navbar() {
+export default function NavbarH() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const links = [
-    { href: "/card", label: "Карт", icon: LayoutGrid },
+    { href: "/cartH", label: "Карт", icon: LayoutGrid },
     { href: "/scorePoints", label: "Зэрэглэл", icon: Trophy },
-    { href: "/quizContent", label: "Тест", icon: NotebookPen },
+    { href: "/quizContentH", label: "Тест", icon: NotebookPen },
   ];
 
   return (

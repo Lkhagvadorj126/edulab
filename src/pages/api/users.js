@@ -5,85 +5,21 @@ export default async function handler(req, res) {
   const client = await clientPromise;
   const db = client.db("science_digital_db");
 
-  // --- POST хүсэлт: Бүртгэл ЭСВЭЛ Оноо шинэчлэх ---
-  if (req.method === "POST") {
-    try {
-      const { email, password, role, userId, xpToAdd } = req.body;
-
-      // Хэрэв xpToAdd болон userId ирсэн байвал ОНОО ШИНЭЧЛЭХ (Quiz-ийн дараа)
-      if (userId && xpToAdd !== undefined) {
-        const result = await db
-          .collection("users")
-          .findOneAndUpdate(
-            { _id: new ObjectId(userId) },
-            { $inc: { totalXp: parseInt(xpToAdd) } },
-            { returnDocument: "after" },
-          );
-
-        const updatedUser = result.value || result;
-        return res.status(200).json({
-          message: "Оноо амжилттай нэмэгдлээ",
-          totalXp: updatedUser.totalXp,
-        });
-      }
-
-      // Хэрэв email ирсэн байвал ШИНЭ БҮРТГЭЛ хийх
-      if (email) {
-        const existingUser = await db.collection("users").findOne({ email });
-        if (existingUser) {
-          return res
-            .status(400)
-            .json({ message: "Энэ и-мэйл хаяг аль хэдийн бүртгэгдсэн байна." });
-        }
-
-        const newUser = {
-          email,
-          password, // Тэмдэглэл: Бодит төсөл дээр bcrypt ашиглаарай
-          role: role || "student",
-          totalXp: 0,
-          createdAt: new Date(),
-        };
-
-        const registerResult = await db.collection("users").insertOne(newUser);
-        return res.status(201).json({
-          message: "Амжилттай бүртгэгдлээ",
-          userId: registerResult.insertedId,
-        });
-      }
-
-      return res
-        .status(400)
-        .json({ message: "Шаардлагатай мэдээлэл дутуу байна." });
-    } catch (err) {
-      return res
-        .status(500)
-        .json({ message: "Алдаа гарлаа", error: err.message });
-    }
-  }
-
-  // --- GET хүсэлт: Лидерүүдийн жагсаалт ЭСВЭЛ Ганц хэрэглэгчийн мэдээлэл ---
+  // GET: Хэрэглэгчийн мэдээлэл авах
   if (req.method === "GET") {
+    const { userId } = req.query;
     try {
-      const { userId } = req.query;
-
-      // Хэрэв userId ирвэл тухайн хэрэглэгчийн мэдээллийг авах (refreshUser-д зориулав)
       if (userId) {
         const user = await db
           .collection("users")
           .findOne({ _id: new ObjectId(userId) });
-        if (!user)
-          return res.status(404).json({ error: "Хэрэглэгч олдсонгүй" });
-
-        const { password, ...safeData } = user; // Нууц үгийг буцаахгүй
-        return res.status(200).json(safeData);
+        return res.status(200).json(user);
       }
-
-      // Лидерүүдийн жагсаалт авах
       const leaders = await db
         .collection("users")
         .find({ role: "student" })
         .sort({ totalXp: -1 })
-        .limit(10) // Эхний 10 сурагч
+        .limit(50)
         .toArray();
       return res.status(200).json(leaders);
     } catch (err) {
@@ -91,5 +27,51 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(405).json({ message: "Method not allowed" });
+  // POST: Бүртгэл эсвэл Оноо нэмэх
+  if (req.method === "POST") {
+    try {
+      const { userId, xpToAdd, email, password, role, name, school, grade } =
+        req.body;
+
+      // ОНОО НЭМЭХ ЛОГИК
+      if (userId && xpToAdd !== undefined) {
+        const result = await db.collection("users").findOneAndUpdate(
+          { _id: new ObjectId(userId) },
+          {
+            $inc: { totalXp: parseInt(xpToAdd) },
+            $set: { lastPlayed: new Date() },
+          },
+          { returnDocument: "after" },
+        );
+        const updatedUser = result.value || result;
+        return res
+          .status(200)
+          .json({ success: true, totalXp: updatedUser.totalXp });
+      }
+
+      // ШИНЭ БҮРТГЭЛ ҮҮСГЭХ ЛОГИК
+      if (email) {
+        const existingUser = await db.collection("users").findOne({ email });
+        if (existingUser)
+          return res.status(400).json({ message: "И-мэйл бүртгэлтэй байна." });
+
+        const newUser = {
+          email,
+          password,
+          name: name || "Сурагч",
+          role: role || "student",
+          school: school || "Тодорхойгүй",
+          grade: grade || "10B",
+          totalXp: 0,
+          createdAt: new Date(),
+        };
+        const registerResult = await db.collection("users").insertOne(newUser);
+        return res
+          .status(201)
+          .json({ success: true, userId: registerResult.insertedId });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: "Алдаа", error: err.message });
+    }
+  }
 }

@@ -18,7 +18,8 @@ import {
   Edit2,
   Check,
   Video,
-} from "lucide-react";
+  FileText,
+} from "lucide-react"; // Энийг "lucide-react" болгож заслаа
 import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";

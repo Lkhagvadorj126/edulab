@@ -26,95 +26,106 @@ import { useAuth } from "@/context/AuthContext";
 
 const INITIAL_DATA = {
   page: {
-    title: "Лазер",
+    title: "Нягтрал",
     subtitle: "Физикийн цахим хичээл",
-    videoUrl: "https://www.youtube.com/embed/y3SBSbsdiYg?si=_ZcmPyfyeqGSs9VA",
+    videoUrl: "https://www.youtube.com/embed/ycCDX3WIqpc",
   },
   slider: [
-    { image: "https://physic-dmts.vercel.app/hudulguun1.png", alt: "Laser 1" },
-    { image: "https://physic-dmts.vercel.app/hudulguun2.png", alt: "Laser 2" },
+    { image: "https://physic-dmts.vercel.app/pre1.png", alt: "Density 1" },
+    { image: "https://physic-dmts.vercel.app/pre2.png", alt: "Density 2" },
   ],
   experiments: [
     {
-      title: "Гэрлийн хугарал",
-      href: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html",
-      img: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light-600.png",
+      title: "Нягтрал (Үндсэн)",
+      href: "https://phet.colorado.edu/sims/html/density/latest/density_all.html",
+      img: "https://phet.colorado.edu/sims/html/density/latest/density-420.png",
     },
     {
-      title: "Квантын үзэгдэл",
-      href: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect_all.html",
-      img: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect-600.png",
+      title: "Буянтын хүч",
+      href: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html",
+      img: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy-600.png",
     },
     {
-      title: "Долгионы интерференц",
-      href: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference_all.html",
-      img: "https://phet.colorado.edu/sims/html/wave-interference/latest/wave-interference-600.png",
+      title: "Шингэний даралт",
+      href: "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure_all.html",
+      img: "https://phet.colorado.edu/sims/html/under-pressure/latest/under-pressure-600.png",
     },
   ],
   theory: [
     {
-      title: "Лазер гэж юу вэ?",
+      title: " Нягтрал гэж юу вэ?",
       content: [
-        "Light Amplification by Stimulated Emission of Radiation буюу албадмал цацаргалтаар гэрлийг хүчжүүлэх гэсэн утгатай.",
+        "Бодисын нэгж эзлэхүүнд ногдох массын хэмжээг нягтрал гэнэ.",
+        "Энэ нь тухайн бодисын молекулууд хэр зэрэг 'шагшуу' эсвэл 'сийрэг' байрласныг илтгэнэ.",
       ],
     },
     {
-      title: "Үүсэл",
+      title: "Үндсэн томьёо",
       content: [
-        "Анхны ажилладаг лазерыг 1960 онд Теодор Майман бамбарууш (ruby) ашиглан бүтээсэн.",
+        "Нягтралыг тодорхойлохдоо массыг эзлэхүүнд хуваана: ρ = m / V",
+        "ρ (ро) - нягтрал, m - масс, V - эзлэхүүн.",
       ],
     },
     {
-      title: "Монохромат чанар",
+      title: " Хэмжих нэгж",
       content: [
-        "Лазерын гэрэл нь зөвхөн нэг тодорхой өнгө буюу нэг долгионы уртаас тогтдог.",
+        "Олон улсын СИ систем дэх үндсэн нэгж нь кг/м³ юм.",
+        "Лабораторийн нөхцөлд ихэвчлэн г/см³ нэгжийг ашигладаг (1 г/см³ = 1000 кг/м³).",
       ],
     },
     {
-      title: "Когерент чанар",
+      title: " Бодисын төлөв ба Нягтрал",
       content: [
-        "Лазерын бүх гэрлийн долгионууд ижил фазтай, ижил чиглэлд синхрон хөдөлдөг.",
+        "Ихэнх бодисын нягтрал хатуу төлөвт хамгийн их, хийн төлөвт хамгийн бага байдаг.",
+        "Анхаар: Ус нь 4°C-т хамгийн их нягтралтай байдаг тул мөс усан дээр хөвдөг.",
       ],
     },
     {
-      title: "Чиглэлт чанар",
+      title: "Хөвөх ба живэх нөхцөл",
       content: [
-        "Маш бага сарнилттай тул хол зайд ч нарийн багц хэлбэрээ хадгалж чаддаг.",
+        "Биеийн нягтрал шингэнийхээс бага бол хөвнө (ρ_бие < ρ_шингэн).",
+        "Биеийн нягтрал шингэнийхтэй тэнцүү бол шингэн дотор хаана ч тогтоно.",
+        "Биеийн нягтрал их бол живнэ (ρ_бие > ρ_шингэн).",
       ],
     },
     {
-      title: "Албадмал цацаргалт",
+      title: " Архимедийн хүч",
       content: [
-        "Фотоны нөлөөгөөр өдөөгдсөн электрон доод түвшинд шилжихдээ ижил энергитэй фотон гаргах процесс.",
+        "Шингэн дотор байгаа биед дэшүүлэх хүч үйлчилдэг. Үүнийг Архимедийн хүч гэнэ.",
+        "Томьёо: Fₐ = ρ_ш * g * V_ш",
       ],
     },
     {
-      title: "Үйл ажиллагаа",
+      title: "Температурын нөлөө",
       content: [
-        "Лазер үүсэхийн тулд 'Популяцийн урвуу байршил' буюу өдөөгдсөн төлөвт илүү олон электрон байх шаардлагатай.",
+        "Бодисыг халаахад эзлэхүүн нь тэлж, нягтрал нь багасдаг.",
+        "Дулаан агаар дээр гарч, хүйтэн агаар доош буудаг нь үүнтэй холбоотой.",
       ],
     },
     {
-      title: "Төрөл",
+      title: " Дундаж нягтрал",
       content: [
-        "Хийн (He-Ne), хатуу биеийн (Ruby), хагас дамжуулагч (Diode) гэх мэт олон төрөл бий.",
+        "Хөндий зайтай эсвэл олон төрлийн бодисоос тогтсон биеийн нягтралыг 'дундаж нягтрал' гэнэ.",
+        "Жишээ нь: Төмөр хөлөг онгоц дотроо агаартай тул дундаж нягтрал нь уснаас бага болж хөвдөг.",
       ],
     },
     {
-      title: "Хэрэглээ",
+      title: " Хэрэглээ",
       content: [
-        "Мэс засал, баркод уншигч, металл зүсэх, шилэн кабель болон хол зайн хэмжилтэнд ашигладаг.",
+        "Алтыг хуурамч эсэхийг нягтралаар нь шалгаж болдог (Архимедийн туршилт).",
+        "Цусны нягтралыг үзэж хүний эрүүл мэндийг оношлоход ашигладаг.",
       ],
     },
   ],
 };
 
-const PAGE_ID = "laser";
+const PAGE_ID = "density";
 
-export default function Laser() {
+export default function Density() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
+  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -123,6 +134,7 @@ export default function Laser() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
+  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -141,20 +153,19 @@ export default function Laser() {
         fetch(`/api/lessons?pageId=${PAGE_ID}`),
         fetch(`/api/video?pageId=${PAGE_ID}`),
       ]);
+
       if (canvaRes.ok) {
         const d = await canvaRes.json();
-        if (d && d.url) {
+        if (d.url) {
           setDisplayUrl(d.url);
           setCanvaInput(d.url);
         }
       }
       if (videoRes.ok) {
         const d = await videoRes.json();
-        if (d && d.url) {
+        if (d.url) {
           setVideoUrl(d.url);
           setVideoInput(d.url);
-        } else {
-          setVideoUrl(INITIAL_DATA.page.videoUrl);
         }
       }
       if (expRes.ok) setDbExperiments(await expRes.json());
@@ -168,6 +179,7 @@ export default function Laser() {
     fetchData();
   }, []);
 
+  // --- ACTIONS ---
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
@@ -182,7 +194,7 @@ export default function Laser() {
     });
     if (res.ok) {
       setDisplayUrl(url);
-      alert("Амжилттай хадгалагдлаа!");
+      alert("Презентейшн хадгалагдлаа!");
     }
     setLoading(false);
   };
@@ -198,14 +210,13 @@ export default function Laser() {
       const data = await res.json();
       setVideoUrl(data.url);
       setShowVideoEdit(false);
-      alert("Видео шинэчлэгдлээ!");
+      alert("Видео хичээл шинэчлэгдлээ!");
     }
     setLoading(false);
   };
 
   const handleAddOrUpdateExp = async () => {
-    if (!newExp.title || !newExp.href)
-      return alert("Шаардлагатай талбаруудыг бөглөнө үү!");
+    if (!newExp.title || !newExp.href) return alert("Бөглөнө үү!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
     const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
@@ -224,8 +235,7 @@ export default function Laser() {
 
   const handleAddLesson = async (e) => {
     e.preventDefault();
-    if (!newCard.title || !newCard.content)
-      return alert("Гарчиг болон агуулга оруулна уу!");
+    if (!newCard.title || !newCard.content) return alert("Бөглөнө үү!");
     setLoading(true);
     const res = await fetch("/api/lessons", {
       method: "POST",
@@ -263,7 +273,7 @@ export default function Laser() {
   };
 
   const deleteItem = async (type, id) => {
-    if (!confirm("Устгахдаа итгэлтэй байна уу?")) return;
+    if (!confirm("Та устгахдаа итгэлтэй байна уу?")) return;
     await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
     fetchData();
   };
@@ -281,6 +291,7 @@ export default function Laser() {
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
+
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
@@ -303,6 +314,7 @@ export default function Laser() {
           </button>
         </div>
       </section>
+
       <NavH />
 
       <div className="max-w-[1400px] mx-auto mt-6">
@@ -325,7 +337,7 @@ export default function Laser() {
                   className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  placeholder="Youtube URL..."
+                  placeholder="Youtube линк..."
                 />
                 <button
                   onClick={saveVideo}
@@ -360,7 +372,7 @@ export default function Laser() {
             {isTeacher && (
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
                 <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                  <Settings size={14} /> Презентейшн солих (Canva embed):
+                  <Settings size={14} /> Презентейшн солих:
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -404,6 +416,7 @@ export default function Laser() {
                 </button>
               )}
             </div>
+
             {showExpForm && isTeacher && (
               <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3">
                 <input
@@ -439,6 +452,7 @@ export default function Laser() {
                 </button>
               </div>
             )}
+
             <div className="space-y-4">
               {finalExperiments.map((exp, idx) => (
                 <div key={exp._id || idx} className="relative group">
@@ -501,6 +515,7 @@ export default function Laser() {
             </h2>
             <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
           </div>
+
           {isTeacher && (
             <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
               <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
@@ -517,7 +532,7 @@ export default function Laser() {
                 />
                 <textarea
                   className="p-3 rounded-xl border bg-white outline-none"
-                  placeholder="Агуулга (Мөр бүр нэг суман жагсаалт болно)..."
+                  placeholder="Агуулга..."
                   value={newCard.content}
                   onChange={(e) =>
                     setNewCard({ ...newCard, content: e.target.value })
@@ -538,6 +553,7 @@ export default function Laser() {
               </button>
             </div>
           )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
             {visibleTheory.map((item, i) => (
               <div
@@ -547,7 +563,7 @@ export default function Laser() {
                 {editingCardId === item._id ? (
                   <div className="space-y-4">
                     <input
-                      className="w-full p-2 font-bold border-b outline-none focus:border-indigo-500"
+                      className="w-full p-2 font-bold border-b focus:border-indigo-500 outline-none"
                       value={tempEditData.title}
                       onChange={(e) =>
                         setTempEditData({
@@ -626,6 +642,7 @@ export default function Laser() {
               </div>
             ))}
           </div>
+
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
@@ -656,12 +673,7 @@ export default function Laser() {
             >
               <X size={24} />
             </button>
-            <iframe
-              className="w-full h-full"
-              src={videoUrl}
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            />
+            <iframe className="w-full h-full" src={videoUrl} allowFullScreen />
           </div>
         </div>
       )}

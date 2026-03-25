@@ -1,61 +1,53 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error("User parse error", e);
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  const refreshUser = async () => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
+  // Серверээс хэрэглэгчийн хамгийн сүүлийн үеийн датаг татах
+  const refreshUser = async (userId = user?.id || user?._id) => {
+    const idToFetch = userId || localStorage.getItem("userId");
+    if (!idToFetch) return;
 
     try {
-      const res = await fetch(`/api/users?userId=${userId}`);
+      const res = await fetch(`/api/users?userId=${idToFetch}`);
       if (res.ok) {
-        const updatedData = await res.json();
-        // Бүрэн объектыг хадгалах (email, role, totalXp бүгдийг)
-        localStorage.setItem("user", JSON.stringify(updatedData));
-        setUser(updatedData);
+        const fullUserData = await res.json();
+        setUser({ ...fullUserData, id: fullUserData._id });
       }
     } catch (err) {
       console.error("User refresh failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const login = (userData) => {
-    // MongoDB-ийн _id-г userId болгож хадгалах
-    const id = userData._id || userData.id;
-    if (id) localStorage.setItem("userId", id);
+  useEffect(() => {
+    const savedUserId = localStorage.getItem("userId");
+    if (savedUserId) {
+      refreshUser(savedUserId);
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
-    localStorage.setItem("user", JSON.stringify(userData));
+  const login = (userData) => {
     setUser(userData);
+    localStorage.setItem("userId", userData.id || userData._id);
   };
 
   const logout = () => {
-    localStorage.clear();
     setUser(null);
-    router.push("/");
+    localStorage.removeItem("userId");
+    window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, refreshUser }}>
-      {children}
+    <AuthContext.Provider value={{ user, login, logout, refreshUser, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

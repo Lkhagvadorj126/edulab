@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -10,14 +10,18 @@ import {
   Beaker,
   Dna,
   LayoutGrid,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import NavAll from "./NavAll";
+import { useAuth } from "@/context/AuthContext";
 
+// --- ЧИНИЙ ДАТА (ӨӨРЧЛӨӨГҮЙ) ---
 const topicConfigs = {
   all: {
     title: "Холимог тест",
     sub: "Бүх бүлэг - 10 асуулт",
-    color: "#1E293B", // Slate 800
+    color: "#1E293B",
     bg: "bg-slate-50",
     icon: <LayoutGrid className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=all",
@@ -26,7 +30,7 @@ const topicConfigs = {
   motion: {
     title: "Механик хөдөлгөөн",
     sub: "Физик 10Б",
-    color: "#3B82F6", // Blue 500
+    color: "#3B82F6",
     bg: "bg-blue-50",
     icon: <Activity className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=motion",
@@ -35,7 +39,7 @@ const topicConfigs = {
   sound: {
     title: "Дуу авиа",
     sub: "Физик 10Б",
-    color: "#6366F1", // Indigo 500
+    color: "#6366F1",
     bg: "bg-indigo-50",
     icon: <Activity className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=sound",
@@ -44,7 +48,7 @@ const topicConfigs = {
   light: {
     title: "Гэрэл ба Оптик",
     sub: "Физик 10Б",
-    color: "#F59E0B", // Amber 500
+    color: "#F59E0B",
     bg: "bg-amber-50",
     icon: <Zap className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=light",
@@ -53,7 +57,7 @@ const topicConfigs = {
   heat: {
     title: "Дулааны физик",
     sub: "Физик 10Б",
-    color: "#EF4444", // Rose 500
+    color: "#EF4444",
     bg: "bg-rose-50",
     icon: <Beaker className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=heat",
@@ -62,7 +66,7 @@ const topicConfigs = {
   energy: {
     title: "Ажил ба Энерги",
     sub: "Физик 10Б",
-    color: "#10B981", // Emerald 500
+    color: "#10B981",
     bg: "bg-emerald-50",
     icon: <Zap className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=energy",
@@ -71,13 +75,14 @@ const topicConfigs = {
   quantum: {
     title: "Квант физик",
     sub: "Физик 10Б",
-    color: "#8B5CF6", // Purple 500
+    color: "#8B5CF6",
     bg: "bg-purple-50",
     icon: <Dna className="w-5 h-5 text-white" />,
     retryPath: "/quiz?topic=quantum",
     homePath: "/dashboard",
   },
 };
+
 const allQuestionsByTopic = {
   motion: [
     {
@@ -828,7 +833,10 @@ const allQuestionsByTopic = {
     },
   ],
 };
+
+// --- QUIZ MANAGER (ЗАССАН ХЭСЭГ) ---
 function QuizManager() {
+  const { user, refreshUser } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const topic = searchParams.get("topic") || "all";
@@ -839,6 +847,10 @@ function QuizManager() {
   const [score, setScore] = useState(0);
   const [userAnswers, setUserAnswers] = useState([]);
   const [isClient, setIsClient] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(null); // Сонгосон хариултыг тэмдэглэх
+
+  const hasSaved = useRef(false);
 
   useEffect(() => {
     let sourceQuestions =
@@ -851,10 +863,13 @@ function QuizManager() {
     setIsClient(true);
   }, [topic]);
 
-  // QuizManager доторх handleAnswer функцийг ингэж шинэчил:
-  const handleAnswer = (idx) => {
+  const handleAnswer = async (idx) => {
+    if (isSaving || selectedIdx !== null) return;
+
+    setSelectedIdx(idx);
     const currentQ = questions[step];
     const isCorrect = idx === currentQ.correct;
+    const nextScore = isCorrect ? score + 1 : score;
 
     const answerData = {
       question: currentQ.question,
@@ -863,90 +878,175 @@ function QuizManager() {
       isCorrect,
     };
 
-    const updatedAnswers = [...userAnswers, answerData];
-    setUserAnswers(updatedAnswers);
+    const nextAnswers = [...userAnswers, answerData];
+    if (isCorrect) setScore(nextScore);
+    setUserAnswers(nextAnswers);
 
-    // Оноог шууд шинэчлэн тооцох (State async учраас v-ээр тооцно)
-    const newScore = isCorrect ? score + 1 : score;
-    if (isCorrect) setScore(newScore);
-
-    setTimeout(() => {
-      if (step + 1 < questions.length) {
-        setStep((s) => s + 1);
+    setTimeout(async () => {
+      if (step + 1 >= questions.length) {
+        setIsSaving(true);
+        await saveFinalScore(nextScore, nextAnswers);
       } else {
-        // ЧУХАЛ: Энд чиглүүлэх замыг үр дүнгийн хуудасны замаар солино
-        // Жишээ нь: /results эсвэл /resultContent
-        const encodedAnswers = encodeURIComponent(
-          JSON.stringify(updatedAnswers),
-        );
-        router.push(
-          `/resultContent?type=${topic}&total=${questions.length}&score=${newScore}&answers=${encodedAnswers}`,
-        );
+        setStep((s) => s + 1);
+        setSelectedIdx(null);
       }
-    }, 300);
+    }, 400);
   };
 
-  if (!isClient || questions.length === 0) return null;
+  const saveFinalScore = async (finalScore, finalAnswers) => {
+    if (hasSaved.current) return;
+    hasSaved.current = true;
+    const uId = localStorage.getItem("userId") || user?.id || user?._id;
+
+    try {
+      if (uId) {
+        await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: uId, xpToAdd: finalScore }),
+        });
+        if (refreshUser) await refreshUser();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      const encodedAnswers = encodeURIComponent(JSON.stringify(finalAnswers));
+      router.push(
+        `/resultContent?type=${topic}&total=${questions.length}&score=${finalScore}&answers=${encodedAnswers}`,
+      );
+    }
+  };
+
+  if (!isClient || questions.length === 0)
+    return (
+      <div className="h-screen flex items-center justify-center font-black text-[#312C85] animate-pulse uppercase tracking-widest">
+        Түр хүлээнэ үү...
+      </div>
+    );
 
   return (
     <div
-      className={`h-screen ${config.bg} flex flex-col overflow-hidden font-sans`}
+      className={`min-h-screen ${config.bg} flex flex-col font-sans transition-colors duration-500`}
     >
       <NavAll />
-      <nav className="mt-24 px-6 max-w-[800px] mx-auto w-full">
-        <div className="bg-white/80 backdrop-blur-md border border-white rounded-3xl p-3 shadow-sm flex items-center justify-between">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-all"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              Асуулт {step + 1} / {questions.length}
-            </span>
-            <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${((step + 1) / questions.length) * 100}%`,
-                  backgroundColor: config.color,
-                }}
-              />
+
+      <main className="flex-1 flex flex-col items-center pt-32 pb-12 px-6">
+        {/* Progress Navigation */}
+        <div className="w-full max-w-[700px] mb-10">
+          <div className="bg-white/70 backdrop-blur-xl border border-white rounded-[2rem] p-4 shadow-xl shadow-slate-200/50 flex items-center justify-between">
+            <button
+              onClick={() => router.back()}
+              className="p-3 bg-white rounded-2xl text-slate-400 hover:text-[#312C85] hover:shadow-md transition-all active:scale-90"
+            >
+              <ChevronLeft size={20} strokeWidth={3} />
+            </button>
+
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">
+                {isSaving ? "Дуусгаж байна" : "Явц"}
+              </span>
+              <div className="flex items-center gap-3">
+                <div className="w-32 md:w-48 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full transition-all duration-700 ease-out"
+                    style={{
+                      width: `${((step + 1) / questions.length) * 100}%`,
+                      backgroundColor: config.color,
+                    }}
+                  />
+                </div>
+                <span className="text-sm font-black text-slate-800">
+                  {step + 1}
+                  <span className="text-slate-300">/{questions.length}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl text-[#312C85]/20">
+              {config.icon}
             </div>
           </div>
         </div>
-      </nav>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-white w-full max-w-[650px] rounded-[3rem] p-8 md:p-12 shadow-xl shadow-slate-200/50 border border-slate-50">
-          <div
-            className="inline-block px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] mb-6"
-            style={{
-              backgroundColor: config.color + "15",
-              color: config.color,
-            }}
-          >
-            {config.title}
-          </div>
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 leading-tight mb-8">
-            {questions[step]?.question}
-          </h2>
-          <div className="grid gap-3">
-            {questions[step]?.options.map((ans, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleAnswer(idx)}
-                className="group w-full p-5 rounded-2xl text-left font-bold transition-all border-2 border-slate-50 bg-slate-50/40 text-slate-500 hover:border-slate-900 hover:bg-slate-900 hover:text-white active:scale-[0.97] flex items-center gap-4"
-              >
-                <span className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black bg-white text-slate-400 group-hover:bg-white/10 group-hover:text-white">
-                  {String.fromCharCode(65 + idx)}
-                </span>
-                {ans}
-              </button>
-            ))}
+        {/* Question Card */}
+        <div
+          className={`w-full max-w-[750px] relative transition-all duration-500 ${isSaving ? "opacity-30 scale-95 pointer-events-none" : "scale-100"}`}
+        >
+          {/* Card Decoration */}
+          <div className="absolute inset-0 translate-y-6 scale-[0.9] bg-[#312C85]/5 rounded-[3.5rem] -z-10 blur-md" />
+
+          <div className="bg-white rounded-[3.5rem] p-8 md:p-14 shadow-2xl shadow-slate-200/60 border border-white relative overflow-hidden">
+            {/* Topic Badge */}
+            <div
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest mb-8"
+              style={{
+                backgroundColor: config.color + "15",
+                color: config.color,
+              }}
+            >
+              <div
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ backgroundColor: config.color }}
+              />
+              {config.title}
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 leading-[1.3] mb-12 italic">
+              {questions[step]?.question}
+            </h2>
+
+            <div className="grid gap-4">
+              {questions[step]?.options.map((ans, idx) => {
+                const isSelected = selectedIdx === idx;
+                return (
+                  <button
+                    key={idx}
+                    disabled={isSaving || selectedIdx !== null}
+                    onClick={() => handleAnswer(idx)}
+                    className={`
+                      group relative w-full p-6 rounded-[2rem] text-left transition-all duration-300 flex items-center gap-5 border-2
+                      ${
+                        isSelected
+                          ? "border-[#312C85] bg-[#312C85] text-white shadow-lg shadow-[#312C85]/30 translate-x-2"
+                          : "border-slate-50 bg-slate-50/50 text-slate-600 hover:border-slate-200 hover:bg-white hover:shadow-md active:scale-[0.98]"
+                      }
+                    `}
+                  >
+                    <span
+                      className={`
+                      w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black transition-colors
+                      ${isSelected ? "bg-white/20 text-white" : "bg-white text-slate-300 group-hover:text-[#312C85]"}
+                    `}
+                    >
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                    <span className="font-bold text-base md:text-lg flex-1 leading-tight">
+                      {ans}
+                    </span>
+                    {isSelected && (
+                      <CheckCircle2
+                        size={20}
+                        className="text-white animate-bounce"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {/* Loading Overlay */}
+        {isSaving && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center gap-4">
+              <Loader2 className="w-10 h-10 text-[#312C85] animate-spin" />
+              <p className="font-black text-[#312C85] text-xs uppercase tracking-widest">
+                Үр дүнг хадгалж байна...
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -954,7 +1054,13 @@ function QuizManager() {
 
 export default function QuizPage() {
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <QuizManager />
     </Suspense>
   );

@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -10,14 +11,17 @@ import {
   FaChalkboardTeacher,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
+// Нүдний дүрс нэмэв
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
   const { login, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student"); // 'student' эсвэл 'teacher' сонголт
+  const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Нууц үг харуулах төлөв
 
   useEffect(() => {
     if (user) router.push("/dashboard");
@@ -37,7 +41,7 @@ export default function Login() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }), // Role-ийг сервер рүү илгээнэ
+        body: JSON.stringify({ email, password, role }),
       });
       const data = await res.json();
 
@@ -45,8 +49,7 @@ export default function Login() {
         login(data.user);
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("userRole", data.user.role); // Role-ийг хадгалах
-
+        localStorage.setItem("userRole", data.user.role);
         router.push("/dashboard");
       } else {
         alert(data.message || "Мэдээлэл буруу байна");
@@ -61,7 +64,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-900 font-sans">
       <div className="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white bg-white">
-        {/* Зүүн тал - Дизайн */}
+        {/* Зүүн тал */}
         <div className="hidden md:flex w-5/12 flex-col justify-center items-start p-12 bg-[#312C85] text-white relative overflow-hidden">
           <div className="absolute -top-10 -right-10 text-white/10 pointer-events-none">
             <FaAtom size={280} className="animate-spin-slow opacity-20" />
@@ -89,7 +92,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Баруун тал - Форм */}
+        {/* Баруун тал */}
         <div className="w-full md:w-7/12 p-8 md:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-8">
@@ -101,27 +104,18 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Role Selector (Сурагч / Багш сонголт) */}
             <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
               <button
                 type="button"
                 onClick={() => setRole("student")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${
-                  role === "student"
-                    ? "bg-white text-[#312C85] shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${role === "student" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
                 <FaUserGraduate /> Сурагч
               </button>
               <button
                 type="button"
                 onClick={() => setRole("teacher")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${
-                  role === "teacher"
-                    ? "bg-white text-[#312C85] shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${role === "teacher" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
                 <FaChalkboardTeacher /> Багш
               </button>
@@ -142,36 +136,36 @@ export default function Login() {
                 />
               </div>
 
+              {/* Нууц үг хэсэг (ЗАССАН) */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Нууц үг
                   </label>
-                  <Link
-                    href="#"
-                    className="text-xs text-[#312C85] font-bold hover:underline"
-                  >
-                    Мартсан?
-                  </Link>
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-5 top-4 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-5 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-sm mt-4 ${
-                  loading
-                    ? "bg-slate-400"
-                    : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"
-                }`}
+                className={`w-full py-5 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-sm mt-4 ${loading ? "bg-slate-400" : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"}`}
               >
                 {loading
                   ? "Шалгаж байна..."
