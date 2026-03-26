@@ -487,8 +487,9 @@ export default function Amisgal() {
                       {exp.title}
                     </div>
                   </Link>
+                  {/* Туршилт хэсгийн товчлуурууд */}
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
+                    <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all z-10">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -625,8 +626,9 @@ export default function Amisgal() {
                         </p>
                       ))}
                     </div>
+                    {/* Онолын картны товчлуурууд */}
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);

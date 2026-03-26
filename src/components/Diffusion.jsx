@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Slider from "./Slider";
+import Slider from "../components/Slider"; // Замыг өөрийн бүтцээр шалгаарай
 import {
   Users,
   ChevronDown,
@@ -18,11 +18,13 @@ import {
   Edit2,
   Check,
   Video,
-} from "lucide-react";
-import NavAll from "./NavAll";
-import Nav from "./Nav";
-import NavH from "./NavH";
+  ArrowLeft,
+} from "lucide-react"; // lucide-react-аас import-оо шалгаарай
+import NavAll from "../components/NavAll";
+import NavH from "../components/NavH";
 import { useAuth } from "@/context/AuthContext";
+
+const PAGE_ID = "diffusion";
 
 const INITIAL_DATA = {
   page: {
@@ -104,8 +106,6 @@ const INITIAL_DATA = {
   ],
 };
 
-const PAGE_ID = "diffusion";
-
 export default function Diffusion() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
@@ -118,7 +118,7 @@ export default function Diffusion() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States (Motion.jsx-тэй яг ижил)
+  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -155,7 +155,7 @@ export default function Diffusion() {
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error(err);
+      console.error("Data fetch error:", err);
     }
   };
 
@@ -218,6 +218,8 @@ export default function Diffusion() {
 
   const handleAddLesson = async (e) => {
     e.preventDefault();
+    if (!newCard.title || !newCard.content)
+      return alert("Гарчиг болон агуулга хоосон байна!");
     setLoading(true);
     const res = await fetch("/api/lessons", {
       method: "POST",
@@ -234,6 +236,12 @@ export default function Diffusion() {
       fetchData();
     }
     setLoading(false);
+  };
+
+  const deleteItem = async (type, id) => {
+    if (!confirm("Устгахдаа итгэлтэй байна уу?")) return;
+    await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
+    fetchData();
   };
 
   const handleInlineSave = async (id) => {
@@ -254,14 +262,8 @@ export default function Diffusion() {
     setLoading(false);
   };
 
-  const deleteItem = async (type, id) => {
-    if (!confirm("Устгах уу?")) return;
-    await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
-    fetchData();
-  };
-
   const finalExperiments = [
-    ...dbExperiments,
+    ...dbExperiments.slice().reverse(),
     ...INITIAL_DATA.experiments,
   ].slice(0, 3);
   const allTheory = [
@@ -277,6 +279,12 @@ export default function Diffusion() {
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
+            <Link
+              href="/physic"
+              className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ArrowLeft className="text-[#312C85]" size={24} />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
@@ -392,7 +400,7 @@ export default function Diffusion() {
                     setNewExp({ title: "", href: "", img: "" });
                     setShowExpForm(!showExpForm);
                   }}
-                  className="p-1.5 bg-[#312C85] text-white rounded-lg"
+                  className="p-1.5 bg-[#312C85] text-white rounded-lg transition-transform active:scale-95"
                 >
                   {showExpForm ? <X size={16} /> : <Plus size={16} />}
                 </button>
@@ -400,7 +408,7 @@ export default function Diffusion() {
             </div>
 
             {showExpForm && isTeacher && (
-              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3">
+              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 animate-in fade-in zoom-in duration-200">
                 <input
                   className="text-sm p-2 border rounded-xl"
                   placeholder="Нэр..."
@@ -428,7 +436,7 @@ export default function Diffusion() {
                 <button
                   onClick={handleAddOrUpdateExp}
                   disabled={loading}
-                  className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold"
+                  className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold active:scale-95 transition-all"
                 >
                   {editingExp ? "Засах" : "Нэмэх"}
                 </button>
@@ -449,7 +457,7 @@ export default function Diffusion() {
                           exp.img ||
                           "https://phet.colorado.edu/sims/html/diffusion/latest/diffusion-420.png"
                         }
-                        className="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                         alt={exp.title}
                       />
                       <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
@@ -461,7 +469,7 @@ export default function Diffusion() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -472,13 +480,13 @@ export default function Diffusion() {
                           });
                           setShowExpForm(true);
                         }}
-                        className="p-2 bg-blue-500 text-white rounded-full"
+                        className="p-2 bg-blue-500 text-white rounded-full shadow-lg"
                       >
                         <Edit2 size={10} />
                       </button>
                       <button
                         onClick={() => deleteItem("experiment", exp._id)}
-                        className="p-2 bg-red-500 text-white rounded-full"
+                        className="p-2 bg-red-500 text-white rounded-full shadow-lg"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -490,6 +498,7 @@ export default function Diffusion() {
           </div>
         </div>
 
+        {/* Theory Section */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
           <div className="flex flex-col items-center mb-10">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
@@ -505,7 +514,7 @@ export default function Diffusion() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white outline-none"
+                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -513,8 +522,8 @@ export default function Diffusion() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white outline-none"
-                  placeholder="Агуулга..."
+                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
+                  placeholder="Агуулга (Мөр бүрийг шинэ догол болгоно)..."
                   value={newCard.content}
                   onChange={(e) =>
                     setNewCard({ ...newCard, content: e.target.value })
@@ -524,7 +533,7 @@ export default function Diffusion() {
               <button
                 onClick={handleAddLesson}
                 disabled={loading}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2 active:scale-[0.98] transition-all"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -543,9 +552,9 @@ export default function Diffusion() {
                 className="relative group bg-white rounded-2xl p-6 border border-slate-100 hover:border-indigo-200 transition-all shadow-sm"
               >
                 {editingCardId === item._id ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-in fade-in duration-300">
                     <input
-                      className="w-full p-2 font-bold border-b"
+                      className="w-full p-2 font-bold border-b focus:border-indigo-500 outline-none"
                       value={tempEditData.title}
                       onChange={(e) =>
                         setTempEditData({
@@ -555,7 +564,7 @@ export default function Diffusion() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 text-sm border rounded-lg"
+                      className="w-full p-2 text-sm border rounded-lg min-h-[120px]"
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -567,7 +576,7 @@ export default function Diffusion() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleInlineSave(item._id)}
-                        className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold"
+                        className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
                       >
                         <Check size={16} /> Хадгалах
                       </button>
@@ -582,23 +591,23 @@ export default function Diffusion() {
                 ) : (
                   <>
                     <h3 className="text-lg font-bold text-[#312C85] mb-4 pr-16 flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm">
+                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-bold text-[#312C85]">
                         {i + 1}
                       </span>
                       {item.title}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3"
+                          className="text-sm text-slate-600 border-l-2 border-indigo-100 pl-3 leading-relaxed"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -607,13 +616,13 @@ export default function Diffusion() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white"
+                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -630,8 +639,8 @@ export default function Diffusion() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase">
-                {showAll ? "Хураах" : "Бүгдийг үзэх"}
+              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all">
+                {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
                 <ChevronUp size={20} className="text-[#312C85]" />
@@ -647,15 +656,20 @@ export default function Diffusion() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full"
+              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>
-            <iframe className="w-full h-full" src={videoUrl} allowFullScreen />
+            <iframe
+              className="w-full h-full"
+              src={videoUrl}
+              allowFullScreen
+              title="Video Lesson"
+            />
           </div>
         </div>
       )}

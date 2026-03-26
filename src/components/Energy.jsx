@@ -18,15 +18,13 @@ import {
   Edit2,
   Check,
   Video,
-  FileText,
-} from "lucide-react"; // Энийг "lucide-react" болгож заслаа
+  Beaker,
+} from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";
 
-// Энэ хуудасны ID (Data-г зааглах зорилгоор)
 const PAGE_ID = "energy";
-
 const INITIAL_DATA = {
   page: {
     title: "Цахилгаан ба соронз",
@@ -126,9 +124,9 @@ export default function Energy() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
+  // Editing States
   const [editingCardId, setEditingCardId] = useState(null);
   const [tempEditData, setTempEditData] = useState({ title: "", content: "" });
-
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showExpForm, setShowExpForm] = useState(false);
@@ -145,25 +143,24 @@ export default function Energy() {
         fetch(`/api/lessons?pageId=${PAGE_ID}`),
         fetch(`/api/video?pageId=${PAGE_ID}`),
       ]);
-
       if (canvaRes.ok) {
-        const data = await canvaRes.json();
-        if (data.url) {
-          setDisplayUrl(data.url);
-          setCanvaInput(data.url);
+        const d = await canvaRes.json();
+        if (d?.url) {
+          setDisplayUrl(d.url);
+          setCanvaInput(d.url);
         }
       }
       if (videoRes.ok) {
-        const data = await videoRes.json();
-        if (data.url) {
-          setVideoUrl(data.url);
-          setVideoInput(data.url);
+        const d = await videoRes.json();
+        if (d?.url) {
+          setVideoUrl(d.url);
+          setVideoInput(d.url);
         }
       }
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error("Data fetch error:", err);
+      console.error(err);
     }
   };
 
@@ -171,21 +168,12 @@ export default function Energy() {
     fetchData();
   }, []);
 
-  const finalExperiments = [...dbExperiments, ...INITIAL_DATA.experiments];
-  const allTheory = [
-    ...dynamicLessons.slice().reverse(),
-    ...INITIAL_DATA.theory,
-  ];
-  const visibleTheory = showAll ? allTheory : allTheory.slice(0, 4);
-
-  // --- ACTIONS ---
-
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
     if (url.includes("<iframe")) {
       const match = url.match(/src="([^"]+)"/);
-      if (match && match[1]) url = match[1];
+      if (match) url = match[1];
     }
     const res = await fetch("/api/presentation", {
       method: "POST",
@@ -194,7 +182,7 @@ export default function Energy() {
     });
     if (res.ok) {
       setDisplayUrl(url);
-      alert("Презентейшн хадгалагдлаа!");
+      alert("Хадгалагдлаа!");
     }
     setLoading(false);
   };
@@ -244,9 +232,7 @@ export default function Energy() {
       body: JSON.stringify({
         id,
         title: tempEditData.title,
-        content: tempEditData.content
-          .split("\n")
-          .filter((c) => c.trim() !== ""),
+        content: tempEditData.content.split("\n").filter((c) => c.trim()),
       }),
     });
     if (res.ok) {
@@ -265,7 +251,7 @@ export default function Energy() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: newCard.title,
-        content: newCard.content.split("\n").filter((c) => c.trim() !== ""),
+        content: newCard.content.split("\n").filter((c) => c.trim()),
         pageId: PAGE_ID,
       }),
     });
@@ -282,28 +268,39 @@ export default function Energy() {
     if (res.ok) fetchData();
   };
 
+  const finalExperiments = [
+    ...dbExperiments.slice().reverse(),
+    ...INITIAL_DATA.experiments,
+  ].slice(0, 3);
+  const allTheory = [
+    ...dynamicLessons.slice().reverse(),
+    ...INITIAL_DATA.theory,
+  ];
+  const visibleTheory = showAll ? allTheory : allTheory.slice(0, 4);
+
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
+
+      {/* Header */}
       <section className="pt-24 md:pt-28">
-        <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
-          <div className="flex items-center">
+        <div className="flex flex-col sm:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
+          <div className="flex items-center w-full sm:w-auto">
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
                 {INITIAL_DATA.page.title}
               </h1>
-              <p className="text-slate-500 text-xs flex items-center gap-1">
+              <p className="text-slate-500 text-[10px] md:text-xs font-bold flex items-center gap-1 uppercase tracking-tighter">
                 <Users size={12} /> {INITIAL_DATA.page.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-all"
           >
-            <Play size={16} fill="currentColor" />{" "}
-            <span className="hidden sm:inline">Видео үзэх</span>
+            <Play size={16} fill="currentColor" /> <span>Хичээл үзэх</span>
           </button>
         </div>
       </section>
@@ -311,31 +308,31 @@ export default function Energy() {
       <Nav />
 
       <div className="max-w-[1400px] mx-auto mt-6">
+        {/* Teacher Video Control */}
         {isTeacher && (
-          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
+          <div className="mb-6 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
             <div className="flex justify-between items-center">
-              <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                <Video size={16} /> Видео хичээл удирдах:
+              <p className="text-[11px] font-black text-[#312C85] flex items-center gap-2 uppercase tracking-widest">
+                <Video size={16} /> Видео удирдлага
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
-                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600"
               >
-                {showVideoEdit ? "Хаах" : "Линк солих"}
+                {showVideoEdit ? "Хаах" : "Засах"}
               </button>
             </div>
             {showVideoEdit && (
-              <div className="flex gap-2 animate-in slide-in-from-top-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  placeholder="Youtube Link..."
+                  placeholder="Youtube link..."
                 />
                 <button
                   onClick={saveVideo}
-                  disabled={loading}
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <Loader2 className="animate-spin" size={18} />
@@ -349,47 +346,52 @@ export default function Energy() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main Content Area */}
+          <div className="w-full lg:w-[75%] space-y-4">
+            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
                   className="w-full h-full border-none"
                   allowFullScreen
-                />
+                ></iframe>
               ) : (
                 <Slider slides={INITIAL_DATA.slider} />
               )}
             </div>
             {isTeacher && (
-              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-                <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                  <Settings size={14} /> Презентейшн солих:
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
+                <p className="text-[10px] font-black text-[#312C85] flex items-center gap-2 uppercase tracking-widest">
+                  <Settings size={14} /> Презентейшн солих
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
-                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
                     placeholder="Canva/Iframe Link..."
                   />
                   <button
                     onClick={saveCanva}
-                    disabled={loading}
-                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md shadow-indigo-200"
+                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center"
                   >
-                    Хадгалах
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <Save size={18} />
+                    )}
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="lg:w-[25%] flex flex-col gap-4">
+          {/* Sidebar Area: Experiments */}
+          <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
-                Туршилтууд
+              <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2">
+                <Beaker size={14} /> Туршилтууд
               </h3>
               {isTeacher && (
                 <button
@@ -406,7 +408,7 @@ export default function Energy() {
             </div>
 
             {showExpForm && (
-              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 animate-in fade-in zoom-in">
+              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3">
                 <input
                   className="text-sm p-2 border rounded-xl"
                   placeholder="Нэр..."
@@ -433,56 +435,51 @@ export default function Energy() {
                 />
                 <button
                   onClick={handleAddOrUpdateExp}
-                  disabled={loading}
-                  className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-100"
+                  className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold"
                 >
-                  {editingExp ? "Засах" : "Нэмэх"}
+                  Хадгалах
                 </button>
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
               {finalExperiments.map((exp, idx) => (
                 <div
                   key={exp._id || idx}
-                  className="relative group bg-white rounded-2xl p-2 border border-slate-200 hover:border-[#312C85] transition-all shadow-sm"
+                  className="relative group bg-white rounded-2xl p-2 border border-slate-100 hover:border-indigo-300 transition-all shadow-sm"
                 >
                   <Link href={exp.href} target="_blank">
-                    <div className="h-28 rounded-xl bg-slate-100 overflow-hidden relative">
+                    <div className="h-32 sm:h-24 lg:h-28 rounded-xl bg-indigo-50/30 overflow-hidden relative">
                       <img
                         src={exp.img}
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
                         alt={exp.title}
                       />
-                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <ExternalLink size={14} />
                       </div>
                     </div>
-                    <div className="py-2.5 px-1 font-bold text-sm text-slate-700 truncate">
+                    <div className="py-2.5 px-1 font-bold text-[12px] text-slate-700 truncate">
                       {exp.title}
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all z-10">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
-                          setNewExp({
-                            title: exp.title,
-                            href: exp.href,
-                            img: exp.img,
-                          });
+                          setNewExp(exp);
                           setShowExpForm(true);
                         }}
-                        className="p-2 bg-blue-500 text-white rounded-full shadow-lg"
+                        className="p-2 bg-blue-500 text-white rounded-full"
                       >
-                        <Edit2 size={10} />
+                        <Edit2 size={12} />
                       </button>
                       <button
                         onClick={() => deleteItem("experiment", exp._id)}
-                        className="p-2 bg-red-500 text-white rounded-full shadow-lg"
+                        className="p-2 bg-red-500 text-white rounded-full"
                       >
-                        <Trash2 size={10} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   )}
@@ -492,18 +489,20 @@ export default function Energy() {
           </div>
         </div>
 
-        <section className="bg-white rounded-[3rem] p-6 md:p-12 shadow-sm border border-slate-200 mt-12">
-          <div className="flex flex-col items-center mb-10 text-center">
-            <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
-              Онолын мэдээлэл
+        {/* Theory Section */}
+        <section className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12">
+          <div className="flex flex-col items-center mb-8 md:mb-12 text-center">
+            <h2 className="text-xl md:text-3xl text-slate-900 font-black uppercase tracking-tight">
+              Онолын Мэдээлэл
             </h2>
-            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
+            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-3"></div>
           </div>
+
           {isTeacher && (
-            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
+            <div className="mb-10 p-4 md:p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="p-3 rounded-xl border bg-white outline-none"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -511,7 +510,7 @@ export default function Energy() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white outline-none min-h-[50px] focus:ring-2 focus:ring-indigo-500"
+                  className="p-3 rounded-xl border bg-white outline-none"
                   placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
@@ -521,132 +520,97 @@ export default function Energy() {
               </div>
               <button
                 onClick={handleAddLesson}
-                disabled={loading}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-800 transition-all shadow-md shadow-indigo-100"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
                 ) : (
                   <Plus size={20} />
                 )}{" "}
-                Онолын карт нэмэх
+                Карт нэмэх
               </button>
             </div>
           )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
             {visibleTheory.map((item, i) => (
               <div
                 key={item._id || i}
-                className={`relative group bg-white rounded-3xl p-8 border transition-all shadow-sm ${editingCardId === item._id ? "ring-2 ring-indigo-500 border-transparent" : "border-slate-100 hover:border-indigo-200"}`}
+                className="relative group bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-slate-50 hover:bg-indigo-50/10 transition-all shadow-sm"
               >
-                {editingCardId === item._id ? (
-                  <div className="space-y-4">
-                    <input
-                      className="w-full p-2 font-bold text-[#312C85] border-b outline-none"
-                      value={tempEditData.title}
-                      onChange={(e) =>
-                        setTempEditData({
-                          ...tempEditData,
-                          title: e.target.value,
-                        })
-                      }
-                    />
-                    <textarea
-                      className="w-full p-2 text-sm text-slate-600 border rounded-lg min-h-[100px]"
-                      value={tempEditData.content}
-                      onChange={(e) =>
-                        setTempEditData({
-                          ...tempEditData,
-                          content: e.target.value,
-                        })
-                      }
-                    />
-                    <div className="flex gap-2">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-base md:text-lg font-bold text-[#312C85] flex items-center gap-3">
+                    <span className="min-w-[32px] h-8 rounded-lg bg-[#312C85] text-white flex items-center justify-center text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    {item.title}
+                  </h3>
+                  {isTeacher && item._id && (
+                    <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
                       <button
-                        onClick={() => handleInlineSave(item._id)}
-                        className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-1 shadow-md shadow-green-100"
+                        onClick={() => {
+                          setEditingCardId(item._id);
+                          setTempEditData({
+                            title: item.title,
+                            content: item.content.join("\n"),
+                          });
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
                       >
-                        <Check size={16} /> Хадгалах
+                        <Edit2 size={16} />
                       </button>
                       <button
-                        onClick={() => setEditingCardId(null)}
-                        className="flex-1 bg-slate-200 text-slate-600 py-2 rounded-lg font-bold"
+                        onClick={() => deleteItem("lessons", item._id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-md"
                       >
-                        Болих
+                        <Trash2 size={16} />
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-bold text-[#312C85] flex items-center gap-3">
-                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-xs font-bold">
-                          {i + 1}
-                        </span>
-                        {item.title}
-                      </h3>
-                      {isTeacher && item._id && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <button
-                            onClick={() => {
-                              setEditingCardId(item._id);
-                              setTempEditData({
-                                title: item.title,
-                                content: item.content.join("\n"),
-                              });
-                            }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => deleteItem("lessons", item._id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {item.content.map((text, j) => (
-                        <p
-                          key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3 leading-relaxed"
-                        >
-                          {text}
-                        </p>
-                      ))}
-                    </div>
-                  </>
-                )}
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {item.content.map((text, j) => (
+                    <p
+                      key={j}
+                      className="text-sm text-slate-600 border-l-2 border-indigo-100 pl-4 leading-relaxed"
+                    >
+                      {text}
+                    </p>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
+
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-[#312C85] px-8 py-2 rounded-full text-xs font-bold uppercase group-hover:bg-[#312C85] group-hover:text-white transition-all shadow-sm">
+              <div className="bg-indigo-50 text-[#312C85] px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all shadow-sm">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
-              <ChevronDown
-                className={`text-[#312C85] transition-transform ${showAll ? "rotate-180" : "animate-bounce"}`}
-                size={20}
-              />
+              {showAll ? (
+                <ChevronUp size={20} className="text-[#312C85]" />
+              ) : (
+                <ChevronDown
+                  size={20}
+                  className="text-[#312C85] animate-bounce"
+                />
+              )}
             </button>
           </div>
         </section>
       </div>
 
+      {/* Video Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-2 md:p-4 bg-black/85 backdrop-blur-sm"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-xl md:rounded-[2.5rem] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -655,7 +619,12 @@ export default function Energy() {
             >
               <X size={24} />
             </button>
-            <iframe className="w-full h-full" src={videoUrl} allowFullScreen />
+            <iframe
+              className="w-full h-full"
+              src={videoUrl}
+              allowFullScreen
+              allow="autoplay"
+            />
           </div>
         </div>
       )}

@@ -18,10 +18,13 @@ import {
   Edit2,
   Check,
   Video,
+  ArrowLeft,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";
+
+const PAGE_ID = "sound";
 
 const INITIAL_DATA = {
   page: {
@@ -110,13 +113,10 @@ const INITIAL_DATA = {
   ],
 };
 
-const PAGE_ID = "sound"; // Энэ хуудасны ID
-
 export default function Sound() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -125,7 +125,6 @@ export default function Sound() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -170,7 +169,6 @@ export default function Sound() {
     fetchData();
   }, []);
 
-  // --- ACTIONS ---
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
@@ -230,11 +228,8 @@ export default function Sound() {
     if (!newExp.title || !newExp.href) return alert("Мэдээлэл дутуу байна!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
-    const url = editingExp
-      ? `/api/experiment?id=${editingExp}`
-      : "/api/experiment";
-    const res = await fetch(url, {
-      method: method,
+    const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...newExp, pageId: PAGE_ID }),
     });
@@ -273,7 +268,6 @@ export default function Sound() {
     setLoading(false);
   };
 
-  // Merge Data
   const finalExperiments = [
     ...dbExperiments,
     ...INITIAL_DATA.experiments,
@@ -291,6 +285,12 @@ export default function Sound() {
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
+            <Link
+              href="/physics"
+              className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ArrowLeft className="text-[#312C85]" size={24} />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
@@ -303,7 +303,7 @@ export default function Sound() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold"
+            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all"
           >
             <Play size={16} fill="currentColor" />{" "}
             <span className="hidden sm:inline">Видео үзэх</span>
@@ -322,7 +322,7 @@ export default function Sound() {
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
-                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600"
+                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
               >
                 {showVideoEdit ? "Хаах" : "Линк солих"}
               </button>
@@ -330,7 +330,7 @@ export default function Sound() {
             {showVideoEdit && (
               <div className="flex gap-2">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
+                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
                   placeholder="Youtube линк..."
@@ -353,7 +353,7 @@ export default function Sound() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px]">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -371,7 +371,7 @@ export default function Sound() {
                 </p>
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
+                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
                     placeholder="Canva embed код энд хуулна уу..."
@@ -404,7 +404,7 @@ export default function Sound() {
                     setNewExp({ title: "", href: "", img: "" });
                     setShowExpForm(!showExpForm);
                   }}
-                  className="p-1 bg-[#312C85] text-white rounded-lg"
+                  className="p-1.5 bg-[#312C85] text-white rounded-lg"
                 >
                   {showExpForm ? <X size={16} /> : <Plus size={16} />}
                 </button>
@@ -423,7 +423,7 @@ export default function Sound() {
                 />
                 <input
                   className="text-sm p-2 border rounded-xl outline-none"
-                  placeholder="Линк..."
+                  placeholder="URL..."
                   value={newExp.href}
                   onChange={(e) =>
                     setNewExp({ ...newExp, href: e.target.value })
@@ -461,8 +461,12 @@ export default function Sound() {
                   >
                     <div className="h-28 rounded-xl bg-slate-100 overflow-hidden relative">
                       <img
-                        src={exp.img}
+                        src={
+                          exp.img ||
+                          "https://images.unsplash.com/photo-1532187875605-13e70f849e71?w=400"
+                        }
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        alt={exp.title}
                       />
                       <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                         <ExternalLink size={14} />
@@ -473,7 +477,7 @@ export default function Sound() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -503,7 +507,7 @@ export default function Sound() {
         </div>
 
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
-          <div className="flex flex-col items-center mb-10">
+          <div className="flex flex-col items-center mb-10 text-center">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase tracking-tight">
               Дуу ба долгион <span className="text-[#312C85]">Онол</span>
             </h2>
@@ -511,10 +515,13 @@ export default function Sound() {
           </div>
 
           {isTeacher && (
-            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
+            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4 max-w-4xl mx-auto">
+              <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
+                Шинэ карт нэмэх
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white text-sm"
+                  className="p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -522,7 +529,7 @@ export default function Sound() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white text-sm"
+                  className="p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                   placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
@@ -532,7 +539,7 @@ export default function Sound() {
               </div>
               <button
                 onClick={handleAddLesson}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2 hover:bg-black transition-all"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -591,23 +598,23 @@ export default function Sound() {
                 ) : (
                   <>
                     <h3 className="text-lg font-bold text-[#312C85] mb-4 flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-black">
+                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-black text-[#312C85]">
                         {i + 1}
                       </span>
                       {item.title}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3 leading-relaxed"
+                          className="text-sm text-slate-600 border-l-2 border-indigo-100 pl-3 leading-relaxed"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -616,13 +623,13 @@ export default function Sound() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg"
+                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg"
+                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -660,7 +667,7 @@ export default function Sound() {
           <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full"
+              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>

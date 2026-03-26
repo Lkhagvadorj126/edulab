@@ -488,7 +488,7 @@ export default function Urgamal() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -520,14 +520,14 @@ export default function Urgamal() {
         {/* Theory Section (Motion Style) */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
           <div className="flex flex-col items-center mb-10">
-            <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
-              Онолын мэдээлэл
+            <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase tracking-tight text-center">
+              Ургамлын ангилал зүйн онол
             </h2>
             <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
           </div>
 
           {isTeacher && (
-            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
+            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4 max-w-4xl mx-auto">
               <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
                 Шинэ карт нэмэх
               </h4>
@@ -583,7 +583,7 @@ export default function Urgamal() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 text-sm border rounded-lg outline-none h-32"
+                      className="w-full p-2 text-sm border rounded-lg h-32 outline-none"
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -601,7 +601,7 @@ export default function Urgamal() {
                       </button>
                       <button
                         onClick={() => setEditingCardId(null)}
-                        className="flex-1 bg-slate-200 py-2 rounded-lg font-bold"
+                        className="flex-1 bg-slate-200 py-2 rounded-lg"
                       >
                         Болих
                       </button>
@@ -610,7 +610,7 @@ export default function Urgamal() {
                 ) : (
                   <>
                     <h3 className="text-lg font-bold text-[#312C85] mb-4 pr-16 flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-bold">
+                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-bold text-[#312C85]">
                         {i + 1}
                       </span>
                       {item.title}
@@ -619,14 +619,14 @@ export default function Urgamal() {
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3 leading-relaxed"
+                          className="text-sm text-slate-600 border-l-2 border-indigo-100 pl-3 leading-relaxed"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -658,8 +658,8 @@ export default function Urgamal() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-all">
-                {showAll ? "Хураах" : "Бүгдийг үзэх"}
+              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all">
+                {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
                 <ChevronUp size={20} className="text-[#312C85]" />

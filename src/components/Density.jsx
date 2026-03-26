@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Slider from "./Slider";
+import Slider from "../components/Slider"; // Компонентын замыг шалгаарай
 import {
   Users,
   ChevronDown,
@@ -18,11 +18,13 @@ import {
   Edit2,
   Check,
   Video,
+  ArrowLeft,
 } from "lucide-react";
-import NavAll from "./NavAll";
-import Nav from "./Nav";
-import NavH from "./NavH";
+import NavAll from "../components/NavAll";
+import NavH from "../components/NavH";
 import { useAuth } from "@/context/AuthContext";
+
+const PAGE_ID = "density";
 
 const INITIAL_DATA = {
   page: {
@@ -105,8 +107,6 @@ const INITIAL_DATA = {
   ],
 };
 
-const PAGE_ID = "density";
-
 export default function Density() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
@@ -157,7 +157,7 @@ export default function Density() {
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error(err);
+      console.error("Data fetch error:", err);
     }
   };
 
@@ -165,7 +165,6 @@ export default function Density() {
     fetchData();
   }, []);
 
-  // --- ACTIONS ---
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
@@ -180,7 +179,7 @@ export default function Density() {
     });
     if (res.ok) {
       setDisplayUrl(url);
-      alert("Презентейшн хадгалагдлаа!");
+      alert("Амжилттай хадгалагдлаа!");
     }
     setLoading(false);
   };
@@ -196,13 +195,14 @@ export default function Density() {
       const data = await res.json();
       setVideoUrl(data.url);
       setShowVideoEdit(false);
-      alert("Видео хичээл шинэчлэгдлээ!");
+      alert("Видео шинэчлэгдлээ!");
     }
     setLoading(false);
   };
 
   const handleAddOrUpdateExp = async () => {
-    if (!newExp.title || !newExp.href) return alert("Бөглөнө үү!");
+    if (!newExp.title || !newExp.href)
+      return alert("Мэдээллээ бүрэн оруулна уу!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
     const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
@@ -240,6 +240,12 @@ export default function Density() {
     setLoading(false);
   };
 
+  const deleteItem = async (type, id) => {
+    if (!confirm("Та устгахдаа итгэлтэй байна уу?")) return;
+    await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
+    fetchData();
+  };
+
   const handleInlineSave = async (id) => {
     setLoading(true);
     const res = await fetch("/api/lessons", {
@@ -256,12 +262,6 @@ export default function Density() {
       fetchData();
     }
     setLoading(false);
-  };
-
-  const deleteItem = async (type, id) => {
-    if (!confirm("Та устгахдаа итгэлтэй байна уу?")) return;
-    await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
-    fetchData();
   };
 
   const finalExperiments = [
@@ -281,6 +281,12 @@ export default function Density() {
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
+            <Link
+              href="/physic"
+              className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ArrowLeft className="text-[#312C85]" size={24} />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
@@ -465,7 +471,7 @@ export default function Density() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -528,7 +534,7 @@ export default function Density() {
               <button
                 onClick={handleAddLesson}
                 disabled={loading}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2 hover:bg-black transition-all"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -602,7 +608,7 @@ export default function Density() {
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -611,13 +617,13 @@ export default function Density() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white"
+                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                         >
                           <Trash2 size={16} />
                         </button>

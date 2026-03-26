@@ -126,7 +126,6 @@ export default function Angilal() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -135,7 +134,6 @@ export default function Angilal() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -294,7 +292,6 @@ export default function Angilal() {
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
 
-      {/* Header Section */}
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
@@ -323,9 +320,10 @@ export default function Angilal() {
           </button>
         </div>
       </section>
+
       <NavBio />
+
       <div className="max-w-[1400px] mx-auto mt-6">
-        {/* Багшийн удирдлага: Видео */}
         {isTeacher && (
           <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
             <div className="flex justify-between items-center">
@@ -365,7 +363,6 @@ export default function Angilal() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Зүүн тал: Презентейшн/Слайдер */}
           <div className="lg:w-[75%] space-y-4">
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
               {displayUrl ? (
@@ -407,7 +404,6 @@ export default function Angilal() {
             )}
           </div>
 
-          {/* Баруун тал: Лаборатори */}
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
               <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
@@ -489,7 +485,7 @@ export default function Angilal() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
+                    <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all z-20">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -518,7 +514,6 @@ export default function Angilal() {
           </div>
         </div>
 
-        {/* Онол хэсэг */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
           <div className="flex flex-col items-center mb-10">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
@@ -526,7 +521,7 @@ export default function Angilal() {
             </h2>
             <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
           </div>
-
+          [Image of biological classification hierarchy]
           {isTeacher && (
             <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
               <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
@@ -564,7 +559,6 @@ export default function Angilal() {
               </button>
             </div>
           )}
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
             {visibleTheory.map((item, i) => (
               <div
@@ -627,7 +621,7 @@ export default function Angilal() {
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -653,7 +647,6 @@ export default function Angilal() {
               </div>
             ))}
           </div>
-
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
@@ -675,7 +668,6 @@ export default function Angilal() {
         </section>
       </div>
 
-      {/* Video Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">

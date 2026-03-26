@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Slider from "../components/Slider";
 import {
-  Users,
   ChevronDown,
   ChevronUp,
   Play,
@@ -120,12 +119,10 @@ const INITIAL_DATA = {
     },
   ],
 };
-
 export default function Zohitsuulga() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -134,7 +131,7 @@ export default function Zohitsuulga() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States
+  // Teacher states
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -153,25 +150,24 @@ export default function Zohitsuulga() {
         fetch(`/api/lessons?pageId=${PAGE_ID}`),
         fetch(`/api/video?pageId=${PAGE_ID}`),
       ]);
-
       if (canvaRes.ok) {
-        const data = await canvaRes.json();
-        if (data.url) {
-          setDisplayUrl(data.url);
-          setCanvaInput(data.url);
+        const d = await canvaRes.json();
+        if (d.url) {
+          setDisplayUrl(d.url);
+          setCanvaInput(d.url);
         }
       }
       if (videoRes.ok) {
-        const data = await videoRes.json();
-        if (data.url) {
-          setVideoUrl(data.url);
-          setVideoInput(data.url);
+        const d = await videoRes.json();
+        if (d.url) {
+          setVideoUrl(d.url);
+          setVideoInput(d.url);
         }
       }
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error("Error fetching:", err);
+      console.error(err);
     }
   };
 
@@ -184,17 +180,14 @@ export default function Zohitsuulga() {
     let url = canvaInput.trim();
     if (url.includes("<iframe")) {
       const match = url.match(/src="([^"]+)"/);
-      if (match && match[1]) url = match[1];
+      if (match) url = match[1];
     }
-    const res = await fetch(`/api/presentation?pageId=${PAGE_ID}`, {
+    await fetch(`/api/presentation?pageId=${PAGE_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, pageId: PAGE_ID }),
     });
-    if (res.ok) {
-      setDisplayUrl(url);
-      alert("Презентейшн хадгалагдлаа!");
-    }
+    setDisplayUrl(url);
     setLoading(false);
   };
 
@@ -209,7 +202,6 @@ export default function Zohitsuulga() {
       const data = await res.json();
       setVideoUrl(data.url);
       setShowVideoEdit(false);
-      alert("Видео шинэчлэгдлээ!");
     }
     setLoading(false);
   };
@@ -218,17 +210,15 @@ export default function Zohitsuulga() {
     if (!newExp.title || !newExp.href) return alert("Бөглөнө үү!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
-    const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
+    await fetch(`/api/experiment?id=${editingExp || ""}`, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...newExp, pageId: PAGE_ID, id: editingExp }),
     });
-    if (res.ok) {
-      setNewExp({ title: "", href: "", img: "" });
-      setEditingExp(null);
-      setShowExpForm(false);
-      fetchData();
-    }
+    setNewExp({ title: "", href: "", img: "" });
+    setEditingExp(null);
+    setShowExpForm(false);
+    fetchData();
     setLoading(false);
   };
 
@@ -236,51 +226,45 @@ export default function Zohitsuulga() {
     e.preventDefault();
     if (!newCard.title || !newCard.content) return alert("Бөглөнө үү!");
     setLoading(true);
-    const res = await fetch("/api/lessons", {
+    await fetch("/api/lessons", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: newCard.title,
-        content: newCard.content.split("\n").filter((c) => c.trim() !== ""),
+        content: newCard.content.split("\n").filter((c) => c.trim()),
         pageId: PAGE_ID,
         userId: user?.id,
       }),
     });
-    if (res.ok) {
-      setNewCard({ title: "", content: "" });
-      fetchData();
-    }
+    setNewCard({ title: "", content: "" });
+    fetchData();
     setLoading(false);
   };
 
   const deleteItem = async (type, id) => {
     if (!confirm("Устгах уу?")) return;
-    const res = await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
+    await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
+    fetchData();
   };
 
   const handleInlineSave = async (id) => {
     setLoading(true);
-    const res = await fetch("/api/lessons", {
+    await fetch("/api/lessons", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id,
         title: tempEditData.title,
-        content: tempEditData.content
-          .split("\n")
-          .filter((c) => c.trim() !== ""),
+        content: tempEditData.content.split("\n").filter((c) => c.trim()),
       }),
     });
-    if (res.ok) {
-      setEditingCardId(null);
-      fetchData();
-    }
+    setEditingCardId(null);
+    fetchData();
     setLoading(false);
   };
 
   const finalExperiments = [
-    ...dbExperiments,
+    ...dbExperiments.slice().reverse(),
     ...INITIAL_DATA.experiments,
   ].slice(0, 3);
   const allTheory = [
@@ -293,7 +277,6 @@ export default function Zohitsuulga() {
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
 
-      {/* Header */}
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
@@ -315,36 +298,38 @@ export default function Zohitsuulga() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all"
+            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all"
           >
             <Play size={16} fill="currentColor" />{" "}
             <span className="hidden sm:inline">Видео үзэх</span>
           </button>
         </div>
       </section>
+
       <NavBio />
+
       <div className="max-w-[1400px] mx-auto mt-6">
-        {/* Багшийн видео удирдах */}
+        {/* Teacher Video Control */}
         {isTeacher && (
-          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                <Video size={16} /> Видео хичээл удирдах:
+          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase">
+                <Video size={16} /> Видео хичээл:
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
-                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                className="text-[10px] font-bold bg-white border border-indigo-200 px-3 py-1 rounded-lg text-indigo-600 uppercase"
               >
-                {showVideoEdit ? "Хаах" : "Линк солих"}
+                {showVideoEdit ? "Хаах" : "Засах"}
               </button>
             </div>
             {showVideoEdit && (
               <div className="flex gap-2">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-[#312C85]"
+                  className="flex-1 p-3 rounded-xl border text-sm outline-none"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  placeholder="Youtube линк..."
+                  placeholder="Youtube link..."
                 />
                 <button
                   onClick={saveVideo}
@@ -355,8 +340,7 @@ export default function Zohitsuulga() {
                     <Loader2 className="animate-spin" size={18} />
                   ) : (
                     <Save size={18} />
-                  )}{" "}
-                  Хадгалах
+                  )}
                 </button>
               </div>
             )}
@@ -364,52 +348,46 @@ export default function Zohitsuulga() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Презентейшн */}
+          {/* Main Content */}
           <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px]">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
                   className="w-full h-full border-none"
                   allowFullScreen
-                ></iframe>
+                />
               ) : (
                 <Slider slides={INITIAL_DATA.slider} />
               )}
             </div>
             {isTeacher && (
-              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-                <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                  <Settings size={14} /> Презентейшн солих (Canva embed код):
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-[#312C85]"
-                    value={canvaInput}
-                    onChange={(e) => setCanvaInput(e.target.value)}
-                    placeholder="Canva код..."
-                  />
-                  <button
-                    onClick={saveCanva}
-                    disabled={loading}
-                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
-                  >
-                    {loading ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <Save size={18} />
-                    )}{" "}
-                    Хадгалах
-                  </button>
-                </div>
+              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex gap-2">
+                <input
+                  className="flex-1 p-3 rounded-xl border text-sm outline-none"
+                  value={canvaInput}
+                  onChange={(e) => setCanvaInput(e.target.value)}
+                  placeholder="Canva embed..."
+                />
+                <button
+                  onClick={saveCanva}
+                  disabled={loading}
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                </button>
               </div>
             )}
           </div>
 
-          {/* Лаборатори */}
+          {/* Experiments Section */}
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
+              <h3 className="font-bold text-slate-800 text-xs uppercase opacity-60 tracking-widest">
                 Виртуал лаборатори
               </h3>
               {isTeacher && (
@@ -446,7 +424,7 @@ export default function Zohitsuulga() {
                 />
                 <input
                   className="text-sm p-2 border rounded-xl outline-none"
-                  placeholder="Зураг URL..."
+                  placeholder="Зураг..."
                   value={newExp.img}
                   onChange={(e) =>
                     setNewExp({ ...newExp, img: e.target.value })
@@ -479,7 +457,7 @@ export default function Zohitsuulga() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
                         alt={exp.title}
                       />
-                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                         <ExternalLink size={14} />
                       </div>
                     </div>
@@ -488,7 +466,7 @@ export default function Zohitsuulga() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
+                    <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all z-20">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -499,13 +477,13 @@ export default function Zohitsuulga() {
                           });
                           setShowExpForm(true);
                         }}
-                        className="p-2 bg-blue-500 text-white rounded-full"
+                        className="p-2 bg-blue-500 text-white rounded-full shadow-lg active:scale-90"
                       >
                         <Edit2 size={10} />
                       </button>
                       <button
                         onClick={() => deleteItem("experiment", exp._id)}
-                        className="p-2 bg-red-500 text-white rounded-full"
+                        className="p-2 bg-red-500 text-white rounded-full shadow-lg active:scale-90"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -517,7 +495,7 @@ export default function Zohitsuulga() {
           </div>
         </div>
 
-        {/* Онол */}
+        {/* Theory Cards */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
           <div className="flex flex-col items-center mb-10">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
@@ -533,7 +511,7 @@ export default function Zohitsuulga() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="p-3 rounded-xl border bg-white outline-none"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -541,7 +519,7 @@ export default function Zohitsuulga() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="p-3 rounded-xl border bg-white outline-none"
                   placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
@@ -552,7 +530,7 @@ export default function Zohitsuulga() {
               <button
                 onClick={handleAddLesson}
                 disabled={loading}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2 hover:bg-black transition-all"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -583,7 +561,7 @@ export default function Zohitsuulga() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 text-sm border rounded-lg outline-none h-32"
+                      className="w-full p-2 text-sm border rounded-lg h-32 outline-none"
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -626,7 +604,7 @@ export default function Zohitsuulga() {
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -635,13 +613,13 @@ export default function Zohitsuulga() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
+                          className="p-2 bg-blue-50 text-blue-600 rounded-lg active:scale-90"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                          className="p-2 bg-red-50 text-red-500 rounded-lg active:scale-90"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -658,7 +636,7 @@ export default function Zohitsuulga() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-all">
+              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all">
                 {showAll ? "Хураах" : "Бүгдийг үзэх"}
               </div>
               {showAll ? (

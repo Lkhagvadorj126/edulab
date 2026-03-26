@@ -18,10 +18,13 @@ import {
   Edit2,
   Check,
   Video,
+  Beaker,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";
+
+const PAGE_ID = "light";
 
 const INITIAL_DATA = {
   page: {
@@ -109,14 +112,10 @@ const INITIAL_DATA = {
     },
   ],
 };
-
-const PAGE_ID = "light"; // Энэ хуудасны ID
-
 export default function Light() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -125,7 +124,6 @@ export default function Light() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -144,7 +142,6 @@ export default function Light() {
         fetch(`/api/lessons?pageId=${PAGE_ID}`),
         fetch(`/api/video?pageId=${PAGE_ID}`),
       ]);
-
       if (canvaRes.ok) {
         const data = await canvaRes.json();
         if (data.url) {
@@ -162,7 +159,7 @@ export default function Light() {
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error("Алдаа гарлаа:", err);
+      console.error(err);
     }
   };
 
@@ -170,13 +167,12 @@ export default function Light() {
     fetchData();
   }, []);
 
-  // --- ACTIONS ---
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
     if (url.includes("<iframe")) {
       const match = url.match(/src="([^"]+)"/);
-      if (match && match[1]) url = match[1];
+      if (match) url = match[1];
     }
     const res = await fetch(`/api/presentation?pageId=${PAGE_ID}`, {
       method: "POST",
@@ -185,7 +181,7 @@ export default function Light() {
     });
     if (res.ok) {
       setDisplayUrl(url);
-      alert("Презентейшн хадгалагдлаа!");
+      alert("Хадгалагдлаа!");
     }
     setLoading(false);
   };
@@ -202,6 +198,27 @@ export default function Light() {
       setVideoUrl(data.url);
       setShowVideoEdit(false);
       alert("Видео шинэчлэгдлээ!");
+    }
+    setLoading(false);
+  };
+
+  const handleAddOrUpdateExp = async () => {
+    if (!newExp.title || !newExp.href) return alert("Бөглөнө үү!");
+    setLoading(true);
+    const method = editingExp ? "PUT" : "POST";
+    const res = await fetch(
+      editingExp ? `/api/experiment?id=${editingExp}` : "/api/experiment",
+      {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newExp, pageId: PAGE_ID }),
+      },
+    );
+    if (res.ok) {
+      setNewExp({ title: "", href: "", img: "" });
+      setEditingExp(null);
+      setShowExpForm(false);
+      fetchData();
     }
     setLoading(false);
   };
@@ -226,53 +243,6 @@ export default function Light() {
     setLoading(false);
   };
 
-  const deleteItem = async (type, id) => {
-    if (!confirm("Устгах уу?")) return;
-    const res = await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
-  };
-  // --- EXPERIMENT ACTIONS ---
-  const handleAddOrUpdateExp = async () => {
-    // Хоосон утга шалгах
-    if (!newExp.title || !newExp.href) {
-      return alert("Гарчиг болон линкийг заавал бөглөнө үү!");
-    }
-
-    setLoading(true);
-    try {
-      // Хэрэв editingExp (ID) байгаа бол PUT (засах), байхгүй бол POST (нэмэх)
-      const method = editingExp ? "PUT" : "POST";
-      const url = editingExp
-        ? `/api/experiment?id=${editingExp}`
-        : "/api/experiment";
-
-      const res = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newExp,
-          pageId: PAGE_ID, // "light" гэж очих ёстой
-        }),
-      });
-
-      if (res.ok) {
-        // Амжилттай болбол утгуудыг цэвэрлээд, датаг дахин татна
-        setNewExp({ title: "", href: "", img: "" });
-        setEditingExp(null);
-        setShowExpForm(false);
-        fetchData(); // Жагсаалтыг шинэчлэх
-        alert(editingExp ? "Туршилт засагдлаа!" : "Шинэ туршилт нэмэгдлээ!");
-      } else {
-        const errorData = await res.json();
-        alert("Алдаа гарлаа: " + errorData.message);
-      }
-    } catch (err) {
-      console.error("Experiment handle error:", err);
-      alert("Сервертэй холбогдоход алдаа гарлаа.");
-    } finally {
-      setLoading(false);
-    }
-  };
   const handleInlineSave = async (id) => {
     setLoading(true);
     const res = await fetch("/api/lessons", {
@@ -293,9 +263,14 @@ export default function Light() {
     setLoading(false);
   };
 
-  // Data Merging
+  const deleteItem = async (type, id) => {
+    if (!confirm("Устгах уу?")) return;
+    const res = await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
+    if (res.ok) fetchData();
+  };
+
   const finalExperiments = [
-    ...dbExperiments,
+    ...dbExperiments.slice().reverse(),
     ...INITIAL_DATA.experiments,
   ].slice(0, 3);
   const allTheory = [
@@ -309,24 +284,23 @@ export default function Light() {
       <NavAll />
 
       <section className="pt-24 md:pt-28">
-        <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
-          <div className="flex items-center">
+        <div className="flex flex-col sm:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
+          <div className="flex items-center w-full sm:w-auto">
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
                 {INITIAL_DATA.page.title}
               </h1>
-              <p className="text-slate-500 text-xs flex items-center gap-1">
+              <p className="text-slate-500 text-xs flex items-center gap-1 font-bold">
                 <Users size={12} /> {INITIAL_DATA.page.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-md"
           >
-            <Play size={16} fill="currentColor" />{" "}
-            <span className="hidden sm:inline">Видео үзэх</span>
+            <Play size={16} fill="currentColor" /> <span>Хичээл үзэх</span>
           </button>
         </div>
       </section>
@@ -335,10 +309,10 @@ export default function Light() {
 
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
-          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
+          <div className="mb-6 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
             <div className="flex justify-between items-center">
               <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                <Video size={16} /> Видео хичээл удирдах:
+                <Video size={16} /> Видео хичээл удирдах
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
@@ -348,16 +322,16 @@ export default function Light() {
               </button>
             </div>
             {showVideoEdit && (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  placeholder="Youtube линк..."
+                  placeholder="Youtube link..."
                 />
                 <button
                   onClick={saveVideo}
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <Loader2 className="animate-spin" size={18} />
@@ -371,9 +345,9 @@ export default function Light() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-8">
           <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px]">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -385,40 +359,38 @@ export default function Light() {
               )}
             </div>
             {isTeacher && (
-              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3">
                 <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                  <Settings size={14} /> Презентейшн солих:
+                  <Settings size={14} /> Презентейшн солих
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
-                    placeholder="Canva embed код энд хуулна уу..."
+                    placeholder="Canva embed code..."
                   />
                   <button
                     onClick={saveCanva}
-                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
+                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
                       <Save size={18} />
-                    )}{" "}
-                    Хадгалах
+                    )}
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Experiments Section - Энийг хуулаад өмнөх Туршилтын хэсэг дээр дарж бичнэ үү */}
+          {/* Sidebar Area: Experiments */}
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
-                Виртуал лаборатори
+              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60 flex items-center gap-2">
+                <Beaker size={14} /> Виртуал лаборатори
               </h3>
-              {/* БАГШ БОЛ НЭМЭХ ТОВЧ ХАРАГДАНА */}
               {isTeacher && (
                 <button
                   onClick={() => {
@@ -426,35 +398,34 @@ export default function Light() {
                     setNewExp({ title: "", href: "", img: "" });
                     setShowExpForm(!showExpForm);
                   }}
-                  className="p-1.5 bg-[#312C85] text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="p-1.5 bg-[#312C85] text-white rounded-lg"
                 >
                   {showExpForm ? <X size={16} /> : <Plus size={16} />}
                 </button>
               )}
             </div>
 
-            {/* ТУРШИЛТ НЭМЭХ ФОРМ */}
             {showExpForm && isTeacher && (
               <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 shadow-inner">
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Туршилтын нэр..."
+                  className="text-sm p-2 border rounded-xl"
+                  placeholder="Нэр..."
                   value={newExp.title}
                   onChange={(e) =>
                     setNewExp({ ...newExp, title: e.target.value })
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="PhET эсвэл Лаб линк (URL)..."
+                  className="text-sm p-2 border rounded-xl"
+                  placeholder="Link..."
                   value={newExp.href}
                   onChange={(e) =>
                     setNewExp({ ...newExp, href: e.target.value })
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Зургийн линк (Image URL)..."
+                  className="text-sm p-2 border rounded-xl"
+                  placeholder="Image URL..."
                   value={newExp.img}
                   onChange={(e) =>
                     setNewExp({ ...newExp, img: e.target.value })
@@ -462,67 +433,60 @@ export default function Light() {
                 />
                 <button
                   onClick={handleAddOrUpdateExp}
-                  disabled={loading}
                   className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold flex justify-center items-center gap-2"
                 >
                   {loading ? (
                     <Loader2 className="animate-spin" size={16} />
                   ) : (
                     <Save size={16} />
-                  )}
-                  {editingExp ? "Засах" : "Хадгалах"}
+                  )}{" "}
+                  {editingExp ? "Засах" : "Нэмэх"}
                 </button>
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
               {finalExperiments.map((exp, idx) => (
-                <div key={exp._id || idx} className="relative group">
-                  <Link
-                    href={exp.href}
-                    target="_blank"
-                    className="block bg-white rounded-2xl p-2 border border-slate-200 hover:border-[#312C85] transition-all shadow-sm"
-                  >
+                <div
+                  key={exp._id || idx}
+                  className="relative group bg-white rounded-2xl p-2 border border-slate-200 hover:border-[#312C85] transition-all shadow-sm"
+                >
+                  <Link href={exp.href} target="_blank">
                     <div className="h-28 rounded-xl bg-slate-100 overflow-hidden relative">
                       <img
                         src={
-                          exp.img ||
-                          "https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion-600.png"
+                          exp.img || "https://physic-dmts.vercel.app/pre1.png"
                         }
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
                         alt={exp.title}
                       />
-                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <ExternalLink size={14} />
                       </div>
                     </div>
-                    <div className="py-2.5 px-1 font-bold text-sm text-slate-700 truncate">
+                    <div className="py-2.5 px-1 font-bold text-[13px] text-slate-700 truncate">
                       {exp.title}
                     </div>
                   </Link>
 
-                  {/* БАГШ БОЛ УСТГАХ/ЗАСАХ ТОВЧ ХАРАГДАНА */}
+                  {/* ЭНД: Desktop-т Hover, Mobile-д шууд ил */}
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all z-10">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
-                          setNewExp({
-                            title: exp.title,
-                            href: exp.href,
-                            img: exp.img,
-                          });
+                          setNewExp(exp);
                           setShowExpForm(true);
                         }}
                         className="p-2 bg-blue-500 text-white rounded-full shadow-lg"
                       >
-                        <Edit2 size={10} />
+                        <Edit2 size={12} />
                       </button>
                       <button
                         onClick={() => deleteItem("experiment", exp._id)}
                         className="p-2 bg-red-500 text-white rounded-full shadow-lg"
                       >
-                        <Trash2 size={10} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   )}
@@ -532,19 +496,20 @@ export default function Light() {
           </div>
         </div>
 
-        <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
-          <div className="flex flex-col items-center mb-10">
+        {/* Theory Section */}
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12">
+          <div className="flex flex-col items-center mb-10 text-center">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
               Онолын мэдээлэл
             </h2>
-            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
+            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-3"></div>
           </div>
 
           {isTeacher && (
             <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white"
+                  className="p-3 rounded-xl border bg-white outline-none"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -552,8 +517,8 @@ export default function Light() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white"
-                  placeholder="Агуулга..."
+                  className="p-3 rounded-xl border bg-white outline-none"
+                  placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
                     setNewCard({ ...newCard, content: e.target.value })
@@ -562,14 +527,14 @@ export default function Light() {
               </div>
               <button
                 onClick={handleAddLesson}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
                 ) : (
                   <Plus size={20} />
                 )}{" "}
-                Нэмэх
+                Карт нэмэх
               </button>
             </div>
           )}
@@ -578,12 +543,12 @@ export default function Light() {
             {visibleTheory.map((item, i) => (
               <div
                 key={item._id || i}
-                className="relative group bg-white rounded-2xl p-6 border border-slate-100 hover:border-indigo-200 shadow-sm"
+                className="relative group bg-white rounded-3xl p-6 md:p-8 border border-slate-100 hover:bg-indigo-50/10 transition-all shadow-sm"
               >
                 {editingCardId === item._id ? (
                   <div className="space-y-4">
                     <input
-                      className="w-full p-2 font-bold border-b"
+                      className="w-full p-2 font-bold border-b outline-none"
                       value={tempEditData.title}
                       onChange={(e) =>
                         setTempEditData({
@@ -593,7 +558,8 @@ export default function Light() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 text-sm border rounded-lg"
+                      className="w-full p-2 text-sm border rounded-xl outline-none"
+                      rows={4}
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -605,13 +571,13 @@ export default function Light() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleInlineSave(item._id)}
-                        className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold"
+                        className="flex-1 bg-[#312C85] text-white py-2 rounded-xl font-bold"
                       >
-                        <Check size={16} /> Хадгалах
+                        Хадгалах
                       </button>
                       <button
                         onClick={() => setEditingCardId(null)}
-                        className="flex-1 bg-slate-200 py-2 rounded-lg font-bold"
+                        className="flex-1 bg-slate-200 py-2 rounded-xl font-bold"
                       >
                         Болих
                       </button>
@@ -620,23 +586,24 @@ export default function Light() {
                 ) : (
                   <>
                     <h3 className="text-lg font-bold text-[#312C85] mb-4 flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm">
+                      <span className="min-w-[32px] h-8 rounded-lg bg-[#312C85] text-white flex items-center justify-center text-xs font-bold">
                         {i + 1}
                       </span>
                       {item.title}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3"
+                          className="text-sm text-slate-600 border-l-2 border-indigo-100 pl-4 leading-relaxed"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
+                    {/* ЭНД: Desktop-т Hover, Mobile-д шууд ил */}
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-4 right-4 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -645,13 +612,13 @@ export default function Light() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg"
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -668,7 +635,7 @@ export default function Light() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase">
+              <div className="bg-slate-100 text-slate-600 px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all shadow-sm">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
@@ -685,15 +652,26 @@ export default function Light() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-2 md:p-4 bg-black/85 backdrop-blur-sm"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full"
+              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>
-            <iframe className="w-full h-full" src={videoUrl} allowFullScreen />
+            <iframe
+              className="w-full h-full"
+              src={videoUrl}
+              allowFullScreen
+              allow="autoplay"
+            />
           </div>
         </div>
       )}

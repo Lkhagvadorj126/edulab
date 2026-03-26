@@ -18,10 +18,13 @@ import {
   Edit2,
   Check,
   Video,
+  ArrowLeft,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";
+
+const PAGE_ID = "quantum";
 
 const INITIAL_DATA = {
   page: {
@@ -109,14 +112,10 @@ const INITIAL_DATA = {
     },
   ],
 };
-
-const PAGE_ID = "quantum"; // Энэ хуудасны өвөрмөц ID
-
 export default function Quantum() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // State Management
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -125,7 +124,6 @@ export default function Quantum() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Teacher Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -170,7 +168,6 @@ export default function Quantum() {
     fetchData();
   }, []);
 
-  // --- TEACHER ACTIONS ---
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
@@ -191,11 +188,12 @@ export default function Quantum() {
   };
 
   const saveVideo = async () => {
+    if (!videoInput.trim()) return;
     setLoading(true);
     const res = await fetch("/api/video", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: videoInput, pageId: PAGE_ID }),
+      body: JSON.stringify({ url: videoInput.trim(), pageId: PAGE_ID }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -230,11 +228,11 @@ export default function Quantum() {
     if (!newExp.title || !newExp.href) return alert("Мэдээлэл дутуу байна!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
-    const url = editingExp
+    const apiUrl = editingExp
       ? `/api/experiment?id=${editingExp}`
       : "/api/experiment";
-    const res = await fetch(url, {
-      method: method,
+    const res = await fetch(apiUrl, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...newExp, pageId: PAGE_ID }),
     });
@@ -273,7 +271,6 @@ export default function Quantum() {
     setLoading(false);
   };
 
-  // UI Data Merging
   const finalExperiments = [
     ...dbExperiments,
     ...INITIAL_DATA.experiments,
@@ -288,23 +285,28 @@ export default function Quantum() {
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
 
-      {/* Header Section */}
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
+            <Link
+              href="/physics"
+              className="mr-4 p-2 hover:bg-slate-50 rounded-xl transition-all"
+            >
+              <ArrowLeft size={20} className="text-[#312C85]" />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
                 {INITIAL_DATA.page.title}
               </h1>
-              <p className="text-slate-500 text-xs flex items-center gap-1 font-bold uppercase">
+              <p className="text-slate-500 text-[10px] md:text-xs flex items-center gap-1 font-bold uppercase tracking-wider">
                 <Users size={12} /> {INITIAL_DATA.page.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform"
+            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-black transition-all"
           >
             <Play size={16} fill="currentColor" />{" "}
             <span className="hidden sm:inline text-sm">Хичээл үзэх</span>
@@ -315,7 +317,6 @@ export default function Quantum() {
       <Nav />
 
       <div className="max-w-[1400px] mx-auto mt-6">
-        {/* Video Admin */}
         {isTeacher && (
           <div className="mb-6 bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
             <div className="flex justify-between items-center px-1">
@@ -330,7 +331,7 @@ export default function Quantum() {
               </button>
             </div>
             {showVideoEdit && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-300">
                 <input
                   className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   value={videoInput}
@@ -339,7 +340,7 @@ export default function Quantum() {
                 />
                 <button
                   onClick={saveVideo}
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-md"
                 >
                   {loading ? (
                     <Loader2 className="animate-spin" size={18} />
@@ -354,9 +355,8 @@ export default function Quantum() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Main Content (Presentation/Slider) */}
           <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px]">
+            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -374,10 +374,10 @@ export default function Quantum() {
                 </p>
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none"
+                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
-                    placeholder="Canva-ийн 'Embed' кодыг энд хуулна уу..."
+                    placeholder="Canva 'Embed' код..."
                   />
                   <button
                     onClick={saveCanva}
@@ -395,7 +395,6 @@ export default function Quantum() {
             )}
           </div>
 
-          {/* Sidebar (Experiments) */}
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-2">
               <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-[0.2em] opacity-60">
@@ -408,7 +407,7 @@ export default function Quantum() {
                     setNewExp({ title: "", href: "", img: "" });
                     setShowExpForm(!showExpForm);
                   }}
-                  className="p-1.5 bg-[#312C85] text-white rounded-lg hover:bg-indigo-700"
+                  className="p-1.5 bg-[#312C85] text-white rounded-lg hover:rotate-90 transition-transform"
                 >
                   {showExpForm ? <X size={16} /> : <Plus size={16} />}
                 </button>
@@ -416,9 +415,9 @@ export default function Quantum() {
             </div>
 
             {showExpForm && (
-              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 shadow-inner animate-in fade-in slide-in-from-top-2">
+              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 shadow-inner animate-in slide-in-from-top-2">
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="text-sm p-2 border rounded-xl outline-none"
                   placeholder="Туршилтын нэр..."
                   value={newExp.title}
                   onChange={(e) =>
@@ -426,7 +425,7 @@ export default function Quantum() {
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="text-sm p-2 border rounded-xl outline-none"
                   placeholder="PhET Линк..."
                   value={newExp.href}
                   onChange={(e) =>
@@ -434,7 +433,7 @@ export default function Quantum() {
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="text-sm p-2 border rounded-xl outline-none"
                   placeholder="Зургийн URL..."
                   value={newExp.img}
                   onChange={(e) =>
@@ -465,7 +464,10 @@ export default function Quantum() {
                   >
                     <div className="h-32 rounded-[1.5rem] bg-slate-100 overflow-hidden relative">
                       <img
-                        src={exp.img}
+                        src={
+                          exp.img ||
+                          "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400"
+                        }
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         alt={exp.title}
                       />
@@ -478,7 +480,7 @@ export default function Quantum() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-5 right-5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-5 right-5 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -507,7 +509,6 @@ export default function Quantum() {
           </div>
         </div>
 
-        {/* Theory Section */}
         <section className="bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-slate-200 mt-16">
           <div className="flex flex-col items-center mb-12">
             <h2 className="text-3xl md:text-4xl text-slate-900 font-black uppercase tracking-tight text-center">
@@ -517,7 +518,7 @@ export default function Quantum() {
           </div>
 
           {isTeacher && (
-            <div className="mb-12 p-8 bg-[#312C85]/5 rounded-[2rem] border-2 border-dashed border-[#312C85]/20 flex flex-col gap-5">
+            <div className="mb-12 p-8 bg-[#312C85]/5 rounded-[2rem] border-2 border-dashed border-[#312C85]/20 flex flex-col gap-5 max-w-4xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <input
                   className="p-4 rounded-2xl border bg-white font-bold outline-none focus:ring-2 focus:ring-[#312C85]/20"
@@ -538,7 +539,7 @@ export default function Quantum() {
               </div>
               <button
                 onClick={handleAddLesson}
-                className="bg-[#312C85] text-white py-4 rounded-2xl font-black uppercase tracking-widest flex justify-center gap-3 hover:bg-[#312C85]/90 transition-all shadow-lg shadow-indigo-100"
+                className="bg-[#312C85] text-white py-4 rounded-2xl font-black uppercase tracking-widest flex justify-center gap-3 hover:bg-black transition-all shadow-lg"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -597,23 +598,23 @@ export default function Quantum() {
                 ) : (
                   <>
                     <h3 className="text-xl font-black text-[#312C85] mb-6 flex items-center gap-4">
-                      <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#312C85] text-white text-sm font-black shadow-lg shadow-[#312C85]/20">
+                      <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#312C85] text-white text-sm font-black shadow-lg">
                         {i + 1}
                       </span>
                       {item.title}
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-slate-600 leading-relaxed border-l-3 border-[#312C85]/10 pl-5 font-medium"
+                          className="text-slate-600 leading-relaxed border-l-4 border-indigo-50 pl-5 font-medium"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-6 right-6 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -661,7 +662,6 @@ export default function Quantum() {
         </section>
       </div>
 
-      {/* Video Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm">
           <div className="relative w-full max-w-5xl aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">

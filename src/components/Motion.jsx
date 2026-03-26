@@ -23,6 +23,8 @@ import NavAll from "./NavAll";
 import Nav from "./Nav";
 import { useAuth } from "@/context/AuthContext";
 
+const PAGE_ID = "motion";
+
 const INITIAL_DATA = {
   page: {
     title: "Хөдөлгөөн",
@@ -129,13 +131,10 @@ const INITIAL_DATA = {
   ],
 };
 
-const PAGE_ID = "motion";
-
 export default function Motion() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // States
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(INITIAL_DATA.page.videoUrl);
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -144,7 +143,6 @@ export default function Motion() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  // Edit States
   const [canvaInput, setCanvaInput] = useState("");
   const [videoInput, setVideoInput] = useState("");
   const [showVideoEdit, setShowVideoEdit] = useState(false);
@@ -164,26 +162,20 @@ export default function Motion() {
         fetch(`/api/video?pageId=${PAGE_ID}`),
       ]);
 
-      // Presentation-ийг шалгах
       if (canvaRes.ok) {
-        const canvaData = await canvaRes.json();
-        if (canvaData.url) {
-          setDisplayUrl(canvaData.url);
-          setCanvaInput(canvaData.url);
+        const data = await canvaRes.json();
+        if (data.url) {
+          setDisplayUrl(data.url);
+          setCanvaInput(data.url);
         }
       }
-
-      // ВИДЕОГ ШАЛГАХ (Энд анхаар!)
       if (videoRes.ok) {
-        // json()-ыг ганцхан удаа энд дуудна
-        const videoData = await videoRes.json();
-        if (videoData.url) {
-          setVideoUrl(videoData.url);
-          setVideoInput(videoData.url);
+        const data = await videoRes.json();
+        if (data.url) {
+          setVideoUrl(data.url);
+          setVideoInput(data.url);
         }
       }
-
-      // Бусад өгөгдөл
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
@@ -195,28 +187,18 @@ export default function Motion() {
     fetchData();
   }, []);
 
-  // --- ACTIONS ---
-
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
-
-    // Canva <iframe> болон URL цэвэрлэх
     if (url.includes("<iframe")) {
       const match = url.match(/src="([^"]+)"/);
       if (match && match[1]) url = match[1];
     }
-    if (url.includes("canva.com") && !url.includes("embed")) {
-      url =
-        url.split("?")[0] + (url.includes("/view") ? "?embed" : "/view?embed");
-    }
-
     const res = await fetch(`/api/presentation?pageId=${PAGE_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, pageId: PAGE_ID }),
     });
-
     if (res.ok) {
       setDisplayUrl(url);
       alert("Презентейшн амжилттай хадгалагдлаа!");
@@ -225,11 +207,12 @@ export default function Motion() {
   };
 
   const saveVideo = async () => {
+    if (!videoInput.trim()) return;
     setLoading(true);
     const res = await fetch("/api/video", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: videoInput, pageId: PAGE_ID }),
+      body: JSON.stringify({ url: videoInput.trim(), pageId: PAGE_ID }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -244,18 +227,14 @@ export default function Motion() {
     if (!newExp.title || !newExp.href) return alert("Бөглөнө үү!");
     setLoading(true);
     const method = editingExp ? "PUT" : "POST";
-    const body = {
-      ...(editingExp ? { id: editingExp } : {}),
-      ...newExp,
-      pageId: PAGE_ID,
-    };
-
-    const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
+    const apiUrl = editingExp
+      ? `/api/experiment?id=${editingExp}`
+      : "/api/experiment";
+    const res = await fetch(apiUrl, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...newExp, pageId: PAGE_ID }),
     });
-
     if (res.ok) {
       setNewExp({ title: "", href: "", img: "" });
       setEditingExp(null);
@@ -276,7 +255,6 @@ export default function Motion() {
         title: newCard.title,
         content: newCard.content.split("\n").filter((c) => c.trim() !== ""),
         pageId: PAGE_ID,
-        userId: user?.id,
       }),
     });
     if (res.ok) {
@@ -294,15 +272,16 @@ export default function Motion() {
 
   const handleInlineSave = async (id) => {
     setLoading(true);
-    const payload = {
-      id,
-      title: tempEditData.title,
-      content: tempEditData.content.split("\n").filter((c) => c.trim() !== ""),
-    };
     const res = await fetch("/api/lessons", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        id,
+        title: tempEditData.title,
+        content: tempEditData.content
+          .split("\n")
+          .filter((c) => c.trim() !== ""),
+      }),
     });
     if (res.ok) {
       setEditingCardId(null);
@@ -311,7 +290,6 @@ export default function Motion() {
     setLoading(false);
   };
 
-  // Data Merging
   const finalExperiments = [
     ...dbExperiments,
     ...INITIAL_DATA.experiments,
@@ -325,7 +303,6 @@ export default function Motion() {
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
-
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
@@ -334,17 +311,17 @@ export default function Motion() {
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
                 {INITIAL_DATA.page.title}
               </h1>
-              <p className="text-slate-500 text-xs flex items-center gap-1">
+              <p className="text-slate-500 text-[10px] md:text-xs flex items-center gap-1 font-bold">
                 <Users size={12} /> {INITIAL_DATA.page.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all"
+            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-50 hover:bg-black transition-all"
           >
             <Play size={16} fill="currentColor" />{" "}
-            <span className="hidden sm:inline">Видео үзэх</span>
+            <span className="hidden sm:inline text-sm">Видео үзэх</span>
           </button>
         </div>
       </section>
@@ -353,29 +330,28 @@ export default function Motion() {
 
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
-          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                <Video size={16} /> Видео хичээл удирдах:
+          <div className="mb-6 bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
+            <div className="flex justify-between items-center px-1">
+              <p className="text-[11px] font-black text-[#312C85] flex items-center gap-2 uppercase tracking-widest">
+                <Video size={16} /> Видео хичээл удирдах
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
-                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600"
               >
                 {showVideoEdit ? "Хаах" : "Линк солих"}
               </button>
             </div>
             {showVideoEdit && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 animate-in fade-in zoom-in-95">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 p-3 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
                   placeholder="Youtube линк..."
                 />
                 <button
                   onClick={saveVideo}
-                  disabled={loading}
                   className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
                 >
                   {loading ? (
@@ -405,20 +381,18 @@ export default function Motion() {
             </div>
             {isTeacher && (
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-                <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
-                  <Settings size={14} /> Презентейшн солих (Canva embed код
-                  эсвэл линк):
+                <p className="text-[11px] font-black text-[#312C85] flex items-center gap-2 uppercase tracking-widest">
+                  <Settings size={14} /> Презентейшн солих
                 </p>
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 p-3 rounded-xl border text-sm outline-none"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
-                    placeholder="Canva код энд хуулна уу..."
+                    placeholder="Canva код..."
                   />
                   <button
                     onClick={saveCanva}
-                    disabled={loading}
                     className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
                   >
                     {loading ? (
@@ -435,7 +409,7 @@ export default function Motion() {
 
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
-              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
+              <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-widest opacity-60">
                 Виртуал лаборатори
               </h3>
               {isTeacher && (
@@ -453,7 +427,7 @@ export default function Motion() {
             </div>
 
             {showExpForm && isTeacher && (
-              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3">
+              <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3 animate-in slide-in-from-top-2">
                 <input
                   className="text-sm p-2 border rounded-xl"
                   placeholder="Нэр..."
@@ -472,7 +446,7 @@ export default function Motion() {
                 />
                 <input
                   className="text-sm p-2 border rounded-xl"
-                  placeholder="Зураг (Link)..."
+                  placeholder="Зургийн линк..."
                   value={newExp.img}
                   onChange={(e) =>
                     setNewExp({ ...newExp, img: e.target.value })
@@ -480,10 +454,9 @@ export default function Motion() {
                 />
                 <button
                   onClick={handleAddOrUpdateExp}
-                  disabled={loading}
                   className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold"
                 >
-                  {editingExp ? "Засах" : "Нэмэх"}
+                  Хадгалах
                 </button>
               </div>
             )}
@@ -500,7 +473,7 @@ export default function Motion() {
                       <img
                         src={
                           exp.img ||
-                          "https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion-600.png"
+                          "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400"
                         }
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
                         alt={exp.title}
@@ -514,7 +487,7 @@ export default function Motion() {
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute top-4 right-4 flex gap-1 lg:opacity-0 group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setEditingExp(exp._id);
@@ -525,13 +498,13 @@ export default function Motion() {
                           });
                           setShowExpForm(true);
                         }}
-                        className="p-2 bg-blue-500 text-white rounded-full"
+                        className="p-2 bg-blue-500 text-white rounded-lg shadow-md hover:scale-110 transition-transform"
                       >
                         <Edit2 size={10} />
                       </button>
                       <button
                         onClick={() => deleteItem("experiment", exp._id)}
-                        className="p-2 bg-red-500 text-white rounded-full"
+                        className="p-2 bg-red-500 text-white rounded-lg shadow-md hover:scale-110 transition-transform"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -543,22 +516,19 @@ export default function Motion() {
           </div>
         </div>
 
-        <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
-          <div className="flex flex-col items-center mb-10">
-            <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
+        <section className="bg-white rounded-3xl p-6 md:p-12 shadow-sm border border-slate-200 mt-16">
+          <div className="flex flex-col items-center mb-12">
+            <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase tracking-tight">
               Онолын мэдээлэл
             </h2>
-            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-2"></div>
+            <div className="w-16 h-1 bg-[#312C85] rounded-full mt-3"></div>
           </div>
 
           {isTeacher && (
-            <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
-              <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
-                Шинэ карт нэмэх
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-12 p-8 bg-indigo-50/20 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-5 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <input
-                  className="p-3 rounded-xl border bg-white outline-none"
+                  className="p-4 rounded-xl border bg-white font-bold outline-none"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -566,8 +536,8 @@ export default function Motion() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white outline-none"
-                  placeholder="Агуулга..."
+                  className="p-4 rounded-xl border bg-white outline-none"
+                  placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
                     setNewCard({ ...newCard, content: e.target.value })
@@ -576,29 +546,28 @@ export default function Motion() {
               </div>
               <button
                 onClick={handleAddLesson}
-                disabled={loading}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                className="bg-[#312C85] text-white py-4 rounded-xl font-bold flex justify-center gap-2 hover:bg-black transition-all"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" size={20} />
                 ) : (
                   <Plus size={20} />
                 )}{" "}
-                Нэмэх
+                Карт нэмэх
               </button>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {visibleTheory.map((item, i) => (
               <div
                 key={item._id || i}
-                className="relative group bg-white rounded-2xl p-6 border border-slate-100 hover:border-indigo-200 transition-all shadow-sm"
+                className="relative group bg-white rounded-2xl p-8 border border-slate-100 hover:border-[#312C85]/20 hover:bg-[#312C85]/5 transition-all shadow-sm"
               >
                 {editingCardId === item._id ? (
                   <div className="space-y-4">
                     <input
-                      className="w-full p-2 font-bold border-b"
+                      className="w-full p-2 font-bold border-b-2 border-[#312C85] outline-none bg-transparent"
                       value={tempEditData.title}
                       onChange={(e) =>
                         setTempEditData({
@@ -608,7 +577,8 @@ export default function Motion() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 text-sm border rounded-lg"
+                      className="w-full p-2 text-sm border rounded-xl"
+                      rows={4}
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -622,11 +592,11 @@ export default function Motion() {
                         onClick={() => handleInlineSave(item._id)}
                         className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold"
                       >
-                        <Check size={16} /> Хадгалах
+                        Хадгалах
                       </button>
                       <button
                         onClick={() => setEditingCardId(null)}
-                        className="flex-1 bg-slate-200 py-2 rounded-lg"
+                        className="flex-1 bg-slate-100 py-2 rounded-lg"
                       >
                         Болих
                       </button>
@@ -634,24 +604,24 @@ export default function Motion() {
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-lg font-bold text-[#312C85] mb-4 pr-16 flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm">
+                    <h3 className="text-lg font-bold text-[#312C85] mb-5 flex items-center gap-4">
+                      <span className="min-w-[36px] h-9 rounded-xl bg-[#312C85] text-white flex items-center justify-center text-sm shadow-md">
                         {i + 1}
                       </span>
                       {item.title}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3"
+                          className="text-sm text-slate-600 border-l-3 border-indigo-100 pl-4 leading-relaxed font-medium"
                         >
                           {text}
                         </p>
                       ))}
                     </div>
                     {isTeacher && item._id && (
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="absolute top-6 right-6 flex gap-2 lg:opacity-0 group-hover:opacity-100 transition-all">
                         <button
                           onClick={() => {
                             setEditingCardId(item._id);
@@ -660,13 +630,13 @@ export default function Motion() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white"
+                          className="p-2 bg-white text-blue-600 rounded-lg shadow-sm border border-slate-100 hover:scale-110 transition-transform"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white"
+                          className="p-2 bg-white text-red-500 rounded-lg shadow-sm border border-slate-100 hover:scale-110 transition-transform"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -683,8 +653,8 @@ export default function Motion() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase">
-                {showAll ? "Хураах" : "Бүгдийг үзэх"}
+              <div className="bg-slate-100 text-slate-600 px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all">
+                {showAll ? "Хураах" : "Дэлгэрэнгүй"}
               </div>
               {showAll ? (
                 <ChevronUp size={20} className="text-[#312C85]" />
@@ -700,11 +670,11 @@ export default function Motion() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="relative w-full max-w-5xl aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full"
+              className="absolute top-6 right-6 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>
