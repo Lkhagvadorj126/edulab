@@ -1,9 +1,9 @@
-import Angilal from "@/components/Angilal";
+import CartBio from "@/components/CartBio";
 
 export default function Home() {
   return (
     <div>
-      <Angilal />
+      <CartBio />
     </div>
   );
 }

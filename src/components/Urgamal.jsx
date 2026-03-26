@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Slider from "./Slider";
+import Slider from "../components/Slider";
 import {
   Users,
   ChevronDown,
@@ -18,107 +18,109 @@ import {
   Edit2,
   Check,
   Video,
+  Leaf,
+  ArrowLeft,
 } from "lucide-react";
-import NavAll from "./NavAll";
-import Nav from "./Nav";
+import NavAll from "../components/NavAll";
 import { useAuth } from "@/context/AuthContext";
+import NavBio from "./NavBio";
+
+const PAGE_ID = "urgamal";
 
 const INITIAL_DATA = {
   page: {
-    title: "Дулаан",
-    subtitle: "Физикийн цахим хичээл",
-    videoUrl: "https://www.youtube.com/embed/lvyCe0UaqJY?si=kF3YE9kMJ9hynXfm",
+    title: "Ургамлын ангилал зүй",
+    subtitle: "Биологийн цахим хичээл",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
   },
   slider: [
     {
-      image: "https://physic-dmts.vercel.app/pre1.png",
-      alt: "Thermal Physics 1",
+      image: "https://images.unsplash.com/photo-1501004899824-2270005783ee",
+      alt: "Ургамал 1",
     },
     {
-      image: "https://physic-dmts.vercel.app/pre2.png",
-      alt: "Thermal Physics 2",
+      image: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8",
+      alt: "Ургамал 2",
     },
   ],
   experiments: [
     {
-      title: "Диффуз",
-      href: "https://phet.colorado.edu/sims/html/diffusion/latest/diffusion_all.html",
-      img: "https://phet.colorado.edu/sims/html/diffusion/latest/diffusion-420.png",
+      title: "Фотосинтез",
+      href: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html",
+      img: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy-600.png",
     },
     {
-      title: "Хийн төлөв",
-      href: "https://phet.colorado.edu/sims/html/gases-intro/latest/gases-intro_all.html",
-      img: "https://phet.colorado.edu/sims/html/gases-intro/latest/gases-intro-420.png",
+      title: "Ургамлын бүтэц",
+      href: "https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion_all.html",
+      img: "https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion-600.png",
     },
     {
-      title: "Урвал ба хурд",
-      href: "https://phet.colorado.edu/sims/cheerpj/reactions-and-rates/latest/reactions-and-rates.html?simulation=reactions-and-rates",
-      img: "https://phet.colorado.edu/sims/reactions-and-rates/reactions-and-rates-420.png",
+      title: "Биологийн систем",
+      href: "https://phet.colorado.edu/sims/html/keplers-laws/latest/keplers-laws_all.html",
+      img: "https://phet.colorado.edu/sims/html/keplers-laws/latest/keplers-laws-600.png",
     },
   ],
   theory: [
     {
-      title: "Дулаан ба Температур",
+      title: "Ургамлын эсийн бүтэц",
       content: [
-        "Температур: Молекулуудын дундаж кинетик энергийн хэмжүүр.",
-        "Дулаан (Q): Дотоод энерги нэг биеэс нөгөөд шилжих процесс.",
-        "Термодинамикийн тэгдүгээр хууль: Дулааны тэнцвэрийн зарчим.",
+        "Эсийн хана: Целлюлозоос тогтох бат бөх бүрхүүл.",
+        "Хлоропласт: Фотосинтез явагдах ногоон эрхтэнцэр.",
+        "Том вакуоль: Эсийн шүүс агуулж, тургорын даралтыг барина.",
       ],
     },
     {
-      title: "Дулаан дамжих төрлүүд",
+      title: "Фотосинтез",
       content: [
-        "Дулаан дамжуулалт: Хатуу биеийн бөөмс мөргөлдөх замаар энерги дамжих.",
-        "Конвекц: Шингэн ба хийн урсгалаар энерги зөөгдөх.",
-        "Цацралт: Цахилгаан соронзон долгионоор (вакуумд ч дамжина).",
+        "Гэрлийн энергиэр шим бодис (глюкоз) үүсгэх процесс.",
+        "Томьёо: $6CO_2 + 6H_2O + \text{гэрэл} \rightarrow C_6H_{12}O_6 + 6O_2$.",
+        "Навчны баганан эдэд хамгийн эрчимтэй явагддаг.",
       ],
     },
     {
-      title: "Хувийн дулаан багтаамж",
+      title: "Ургамлын эрхтэнүүд",
       content: [
-        "1 кг бодисыг 1°C-аар халаахад шаардагдах дулаан.",
-        "Дулааны тоо хэмжээ: Q = mcΔT.",
-        "Усны хувийн дулаан багтаамж хамгийн өндөр (4200 Ж/кг·°C) байдаг.",
+        "Үржил (Генератив): Цэцэг, жимс, үр.",
+        "Тэжээл (Вегетатив): Үндэс, иш, навч.",
+        "Үндэс нь ус эрдэс бодисыг шимж, ургамлыг хөрсөнд бэхэлнэ.",
       ],
     },
     {
-      title: "Бодисын төлөвийн өөрчлөлт",
+      title: "Зөөвөрлөх тогтолцоо",
       content: [
-        "Хайлах ба царцах: Q = λm (λ — хайлахын хувийн дулаан).",
-        "Уурших ба конденсац: Q = Lm (L — ууршихын хувийн дулаан).",
-        "Фазын шилжилтийн үед бодисын температур өөрчлөгдөхгүй.",
+        "Ксилем (Модлог): Ус ба эрдэс бодисыг үндэснээс дээш зөөвөрлөнө.",
+        "Флоэм (Долон): Навчинд үүссэн шим бодисыг бүх эрхтэнд түгээнэ.",
+        "Дамжуулах багцууд нь ишинд тодорхой дарааллаар байрладаг.",
       ],
     },
     {
-      title: "Термодинамикийн нэгдүгээр хууль",
+      title: "Ургамлын ангилал",
       content: [
-        "Энерги хадгалагдах хууль: Q = ΔU + A.",
-        "Системд өгсөн дулаан нь дотоод энергийг нэмэгдүүлэх ба ажил хийхэд зарцуулагдана.",
-        "Адиабат процесс: Гадна орчинтой дулаан солилцохгүй процесс (Q = 0).",
+        "Доод ургамал: Замаг (бие нь эрхтэн задраагүй).",
+        "Дээд ургамал: Хөвд, Шивэрс, Ойм хэлбэртэн.",
+        "Үрт ургамал: Нүцгэн үртэн ба Далд үртэн (Цэцэгт ургамал).",
       ],
     },
     {
-      title: "Дотоод энерги ба Ажил",
+      title: "Транспираци",
       content: [
-        "Идеал хийн дотоод энерги: U = (3/2)νRT.",
-        "Хийн гүйцэтгэх ажил: A = PΔV.",
-        "Изохор процесс (V = const): Хий ажил хийхгүй (A = 0).",
+        "Навчны гадаргуугаар ус уурших үзэгдэл.",
+        "Навчинд байх 'Амсар'-аар дамжин хийн солилцоо явагдана.",
+        "Энэ нь ургамлын доторх усны тасралтгүй урсгалыг хангадаг.",
       ],
     },
     {
-      title: "Дулааны машин ба АҮК",
+      title: "Ургамлын үржил",
       content: [
-        "Дулааны машин: Дулааныг механик ажилд шилжүүлэгч төхөөрөмж.",
-        "Ашигт үйлийн коэффициент: η = A/Q₁ = (Q₁ − Q₂)/Q₁.",
-        "Карногийн цикл: Хамгийн өндөр ашигт үйлтэй идеал цикл.",
+        "Бэлгийн үржил: Цэцгийн тоос хүртэлт ба үр тогтолт.",
+        "Бэлгийн бус үржил: Загсаах, мөчирлөх, үндэсний соёогоор үржих.",
+        "Цэцэг бол үржлийн тусгайлан хөгжсөн эрхтэн юм.",
       ],
     },
   ],
 };
 
-const PAGE_ID = "heat"; // Энэ хуудасны ID
-
-export default function Heat() {
+export default function Urgamal() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
@@ -152,23 +154,23 @@ export default function Heat() {
       ]);
 
       if (canvaRes.ok) {
-        const data = await canvaRes.json();
-        if (data.url) {
-          setDisplayUrl(data.url);
-          setCanvaInput(data.url);
+        const canvaData = await canvaRes.json();
+        if (canvaData.url) {
+          setDisplayUrl(canvaData.url);
+          setCanvaInput(canvaData.url);
         }
       }
       if (videoRes.ok) {
-        const data = await videoRes.json();
-        if (data.url) {
-          setVideoUrl(data.url);
-          setVideoInput(data.url);
+        const videoData = await videoRes.json();
+        if (videoData.url) {
+          setVideoUrl(videoData.url);
+          setVideoInput(videoData.url);
         }
       }
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
     } catch (err) {
-      console.error(err);
+      console.error("Алдаа:", err);
     }
   };
 
@@ -177,6 +179,7 @@ export default function Heat() {
   }, []);
 
   // --- ACTIONS ---
+
   const saveCanva = async () => {
     setLoading(true);
     let url = canvaInput.trim();
@@ -184,11 +187,6 @@ export default function Heat() {
       const match = url.match(/src="([^"]+)"/);
       if (match && match[1]) url = match[1];
     }
-    if (url.includes("canva.com") && !url.includes("embed")) {
-      url =
-        url.split("?")[0] + (url.includes("/view") ? "?embed" : "/view?embed");
-    }
-
     const res = await fetch(`/api/presentation?pageId=${PAGE_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -196,7 +194,7 @@ export default function Heat() {
     });
     if (res.ok) {
       setDisplayUrl(url);
-      alert("Амжилттай!");
+      alert("Амжилттай хадгалагдлаа!");
     }
     setLoading(false);
   };
@@ -224,7 +222,7 @@ export default function Heat() {
     const res = await fetch(`/api/experiment?id=${editingExp || ""}`, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newExp, pageId: PAGE_ID }),
+      body: JSON.stringify({ ...newExp, pageId: PAGE_ID, id: editingExp }),
     });
     if (res.ok) {
       setNewExp({ title: "", href: "", img: "" });
@@ -246,6 +244,7 @@ export default function Heat() {
         title: newCard.title,
         content: newCard.content.split("\n").filter((c) => c.trim() !== ""),
         pageId: PAGE_ID,
+        userId: user?.id,
       }),
     });
     if (res.ok) {
@@ -256,7 +255,7 @@ export default function Heat() {
   };
 
   const deleteItem = async (type, id) => {
-    if (!confirm("Устгах уу?")) return;
+    if (!confirm("Устгахдаа итгэлтэй байна уу?")) return;
     const res = await fetch(`/api/${type}?id=${id}`, { method: "DELETE" });
     if (res.ok) fetchData();
   };
@@ -296,61 +295,67 @@ export default function Heat() {
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
 
+      {/* Header */}
       <section className="pt-24 md:pt-28">
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
+            <Link
+              href="/biology"
+              className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ArrowLeft className="text-[#312C85]" size={24} />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
                 {INITIAL_DATA.page.title}
               </h1>
               <p className="text-slate-500 text-xs flex items-center gap-1">
-                <Users size={12} /> {INITIAL_DATA.page.subtitle}
+                <Leaf size={12} /> {INITIAL_DATA.page.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold"
+            className="flex items-center gap-2 bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all"
           >
             <Play size={16} fill="currentColor" />{" "}
             <span className="hidden sm:inline">Видео үзэх</span>
           </button>
         </div>
       </section>
-
-      <Nav />
-
+      <NavBio />
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
-          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100">
-            <div className="flex justify-between items-center mb-3">
-              <p className="text-xs font-bold text-[#312C85] uppercase tracking-wider flex items-center gap-2">
-                <Video size={16} /> Видео хичээл:
+          <div className="mb-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
+                <Video size={16} /> Видео хичээл удирдах:
               </p>
               <button
                 onClick={() => setShowVideoEdit(!showVideoEdit)}
-                className="text-[10px] bg-white border px-2 py-1 rounded-lg uppercase font-bold"
+                className="text-[10px] font-black bg-white border border-indigo-200 px-3 py-1 rounded-lg uppercase text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
               >
-                Солих
+                {showVideoEdit ? "Хаах" : "Линк солих"}
               </button>
             </div>
             {showVideoEdit && (
               <div className="flex gap-2">
                 <input
-                  className="flex-1 p-2 rounded-xl border text-sm"
+                  className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   value={videoInput}
                   onChange={(e) => setVideoInput(e.target.value)}
-                  placeholder="Youtube link..."
+                  placeholder="Youtube линк..."
                 />
                 <button
                   onClick={saveVideo}
-                  className="bg-[#312C85] text-white px-4 py-2 rounded-xl font-bold flex gap-2"
+                  disabled={loading}
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
                 >
                   {loading ? (
-                    <Loader2 className="animate-spin" size={16} />
+                    <Loader2 className="animate-spin" size={18} />
                   ) : (
-                    <Save size={16} />
+                    <Save size={18} />
                   )}{" "}
                   Хадгалах
                 </button>
@@ -361,7 +366,7 @@ export default function Heat() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px]">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200 aspect-video lg:h-[550px] relative">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -374,19 +379,21 @@ export default function Heat() {
             </div>
             {isTeacher && (
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col gap-3">
-                <p className="text-xs font-bold text-[#312C85] uppercase tracking-wider flex items-center gap-2">
-                  <Settings size={14} /> Презентейшн (Canva):
+                <p className="text-xs font-bold text-[#312C85] flex items-center gap-2 uppercase tracking-wider">
+                  <Settings size={14} /> Презентейшн солих (Canva embed код
+                  эсвэл линк):
                 </p>
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 p-3 rounded-xl border text-sm"
+                    className="flex-1 p-3 rounded-xl border bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                     value={canvaInput}
                     onChange={(e) => setCanvaInput(e.target.value)}
-                    placeholder="Canva embed код..."
+                    placeholder="Canva код энд хуулна уу..."
                   />
                   <button
                     onClick={saveCanva}
-                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex gap-2 shadow-md"
+                    disabled={loading}
+                    className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin" size={18} />
@@ -402,7 +409,7 @@ export default function Heat() {
 
           <div className="lg:w-[25%] flex flex-col gap-4">
             <div className="flex justify-between items-center px-1">
-              <h3 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest">
+              <h3 className="font-bold text-slate-800 text-xs uppercase tracking-widest opacity-60">
                 Виртуал лаборатори
               </h3>
               {isTeacher && (
@@ -414,14 +421,15 @@ export default function Heat() {
                   }}
                   className="p-1.5 bg-[#312C85] text-white rounded-lg"
                 >
-                  <Plus size={16} />
+                  {showExpForm ? <X size={16} /> : <Plus size={16} />}
                 </button>
               )}
             </div>
-            {showExpForm && (
+
+            {showExpForm && isTeacher && (
               <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-3">
                 <input
-                  className="text-sm p-2 border rounded-xl"
+                  className="text-sm p-2 border rounded-xl outline-none"
                   placeholder="Нэр..."
                   value={newExp.title}
                   onChange={(e) =>
@@ -429,7 +437,7 @@ export default function Heat() {
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl"
+                  className="text-sm p-2 border rounded-xl outline-none"
                   placeholder="URL..."
                   value={newExp.href}
                   onChange={(e) =>
@@ -437,8 +445,8 @@ export default function Heat() {
                   }
                 />
                 <input
-                  className="text-sm p-2 border rounded-xl"
-                  placeholder="Зураг..."
+                  className="text-sm p-2 border rounded-xl outline-none"
+                  placeholder="Зураг URL..."
                   value={newExp.img}
                   onChange={(e) =>
                     setNewExp({ ...newExp, img: e.target.value })
@@ -446,35 +454,58 @@ export default function Heat() {
                 />
                 <button
                   onClick={handleAddOrUpdateExp}
+                  disabled={loading}
                   className="bg-[#312C85] text-white py-2 rounded-xl text-sm font-bold"
                 >
-                  Хадгалах
+                  {editingExp ? "Засах" : "Нэмэх"}
                 </button>
               </div>
             )}
+
             <div className="space-y-4">
               {finalExperiments.map((exp, idx) => (
-                <div key={idx} className="relative group">
+                <div key={exp._id || idx} className="relative group">
                   <Link
                     href={exp.href}
                     target="_blank"
-                    className="block bg-white rounded-2xl p-2 border border-slate-200 hover:border-[#312C85] transition-all"
+                    className="block bg-white rounded-2xl p-2 border border-slate-200 hover:border-[#312C85] transition-all shadow-sm"
                   >
-                    <div className="h-28 rounded-xl bg-slate-50 overflow-hidden">
+                    <div className="h-28 rounded-xl bg-slate-100 overflow-hidden relative">
                       <img
-                        src={exp.img}
+                        src={
+                          exp.img ||
+                          "https://images.unsplash.com/photo-1532187875605-13e70f849e71?w=400"
+                        }
                         className="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        alt={exp.title}
                       />
+                      <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ExternalLink size={14} />
+                      </div>
                     </div>
-                    <div className="py-2 px-1 font-bold text-sm text-slate-700">
+                    <div className="py-2.5 px-1 font-bold text-sm text-slate-700 truncate">
                       {exp.title}
                     </div>
                   </Link>
                   {isTeacher && exp._id && (
                     <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button
+                        onClick={() => {
+                          setEditingExp(exp._id);
+                          setNewExp({
+                            title: exp.title,
+                            href: exp.href,
+                            img: exp.img,
+                          });
+                          setShowExpForm(true);
+                        }}
+                        className="p-2 bg-blue-500 text-white rounded-full transition-transform active:scale-90"
+                      >
+                        <Edit2 size={10} />
+                      </button>
+                      <button
                         onClick={() => deleteItem("experiment", exp._id)}
-                        className="p-2 bg-red-500 text-white rounded-full"
+                        className="p-2 bg-red-500 text-white rounded-full transition-transform active:scale-90"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -486,6 +517,7 @@ export default function Heat() {
           </div>
         </div>
 
+        {/* Theory Section (Motion Style) */}
         <section className="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-200 mt-12">
           <div className="flex flex-col items-center mb-10">
             <h2 className="text-2xl md:text-3xl text-slate-900 font-black uppercase">
@@ -496,9 +528,12 @@ export default function Heat() {
 
           {isTeacher && (
             <div className="mb-10 p-6 bg-indigo-50/30 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col gap-4">
+              <h4 className="text-xs font-bold text-[#312C85] uppercase tracking-widest">
+                Шинэ карт нэмэх
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  className="p-3 rounded-xl border bg-white"
+                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-200"
                   placeholder="Гарчиг..."
                   value={newCard.title}
                   onChange={(e) =>
@@ -506,8 +541,8 @@ export default function Heat() {
                   }
                 />
                 <textarea
-                  className="p-3 rounded-xl border bg-white"
-                  placeholder="Агуулга..."
+                  className="p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Агуулга (Шинэ мөрөөр)..."
                   value={newCard.content}
                   onChange={(e) =>
                     setNewCard({ ...newCard, content: e.target.value })
@@ -516,8 +551,14 @@ export default function Heat() {
               </div>
               <button
                 onClick={handleAddLesson}
-                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2"
+                disabled={loading}
+                className="bg-[#312C85] text-white py-3 rounded-xl font-bold flex justify-center gap-2 hover:bg-black transition-all"
               >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <Plus size={20} />
+                )}{" "}
                 Нэмэх
               </button>
             </div>
@@ -526,13 +567,13 @@ export default function Heat() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
             {visibleTheory.map((item, i) => (
               <div
-                key={i}
+                key={item._id || i}
                 className="relative group bg-white rounded-2xl p-6 border border-slate-100 hover:border-indigo-200 transition-all shadow-sm"
               >
                 {editingCardId === item._id ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <input
-                      className="w-full p-2 border-b"
+                      className="w-full p-2 font-bold border-b outline-none"
                       value={tempEditData.title}
                       onChange={(e) =>
                         setTempEditData({
@@ -542,7 +583,7 @@ export default function Heat() {
                       }
                     />
                     <textarea
-                      className="w-full p-2 border rounded-lg"
+                      className="w-full p-2 text-sm border rounded-lg outline-none h-32"
                       value={tempEditData.content}
                       onChange={(e) =>
                         setTempEditData({
@@ -551,17 +592,25 @@ export default function Heat() {
                         })
                       }
                     />
-                    <button
-                      onClick={() => handleInlineSave(item._id)}
-                      className="bg-green-500 text-white w-full py-2 rounded-lg font-bold"
-                    >
-                      Хадгалах
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleInlineSave(item._id)}
+                        className="flex-1 bg-green-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                      >
+                        <Check size={16} /> Хадгалах
+                      </button>
+                      <button
+                        onClick={() => setEditingCardId(null)}
+                        className="flex-1 bg-slate-200 py-2 rounded-lg font-bold"
+                      >
+                        Болих
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-lg font-bold text-[#312C85] mb-4 flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm">
+                    <h3 className="text-lg font-bold text-[#312C85] mb-4 pr-16 flex items-center gap-3">
+                      <span className="min-w-[32px] h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-sm font-bold">
                         {i + 1}
                       </span>
                       {item.title}
@@ -570,7 +619,7 @@ export default function Heat() {
                       {item.content.map((text, j) => (
                         <p
                           key={j}
-                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3"
+                          className="text-sm text-slate-600 border-l-2 border-indigo-50 pl-3 leading-relaxed"
                         >
                           {text}
                         </p>
@@ -586,15 +635,15 @@ export default function Heat() {
                               content: item.content.join("\n"),
                             });
                           }}
-                          className="p-2 bg-blue-50 text-blue-600 rounded-lg"
+                          className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-2 bg-red-50 text-red-500 rounded-lg"
+                          className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     )}
@@ -609,8 +658,8 @@ export default function Heat() {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-2 group"
             >
-              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase">
-                {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
+              <div className="bg-slate-100 text-slate-600 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-all">
+                {showAll ? "Хураах" : "Бүгдийг үзэх"}
               </div>
               {showAll ? (
                 <ChevronUp size={20} className="text-[#312C85]" />
@@ -630,7 +679,7 @@ export default function Heat() {
           <div className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/20 text-white rounded-full hover:bg-red-500"
+              className="absolute top-4 right-4 z-10 p-2 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>

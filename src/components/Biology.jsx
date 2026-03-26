@@ -13,6 +13,7 @@ import {
 import NavAll from "../components/NavAll";
 import Navbar from "../components/Navbar";
 import { useAuth } from "@/context/AuthContext";
+import NavbarBio from "./NavbarBio";
 
 const pageConfig = {
   topics: [
@@ -97,7 +98,7 @@ export default function BiologyPage() {
             {/* Баруун тал: Navbar эсвэл Багшийн товч */}
             <div className="flex-shrink-0">
               {!isTeacher ? (
-                <Navbar />
+                <NavbarBio />
               ) : (
                 <Link
                   href="/students-progress"
