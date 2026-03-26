@@ -15,7 +15,9 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="relative z-50">
+    <nav className="relative">
+      {" "}
+      {/* z-index-ийг энд заавал заахгүй, dropdown дээрээ барьсан нь дээр */}
       {/* Desktop Menu */}
       <div className="bg-white border border-slate-100 rounded-[1.5rem] p-1 hidden md:flex items-center shadow-sm">
         {links.map((link) => {
@@ -37,40 +39,47 @@ export default function Navbar() {
           );
         })}
       </div>
-
       {/* Mobile Toggle */}
       <div className="md:hidden flex justify-end">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-3 bg-white border border-slate-100 rounded-2xl text-[#312C85] shadow-sm active:scale-95 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 rounded-2xl text-[#312C85] shadow-sm active:scale-95 transition-all font-bold text-[10px] uppercase tracking-widest"
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isOpen ? <X size={18} /> : <Menu size={18} />}
+          <span>Цэс</span>
         </button>
       </div>
-
       {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-3 w-48 p-2 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl md:hidden flex flex-col gap-1">
-          {links.map((link) => {
-            const isActive = pathname === link.href;
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={`p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${
-                  isActive
-                    ? "bg-[#312C85] text-white"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <Icon size={14} />
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
+        <>
+          {/* Overlay: Дэлгэцийн хаана ч дарсан цэс хаагдана */}
+          <div
+            className="fixed inset-0 z-[70] bg-black/5 backdrop-blur-[2px]"
+            onClick={() => setIsOpen(false)}
+          />
+          {/* Dropdown Container: right-0 болон w-full-оос сэргийлсэн */}
+          <div className="absolute top-full right-0 mt-3 w-[200px] p-2 bg-white border border-slate-100 rounded-[1.8rem] shadow-2xl md:hidden flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-200 z-[80]">
+            {links.map((link) => {
+              const isActive = pathname === link.href;
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`p-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all ${
+                    isActive
+                      ? "bg-[#312C85] text-white shadow-lg shadow-indigo-100"
+                      : "text-slate-500 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon size={16} />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </nav>
   );

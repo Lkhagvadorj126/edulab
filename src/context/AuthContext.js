@@ -7,16 +7,27 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Серверээс хэрэглэгчийн хамгийн сүүлийн үеийн датаг татах
   const refreshUser = async (userId = user?.id || user?._id) => {
     const idToFetch = userId || localStorage.getItem("userId");
-    if (!idToFetch) return;
+    if (!idToFetch) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`/api/users?userId=${idToFetch}`);
+
       if (res.ok) {
         const fullUserData = await res.json();
-        setUser({ ...fullUserData, id: fullUserData._id });
+
+        // Check if fullUserData actually contains data
+        if (fullUserData && (fullUserData._id || fullUserData.id)) {
+          setUser({ ...fullUserData, id: fullUserData._id || fullUserData.id });
+        } else {
+          // If data is null/empty, the session might be invalid
+          console.warn("User data not found in database, logging out...");
+          logout();
+        }
       }
     } catch (err) {
       console.error("User refresh failed:", err);

@@ -4,10 +4,10 @@ import Link from "next/link";
 import {
   FaAtom,
   FaSignOutAlt,
-  FaTrophy,
   FaBars,
   FaTimes,
   FaUserCircle,
+  FaChevronRight,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 
@@ -22,7 +22,6 @@ export default function NavAll() {
   const { user, logout, refreshUser } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Хуудас ачаалагдах эсвэл user өөрчлөгдөх бүрт датаг шинэчлэх
   useEffect(() => {
     if (user && refreshUser) {
       refreshUser();
@@ -31,9 +30,6 @@ export default function NavAll() {
 
   if (!user) return null;
 
-  const isTeacher = user.role === "teacher";
-
-  // Хэрэв нэр байвал нэрийг, байхгүй бол и-мэйлийн эхний хэсгийг харуулна
   const displayName =
     user.name || (user.email ? user.email.split("@")[0] : "Хэрэглэгч");
 
@@ -48,7 +44,7 @@ export default function NavAll() {
             <div className="w-10 h-10 bg-[#312C85] rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
               <FaAtom size={20} className="animate-spin-slow" />
             </div>
-            <span className="hidden sm:block">EDULAB</span>
+            <span className="hidden sm:block uppercase">EDULAB</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
@@ -65,60 +61,92 @@ export default function NavAll() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Гарах товч */}
+          {/* Desktop Logout Button */}
           <button
             onClick={logout}
-            title="Системээс гарах"
-            className="ml-2 flex items-center justify-center gap-3  bg-slate-50 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+            className="hidden md:flex items-center gap-2 bg-slate-50 text-slate-400 px-4 py-2 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
           >
-            <FaSignOutAlt size={16} />
-            <h1>Гарах</h1>
+            <FaSignOutAlt size={14} />
+            <span className="text-[11px] font-black uppercase tracking-wider">
+              Гарах
+            </span>
           </button>
-          {/* Хэрэглэгчийн мэдээлэл */}
-          <Link href="/profile">
-            <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-100">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                <FaUserCircle size={24} />
-              </div>
+
+          {/* Desktop Profile Icon */}
+          <Link href="/profile" className="hidden md:block">
+            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-[#312C85] transition-colors border border-slate-200">
+              <FaUserCircle size={24} />
             </div>
           </Link>
 
-          {/* Mobile Toggle */}
+          {/* Mobile Toggle Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-3 bg-slate-50 rounded-2xl text-[#312C85]"
+            className="lg:hidden p-3 bg-slate-50 rounded-2xl text-[#312C85] hover:bg-slate-100 transition-colors"
           >
-            {isMenuOpen ? <FaTimes /> : <FaBars />}
+            {isMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t p-6 flex flex-col gap-4 shadow-2xl animate-in slide-in-from-top duration-300">
-          <div className="flex items-center gap-4 mb-4 p-4 bg-slate-50 rounded-3xl">
-            <div className="w-12 h-12 bg-[#312C85] rounded-2xl flex items-center justify-center text-white font-black">
-              {displayName.charAt(0).toUpperCase()}
+        <div className="lg:hidden fixed inset-x-0 top-[73px] bg-white border-t border-slate-100 shadow-2xl animate-in slide-in-from-top duration-300 h-screen overflow-y-auto pb-20">
+          <div className="p-6 space-y-6">
+            {/* 1. Profile Section in Mobile Menu */}
+            <Link
+              href="/profile"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center justify-between p-4 bg-[#312C85]/5 rounded-[2rem] border border-[#312C85]/10 group active:scale-95 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#312C85] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-100">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-black text-[#312C85] uppercase text-xs tracking-tight">
+                    {displayName}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Профайл үзэх
+                  </p>
+                </div>
+              </div>
+              <FaChevronRight className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            {/* 2. Navigation Links */}
+            <div className="grid grid-cols-1 gap-2">
+              <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2">
+                Хичээлүүд
+              </p>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-6 py-4 font-black text-slate-600 uppercase text-xs tracking-[0.15em] hover:bg-slate-50 rounded-2xl transition-colors flex items-center justify-between"
+                >
+                  {link.name}
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+                </Link>
+              ))}
             </div>
-            <div>
-              <p className="font-black text-[#312C85] uppercase text-xs">
-                {displayName}
-              </p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase">
-                {user.school}
-              </p>
+
+            {/* 3. Logout Button in Mobile Menu */}
+            <div className="pt-4 border-t border-slate-50">
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center justify-center gap-3 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-100 transition-colors active:scale-95"
+              >
+                <FaSignOutAlt size={16} />
+                Системээс гарах
+              </button>
             </div>
           </div>
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              onClick={() => setIsMenuOpen(false)}
-              className="px-4 py-2 font-black text-slate-500 uppercase text-xs tracking-[0.2em] hover:text-[#312C85] transition-colors"
-            >
-              {link.name}
-            </Link>
-          ))}
         </div>
       )}
     </header>
