@@ -13,7 +13,7 @@ import {
   FaSchool,
   FaLayerGroup,
 } from "react-icons/fa";
-import { Eye, EyeOff, FaLock } from "lucide-react"; // FaLock нэмж ашиглав
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export default function Register() {
   const router = useRouter();
@@ -23,12 +23,13 @@ export default function Register() {
     grade: "",
     email: "",
     password: "",
-    confirmPassword: "", // Нэмэгдсэн
+    confirmPassword: "",
+    teacherCode: "",
     role: "student",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Нэмэгдсэн
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const items = [
     { name: "Хими", icon: FaFlask },
@@ -40,9 +41,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Нууц үг таарч байгаа эсэхийг шалгах
     if (formData.password !== formData.confirmPassword) {
       alert("Нууц үгүүд хоорондоо таарахгүй байна!");
+      return;
+    }
+
+    // БАГШИЙН КОД ШАЛГАЛТ - Хэрэв багш бол заавал зөв код нэхнэ
+    if (formData.role === "teacher" && formData.teacherCode !== "teacher2026") {
+      alert(
+        "Багшийн баталгаажуулах код буруу байна. Эрх бүхий багштай холбогдоно уу.",
+      );
       return;
     }
 
@@ -53,6 +61,7 @@ export default function Register() {
       email: formData.email,
       password: formData.password,
       role: formData.role,
+      teacherCode: formData.teacherCode,
       school: formData.role === "teacher" ? "Захиргаа / Багш" : formData.school,
       grade: formData.role === "teacher" ? "Teacher" : formData.grade,
     };
@@ -69,7 +78,7 @@ export default function Register() {
         alert("Амжилттай бүртгэгдлээ!");
         router.push("/");
       } else {
-        alert(data.message || "Алдаа гарлаа");
+        alert(data.message || "Бүртгэл амжилтгүй. Дахин оролдоно уу.");
       }
     } catch (err) {
       alert("Сервертэй холбогдоход алдаа гарлаа");
@@ -94,9 +103,6 @@ export default function Register() {
           <h1 className="text-4xl font-black mb-6 italic uppercase tracking-tighter">
             Edulab <br /> Science
           </h1>
-          <p className="mb-12 text-blue-100/70 text-sm leading-relaxed z-10">
-            Бүртгэл үүсгэж, шинжлэх ухааны интерактив ертөнцөд нэгдээрэй.
-          </p>
           <div className="grid grid-cols-2 gap-4 w-full z-10">
             {items.map((item, index) => (
               <div
@@ -113,35 +119,37 @@ export default function Register() {
         {/* Баруун тал */}
         <div className="w-full md:w-7/12 p-8 md:p-16 flex flex-col justify-center bg-white">
           <div className="max-w-md mx-auto w-full">
-            <div className="mb-8 text-center md:text-left">
-              <h2 className="text-3xl font-black text-slate-900 mb-1 uppercase italic">
-                Бүртгүүлэх
-              </h2>
-              <p className="text-slate-500 text-sm">
-                Та өөрийн үүргийг сонгоно уу.
-              </p>
-            </div>
+            <h2 className="text-3xl font-black text-slate-900 mb-6 uppercase italic">
+              Бүртгүүлэх
+            </h2>
 
             {/* Role Switcher */}
             <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, role: "student" })}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${formData.role === "student" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-400"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
+                  formData.role === "student"
+                    ? "bg-white text-[#312C85] shadow-sm"
+                    : "text-slate-400"
+                }`}
               >
                 <FaUserGraduate size={14} /> Сурагч
               </button>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, role: "teacher" })}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${formData.role === "teacher" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-400"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
+                  formData.role === "teacher"
+                    ? "bg-white text-[#312C85] shadow-sm"
+                    : "text-slate-400"
+                }`}
               >
                 <FaChalkboardTeacher size={14} /> Багш
               </button>
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {/* Овог нэр */}
               <div className="space-y-1">
                 <label className={labelStyle}>Овог нэр</label>
                 <div className="relative">
@@ -153,7 +161,7 @@ export default function Register() {
                     type="text"
                     required
                     className={`${inputStyle} pl-10`}
-                    placeholder="Л. Бат"
+                    placeholder="Нэрээ оруулна уу"
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
@@ -161,71 +169,82 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Сургууль & Анги (Зөвхөн сурагчид) */}
-              {formData.role === "student" && (
+              {formData.role === "student" ? (
                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
                   <div className="space-y-1">
                     <label className={labelStyle}>Сургууль</label>
-                    <div className="relative">
-                      <FaSchool
-                        className="absolute left-4 top-4 text-slate-300"
-                        size={12}
-                      />
-                      <input
-                        type="text"
-                        required={formData.role === "student"}
-                        className={`${inputStyle} pl-10`}
-                        placeholder="1-р сургууль"
-                        onChange={(e) =>
-                          setFormData({ ...formData, school: e.target.value })
-                        }
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      className={inputStyle}
+                      placeholder="Сургуулийн нэр"
+                      onChange={(e) =>
+                        setFormData({ ...formData, school: e.target.value })
+                      }
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className={labelStyle}>Анги</label>
-                    <div className="relative">
-                      <FaLayerGroup
-                        className="absolute left-4 top-4 text-slate-300"
-                        size={12}
-                      />
-                      <input
-                        type="text"
-                        required={formData.role === "student"}
-                        className={`${inputStyle} pl-10`}
-                        placeholder="10B"
-                        onChange={(e) =>
-                          setFormData({ ...formData, grade: e.target.value })
-                        }
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      className={inputStyle}
+                      placeholder="Жишээ: 10B"
+                      onChange={(e) =>
+                        setFormData({ ...formData, grade: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* БАГШИЙН КОД - Нууцлагдсан */
+                <div className="space-y-1 animate-in slide-in-from-left-2 duration-300">
+                  <label className={labelStyle}>
+                    Багшийн баталгаажуулах код
+                  </label>
+                  <div className="relative">
+                    <ShieldCheck
+                      className="absolute left-4 top-3.5 text-[#312C85]"
+                      size={18}
+                    />
+                    <input
+                      type="password" // Нууц үг шиг харагдана
+                      required
+                      className={`${inputStyle} pl-12 border-blue-100 focus:border-[#312C85]`}
+                      placeholder="Нууц кодыг оруулна уу"
+                      value={formData.teacherCode}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          teacherCode: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                 </div>
               )}
 
-              {/* И-мэйл */}
               <div className="space-y-1">
                 <label className={labelStyle}>И-мэйл хаяг</label>
                 <input
                   type="email"
                   required
                   className={inputStyle}
-                  placeholder="name@science.mn"
+                  placeholder="example@science.mn"
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
                 />
               </div>
 
-              {/* Нууц үг */}
-              <div className="space-y-1">
-                <label className={labelStyle}>Нууц үг</label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 relative">
+                  <label className={labelStyle}>Нууц үг</label>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     className={inputStyle}
-                    placeholder="••••••••"
+                    placeholder="••••"
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
@@ -233,27 +252,18 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-3.5 text-slate-400"
+                    className="absolute right-4 top-9 text-slate-400"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-              </div>
-
-              {/* НУУЦ ҮГ БАТАЛГААЖУУЛАХ (ЗАСВАР) */}
-              <div className="space-y-1">
-                <label className={labelStyle}>Нууц үг баталгаажуулах</label>
-                <div className="relative">
+                <div className="space-y-1 relative">
+                  <label className={labelStyle}>Баталгаажуулах</label>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     required
-                    className={`${inputStyle} ${
-                      formData.confirmPassword &&
-                      formData.password !== formData.confirmPassword
-                        ? "border-red-400 focus:border-red-500 ring-red-100"
-                        : ""
-                    }`}
-                    placeholder="••••••••"
+                    className={`${inputStyle} ${formData.confirmPassword && formData.password !== formData.confirmPassword ? "border-red-400" : ""}`}
+                    placeholder="••••"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -264,43 +274,27 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-3.5 text-slate-400"
+                    className="absolute right-4 top-9 text-slate-400"
                   >
                     {showConfirmPassword ? (
-                      <EyeOff size={18} />
+                      <EyeOff size={16} />
                     ) : (
-                      <Eye size={18} />
+                      <Eye size={16} />
                     )}
                   </button>
                 </div>
-                {formData.confirmPassword &&
-                  formData.password !== formData.confirmPassword && (
-                    <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 animate-pulse">
-                      Нууц үгүүд хоорондоо таарахгүй байна!
-                    </p>
-                  )}
               </div>
 
-              {/* Бүртгүүлэх товчлуур */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-4 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs mt-4 ${loading ? "bg-slate-400" : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"}`}
+                className={`w-full py-4 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs mt-4 ${
+                  loading ? "bg-slate-400" : "bg-[#312C85] hover:bg-[#28246d]"
+                }`}
               >
-                {loading
-                  ? "Бүртгэж байна..."
-                  : formData.role === "teacher"
-                    ? "Багшаар бүртгүүлэх"
-                    : "Бүртгэл үүсгэх"}
+                {loading ? "Түр хүлээнэ үү..." : "Бүртгэл үүсгэх"}
               </button>
             </form>
-
-            <p className="mt-8 text-center text-xs text-slate-500 font-bold">
-              Өмнө нь бүртгүүлсэн үү?{" "}
-              <Link href="/" className="text-[#312C85] hover:underline ml-1">
-                Нэвтрэх
-              </Link>
-            </p>
           </div>
         </div>
       </div>

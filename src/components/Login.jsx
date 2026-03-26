@@ -11,7 +11,6 @@ import {
   FaChalkboardTeacher,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-// Нүдний дүрс нэмэв
 import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
@@ -21,7 +20,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Нууц үг харуулах төлөв
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) router.push("/dashboard");
@@ -47,6 +46,7 @@ export default function Login() {
 
       if (res.ok) {
         login(data.user);
+        // LocalStorage-д мэдээллээ хадгалах
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userRole", data.user.role);
@@ -61,20 +61,26 @@ export default function Login() {
     }
   };
 
+  const labelStyle =
+    "text-[10px] font-black uppercase tracking-wider text-slate-400 ml-1 mb-1 block";
+  const inputStyle =
+    "w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none text-sm";
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-900 font-sans">
       <div className="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white bg-white">
-        {/* Зүүн тал */}
+        {/* Зүүн тал - Дизайн */}
         <div className="hidden md:flex w-5/12 flex-col justify-center items-start p-12 bg-[#312C85] text-white relative overflow-hidden">
           <div className="absolute -top-10 -right-10 text-white/10 pointer-events-none">
             <FaAtom size={280} className="animate-spin-slow opacity-20" />
           </div>
-          <h1 className="text-4xl font-black leading-tight mb-6 tracking-tight">
-            Байгалийн <br />
-            <span className="opacity-80">Ухаан</span>
+          <h1 className="text-4xl font-black leading-tight mb-6 tracking-tight italic uppercase">
+            Edulab <br />
+            <span className="opacity-80">Science</span>
           </h1>
-          <p className="mb-12 text-blue-100/70 leading-relaxed max-w-xs z-10">
-            Тавтай морил! Өөрийн аккаунтаар нэвтэрч сургалтаа үргэлжлүүлнэ үү.
+          <p className="mb-12 text-blue-100/70 leading-relaxed max-w-xs z-10 text-sm">
+            Тавтай морил! Өөрийн аккаунтаар нэвтэрч шинжлэх ухааны аяллаа
+            үргэлжлүүлнэ үү.
           </p>
           <div className="grid grid-cols-2 gap-4 w-full z-10">
             {items.map((item, index) => (
@@ -92,64 +98,68 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Баруун тал */}
+        {/* Баруун тал - Форм */}
         <div className="w-full md:w-7/12 p-8 md:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
-            <div className="mb-8">
-              <h2 className="text-3xl font-black text-slate-900 mb-2">
+            <div className="mb-8 text-center md:text-left">
+              <h2 className="text-3xl font-black text-slate-900 mb-2 uppercase italic">
                 Нэвтрэх
               </h2>
-              <p className="text-slate-500">
+              <p className="text-slate-500 text-sm">
                 Системд нэвтрэх төрлөө сонгоно уу.
               </p>
             </div>
 
+            {/* Role Switcher */}
             <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
               <button
                 type="button"
                 onClick={() => setRole("student")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${role === "student" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
+                  role === "student"
+                    ? "bg-white text-[#312C85] shadow-sm"
+                    : "text-slate-400"
+                }`}
               >
-                <FaUserGraduate /> Сурагч
+                <FaUserGraduate size={14} /> Сурагч
               </button>
               <button
                 type="button"
                 onClick={() => setRole("teacher")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${role === "teacher" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
+                  role === "teacher"
+                    ? "bg-white text-[#312C85] shadow-sm"
+                    : "text-slate-400"
+                }`}
               >
-                <FaChalkboardTeacher /> Багш
+                <FaChalkboardTeacher size={14} /> Багш
               </button>
             </div>
 
-            <form className="space-y-6" onSubmit={handleLogin}>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-                  И-мэйл хаяг
-                </label>
+            <form className="space-y-5" onSubmit={handleLogin}>
+              {/* И-мэйл */}
+              <div className="space-y-1">
+                <label className={labelStyle}>И-мэйл хаяг</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none"
+                  className={inputStyle}
                   placeholder="name@science.mn"
                 />
               </div>
 
-              {/* Нууц үг хэсэг (ЗАССАН) */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Нууц үг
-                  </label>
-                </div>
+              {/* Нууц үг */}
+              <div className="space-y-1">
+                <label className={labelStyle}>Нууц үг</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none"
+                    className={inputStyle}
                     placeholder="••••••••"
                   />
                   <button
@@ -157,15 +167,20 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-5 top-4 text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
+              {/* Нэвтрэх товч */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-5 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-sm mt-4 ${loading ? "bg-slate-400" : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"}`}
+                className={`w-full py-5 rounded-2xl font-black text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-xs mt-4 ${
+                  loading
+                    ? "bg-slate-400"
+                    : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"
+                }`}
               >
                 {loading
                   ? "Шалгаж байна..."
@@ -175,11 +190,11 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="mt-8 text-center text-sm text-slate-500 font-medium">
+            <p className="mt-8 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">
               Шинэ хэрэглэгч үү?{" "}
               <Link
                 href="/register"
-                className="text-[#312C85] font-bold hover:underline ml-1"
+                className="text-[#312C85] hover:underline ml-1"
               >
                 Бүртгэл үүсгэх
               </Link>

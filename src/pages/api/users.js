@@ -30,8 +30,17 @@ export default async function handler(req, res) {
   // POST: Бүртгэл эсвэл Оноо нэмэх
   if (req.method === "POST") {
     try {
-      const { userId, xpToAdd, email, password, role, name, school, grade } =
-        req.body;
+      const {
+        userId,
+        xpToAdd,
+        email,
+        password,
+        role,
+        name,
+        school,
+        grade,
+        teacherCode,
+      } = req.body;
 
       // ОНОО НЭМЭХ ЛОГИК
       if (userId && xpToAdd !== undefined) {
@@ -51,6 +60,13 @@ export default async function handler(req, res) {
 
       // ШИНЭ БҮРТГЭЛ ҮҮСГЭХ ЛОГИК
       if (email) {
+        // Багш бол кодыг заавал шалгана
+        if (role === "teacher" && teacherCode !== "teacher2026") {
+          return res
+            .status(400)
+            .json({ message: "Багшийн баталгаажуулах код буруу байна!" });
+        }
+
         const existingUser = await db.collection("users").findOne({ email });
         if (existingUser)
           return res.status(400).json({ message: "И-мэйл бүртгэлтэй байна." });
@@ -58,20 +74,24 @@ export default async function handler(req, res) {
         const newUser = {
           email,
           password,
-          name: name || "Сурагч",
+          name: name || "Хэрэглэгч",
           role: role || "student",
-          school: school || "Тодорхойгүй",
-          grade: grade || "10B",
+          school:
+            role === "teacher" ? "Захиргаа / Багш" : school || "Тодорхойгүй",
+          grade: role === "teacher" ? "Teacher" : grade || "10B",
           totalXp: 0,
           createdAt: new Date(),
         };
+
         const registerResult = await db.collection("users").insertOne(newUser);
         return res
           .status(201)
           .json({ success: true, userId: registerResult.insertedId });
       }
     } catch (err) {
-      return res.status(500).json({ message: "Алдаа", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Серверийн алдаа", error: err.message });
     }
   }
 }
