@@ -295,6 +295,12 @@ export default function Register() {
                 {loading ? "Түр хүлээнэ үү..." : "Бүртгэл үүсгэх"}
               </button>
             </form>
+            <p className="mt-8 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">
+              Бүртгэлтэй юу?
+              <Link href="/" className="text-[#312C85] hover:underline ml-1">
+                Нэвтрэх
+              </Link>
+            </p>
           </div>
         </div>
       </div>

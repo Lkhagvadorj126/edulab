@@ -36,7 +36,7 @@ export default function NavBio() {
       <div className="bg-white border border-slate-100 rounded-[1.5rem] p-2 shadow-sm flex items-center justify-between w-full">
         {/* Mobile Logo / Title */}
         <div className="md:hidden pl-4 font-black text-[#312C85] tracking-tighter uppercase">
-          Хими
+          Биологи
         </div>
 
         {/* Hamburger Button (Mobile Only) */}

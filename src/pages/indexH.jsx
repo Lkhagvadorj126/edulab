@@ -84,7 +84,7 @@ export default function ChemistryPage() {
             </Link>
             <div>
               <h2 className="text-sm font-black text-[#312C85] uppercase tracking-[0.3em] mb-1">
-                {isTeacher ? "Багшийн хяналт (Хими)" : "Сургалтын хөтөлбөр"}
+                {isTeacher ? "Багшийн хяналт" : "Сургалтын хөтөлбөр"}
               </h2>
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">
                 Хими
