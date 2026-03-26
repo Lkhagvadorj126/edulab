@@ -74,8 +74,7 @@ export default function Dashboard() {
                 ({roleLabel}: {displayName})
               </div>
               <h1 className="text-7xl lg:text-8xl font-black text-slate-900 leading-[0.9] tracking-tighter">
-                Ирээдүйн <br />{" "}
-                <span className="text-[#312C85]">Боловсрол</span>
+                EDU <span className="text-[#312C85]">LAB</span>
               </h1>
               <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-lg">
                 Шинжлэх ухааныг хамгийн сонирхолтой, интерактив хэлбэрээр
