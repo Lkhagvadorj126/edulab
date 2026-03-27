@@ -286,7 +286,7 @@ export default function Sound() {
         <div className="flex bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6">
           <div className="flex items-center">
             <Link
-              href="/physics"
+              href="/indexP"
               className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
             >
               <ArrowLeft className="text-[#312C85]" size={24} />

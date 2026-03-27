@@ -19,6 +19,7 @@ import {
   Check,
   Video,
   Beaker,
+  ArrowLeft,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
@@ -286,6 +287,12 @@ export default function Light() {
       <section className="pt-24 md:pt-28">
         <div className="flex flex-col sm:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
           <div className="flex items-center w-full sm:w-auto">
+            <Link
+              href="/indexP"
+              className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ArrowLeft className="text-[#312C85]" size={24} />
+            </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
