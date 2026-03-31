@@ -15,7 +15,7 @@ const navLinks = [
   { name: "Физик", href: "/indexP" },
   { name: "Хими", href: "/indexH" },
   { name: "Биологи", href: "/biology" },
-  { name: "Газар зүй", href: "/geography" },
+  { name: "Газар зүй", href: "/indexGeo" },
 ];
 
 export default function NavAll() {

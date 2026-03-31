@@ -70,7 +70,6 @@ export default function StudentsProgress() {
                   <th className="px-6 py-4">Байр</th>
                   <th className="px-6 py-4">Сурагч</th>
                   <th className="px-6 py-4">XP Оноо</th>
-                  <th className="px-6 py-4">Зэрэглэл</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -111,13 +110,6 @@ export default function StudentsProgress() {
                             <FaTrophy className="text-amber-500" size={14} />
                             {student.totalXp || 0}
                           </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <span
-                            className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider ${rank.bg} ${rank.color}`}
-                          >
-                            {rank.label}
-                          </span>
                         </td>
                       </tr>
                     );

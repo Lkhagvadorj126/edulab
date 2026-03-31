@@ -36,7 +36,7 @@ const courses = [
   },
   {
     title: "Газарзүй",
-    href: "/geography",
+    href: "/indexGeo",
     desc: "Интерактив атлас",
     icon: FaGlobeAmericas,
     iconColor: "text-[#312C85]",

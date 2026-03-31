@@ -128,7 +128,7 @@ export default function Geography() {
         <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
           <div className="flex items-center gap-3 md:gap-4 min-w-0">
             <Link
-              href="/dashboard"
+              href="/indexGeo"
               className="group p-2.5 md:p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:bg-[#312C85]/5 transition-all active:scale-95 shrink-0"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-[#312C85] group-hover:-translate-x-1 transition-transform" />

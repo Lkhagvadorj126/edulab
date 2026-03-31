@@ -1,9 +1,0 @@
-import Angilal from "@/components/Angilal";
-
-export default function Home() {
-  return (
-    <div>
-      <Angilal />
-    </div>
-  );
-}

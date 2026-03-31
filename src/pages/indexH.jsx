@@ -11,9 +11,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import NavAll from "../components/NavAll";
-import NavH from "@/components/NavH";
 import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/NavbarH";
 import NavbarH from "@/components/NavbarH";
 
 const pageConfig = {
@@ -24,7 +22,7 @@ const pageConfig = {
       icon: (
         <MoveHorizontal className="w-9 h-9 text-[#312C85]" strokeWidth={2.5} />
       ),
-      href: "/diffusion",
+      href: "/chemistry/diffusion", // ЗАСАВ: /chemistry/ нэмсэн
       color: "hover:border-[#312C85]/40 hover:shadow-[#312C85]/10",
       iconBg: "bg-[#312C85]/5",
     },
@@ -32,7 +30,7 @@ const pageConfig = {
       title: "Молекулын туйлшрал",
       desc: "Гадаад цахилгаан орны нөлөөгөөр молекул доторх цэнэгийн төвүүд шилжих үзэгдэл. Диполь момент ба диэлектрик шинж чанар.",
       icon: <Zap className="w-9 h-9 text-[#312C85]" strokeWidth={2.5} />,
-      href: "/molecular",
+      href: "/chemistry/molecular", // ЗАСАВ: /chemistry/ нэмсэн
       color: "hover:border-[#312C85]/40 hover:shadow-[#312C85]/10",
       iconBg: "bg-[#312C85]/5",
     },
@@ -40,7 +38,7 @@ const pageConfig = {
       title: "Квант хэмжилт",
       desc: "Бичил бөөмсийн төлөв байдлыг тодорхойлох процесс. Гейзенбергийн тодорхойгүйн зарчим ба долгионы функцийн нуралт.",
       icon: <Target className="w-9 h-9 text-[#312C85]" strokeWidth={2.5} />,
-      href: "/measurement",
+      href: "/chemistry/measurement", // ЗАСАВ: /chemistry/ нэмсэн
       color: "hover:border-[#312C85]/40 hover:shadow-[#312C85]/10",
       iconBg: "bg-[#312C85]/5",
     },
@@ -48,7 +46,7 @@ const pageConfig = {
       title: "Нягтрал",
       desc: "Нэгж эзэлхүүнд ногдох бодисын масс. Хатуу, шингэн, хийн төлөв байдлын молекул бүтцийн нягт ба Архимедийн хүч.",
       icon: <Layers className="w-9 h-9 text-[#312C85]" strokeWidth={2.5} />,
-      href: "/density",
+      href: "/chemistry/density", // ЗАСАВ: /chemistry/ нэмсэн
       color: "hover:border-[#312C85]/40 hover:shadow-[#312C85]/10",
       iconBg: "bg-[#312C85]/5",
     },
@@ -56,7 +54,7 @@ const pageConfig = {
       title: "Лазер",
       desc: "Албадмал цацрагаар гэрлийг хүчтэй болгох төхөөрөмж. Когерент чанар, монохромат гэрэл ба фотоны бөөгнөрөл.",
       icon: <ZapOff className="w-9 h-9 text-[#312C85]" strokeWidth={2.5} />,
-      href: "/laser",
+      href: "/chemistry/laser", // ЗАСАВ: /chemistry/ нэмсэн
       color: "hover:border-[#312C85]/40 hover:shadow-[#312C85]/10",
       iconBg: "bg-[#312C85]/5",
     },
@@ -71,14 +69,12 @@ export default function ChemistryPage() {
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
       <NavAll />
-
       <section className="max-w-7xl mx-auto px-4 md:px-8 pt-32 pb-20 relative z-20">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="group p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:bg-[#312C85]/5 transition-all duration-300 text-[#312C85] active:scale-95"
+              className="group p-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:bg-[#312C85]/5 transition-all duration-300 text-[#312C85]"
             >
               <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
             </Link>
@@ -93,18 +89,16 @@ export default function ChemistryPage() {
             </div>
           </div>
 
-          {/* Багш биш үед NavH (Химийн цэс)-г баруун талд харуулна */}
           {!isTeacher && (
             <div className="flex justify-start md:justify-end">
               <NavbarH />
             </div>
           )}
 
-          {/* Багшид зориулсан товч */}
           {isTeacher && (
             <Link
               href="/students-progress"
-              className="bg-[#312C85] text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#312C85]/20 hover:bg-[#312C85]/90 transition-all flex items-center gap-2 active:scale-95"
+              className="bg-[#312C85] text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-[#312C85]/20 hover:bg-[#312C85]/90 transition-all flex items-center gap-2"
             >
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               Сурагчдын зэрэглэл харах
@@ -112,7 +106,6 @@ export default function ChemistryPage() {
           )}
         </div>
 
-        {/* Topics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {topics.map((topic, index) => (
             <Link
@@ -139,8 +132,6 @@ export default function ChemistryPage() {
           ))}
         </div>
       </section>
-
-      {/* Decorative Background */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 opacity-30">
         <div className="absolute top-[10%] left-[-5%] w-[35%] h-[35%] bg-[#312C85]/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-[#312C85]/10 rounded-full blur-[100px]" />
