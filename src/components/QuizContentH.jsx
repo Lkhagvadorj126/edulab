@@ -525,7 +525,7 @@ function QuizManager() {
                 className="w-1.5 h-1.5 rounded-full animate-pulse"
                 style={{ backgroundColor: config.color }}
               />
-              ФИЗИК 10Б • {topicId === "all" ? "ХОЛИМОГ" : "БҮЛЭГ"}
+              {topicId === "all" ? "ХИМИ ХОЛИМОГ" : "БҮЛЭГ"}
             </div>
 
             <h2 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-12 italic">

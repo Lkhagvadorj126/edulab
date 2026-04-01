@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutGrid, Trophy, NotebookPen } from "lucide-react";
+import { Menu, X, LayoutGrid, Trophy, NotebookPen, Atom } from "lucide-react";
 
 export default function NavbarH() {
   const pathname = usePathname();
@@ -12,6 +12,7 @@ export default function NavbarH() {
     { href: "/cartH", label: "Карт", icon: LayoutGrid },
     { href: "/scorePoints", label: "Зэрэглэл", icon: Trophy },
     { href: "/quizContentH", label: "Тест", icon: NotebookPen },
+    { href: "/chemistryTable", label: "Үелэх хүснэгт", icon: Atom },
   ];
 
   return (
