@@ -196,7 +196,7 @@ export default function LessonTemplate({ pageId, config }) {
         <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
           <div className="flex items-center w-full xl:w-auto">
             <Link
-              href="/indexH"
+              href="/biology"
               className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
             >
               <ArrowLeft className="text-[#312C85]" size={24} />

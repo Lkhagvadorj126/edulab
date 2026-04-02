@@ -10,11 +10,9 @@ import {
   FaSignInAlt,
   FaTimes,
   FaCopy,
-  FaMapMarkerAlt,
-  FaSchool,
-  FaLayerGroup,
   FaUsers,
   FaTrophy,
+  FaTrash, // Энд FaTrash2-ыг FaTrash болгож засав
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import NavAll from "./NavAll";
@@ -67,7 +65,7 @@ export default function Dashboard() {
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studentCode, setStudentCode] = useState("");
-  const [classMembers, setClassMembers] = useState([]); // Ангийн сурагчид
+  const [classMembers, setClassMembers] = useState([]);
   const [formData, setFormData] = useState({
     city: "",
     district: "",
@@ -75,21 +73,54 @@ export default function Dashboard() {
     className: "",
   });
 
-  // Сурагчдын жагсаалтыг татах
-  useEffect(() => {
-    const fetchMembers = async () => {
-      if (user?.classCode && user.classCode !== "NO_CLASS") {
+  // Сурагчдын жагсаалтыг татах функц
+  const fetchMembers = async () => {
+    if (user?.classCode && user.classCode !== "NO_CLASS") {
+      try {
         const res = await fetch(`/api/classes?classCode=${user.classCode}`);
         const data = await res.json();
         setClassMembers(data);
+      } catch (err) {
+        console.error("Гишүүдийг татахад алдаа гарлаа");
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     if (user) fetchMembers();
   }, [user]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
+
+  // --- СУРАГЧ ХАСАХ ФУНКЦ ---
+  const handleRemoveMember = async (memberId, memberName) => {
+    if (!confirm(`${memberName} сурагчийг ангиас хасахдаа итгэлтэй байна уу?`))
+      return;
+
+    try {
+      const res = await fetch("/api/classes", {
+        method: "PATCH", // Эсвэл танай API-аас хамаарч POST/PUT
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "remove_member",
+          memberId: memberId,
+          classCode: user.classCode,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Жагсаалтыг шинэчлэх
+        fetchMembers();
+      } else {
+        alert(data.message || "Хасахад алдаа гарлаа");
+      }
+    } catch (err) {
+      alert("Сервертэй холбогдоход алдаа гарлаа");
+    }
+  };
 
   const handleAction = async () => {
     if (!user?._id) return;
@@ -136,7 +167,7 @@ export default function Dashboard() {
     <main className="min-h-screen bg-white font-sans antialiased relative">
       <NavAll />
 
-      {/* --- MODAL WINDOW --- */}
+      {/* --- MODAL WINDOW (Анги үүсгэх/солих) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
@@ -261,7 +292,6 @@ export default function Dashboard() {
                 {user.classCode}
               </div>
 
-              {/* ХЭРЭВ АНГИД НЭГДСЭН БОЛ СУРАГЧДЫГ ХАРУУЛАХ */}
               {hasClass ? (
                 <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
                   <div className="flex justify-between items-center">
@@ -303,11 +333,27 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-[#312C85]">
-                            {member.totalXp.toLocaleString()}
-                          </span>
-                          <FaTrophy className="text-amber-400" size={12} />
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-[#312C85]">
+                              {member.totalXp.toLocaleString()}
+                            </span>
+                            <FaTrophy className="text-amber-400" size={12} />
+                          </div>
+
+                          {/* ХАСАХ ТОВЧ: Зөвхөн багш өөрөө биш, бусад сурагчдыг хасах боломжтой */}
+                          {user.role === "teacher" &&
+                            member._id !== user._id && (
+                              <button
+                                onClick={() =>
+                                  handleRemoveMember(member._id, member.name)
+                                }
+                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                title="Ангиас хасах"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            )}
                         </div>
                       </div>
                     ))}
