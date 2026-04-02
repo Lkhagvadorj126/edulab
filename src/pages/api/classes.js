@@ -1,42 +1,76 @@
-// src/pages/api/classes.js
-export default function handler(req, res) {
-  if (req.method !== "POST") {
-    return res
-      .status(405)
-      .json({ message: "Зөвхөн POST хүсэлт зөвшөөрөгдөнө" });
-  }
+import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
-  const { action, className, classCode } = req.body;
+export default async function handler(req, res) {
+  const client = await clientPromise;
+  const db = client.db("science_digital_db");
 
-  // 1. АНГИ ҮҮСГЭХ ЛОГИК (Багш)
-  if (action === "create") {
-    if (!className) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Ангийн нэр оруулна уу!" });
+  // --- СУРАГЧДЫН ЖАГСААЛТ АВАХ (ШИНЭ) ---
+  if (req.method === "GET") {
+    const { classCode } = req.query;
+    if (!classCode || classCode === "NO_CLASS") {
+      return res.status(200).json([]);
     }
-
-    // Санамсаргүй 6 оронтой код үүсгэх (Жишээ нь: X8Y2A1)
-    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Энд өгөгдлийн санд (Database) хадгалах код бичигдэнэ
-    return res.status(200).json({ success: true, code: newCode });
-  }
-
-  // 2. АНГИД НЭГДЭХ ЛОГИК (Сурагч)
-  if (action === "join") {
-    if (!classCode || classCode.length !== 6) {
-      return res
-        .status(400)
-        .json({ success: false, message: "6 оронтой код оруулна уу!" });
+    try {
+      const students = await db
+        .collection("users")
+        .find({ classCode: classCode })
+        .project({ name: 1, email: 1, totalXp: 1, role: 1 }) // Нууц үг харуулахгүй
+        .sort({ totalXp: -1 })
+        .toArray();
+      return res.status(200).json(students);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-
-    // Жишээ баталгаажуулалт (Бодит системд DB-ээс шүүнэ)
-    // Одоохондоо бүх 6 оронтой кодыг зөв гэж тооцъё
-    return res
-      .status(200)
-      .json({ success: true, message: "Амжилттай нэгдлээ" });
   }
 
-  return res.status(400).json({ message: "Буруу үйлдэл" });
+  // --- POST ХҮСЭЛТҮҮД (ӨМНӨХ ХЭВЭЭРЭЭ) ---
+  if (req.method === "POST") {
+    const { action, location, school, className, classCode, userId } = req.body;
+    try {
+      if (action === "create") {
+        const newCode = Math.random()
+          .toString(36)
+          .substring(2, 8)
+          .toUpperCase();
+        await db.collection("classes").insertOne({
+          code: newCode,
+          teacherId: new ObjectId(userId),
+          location,
+          school,
+          className,
+          createdAt: new Date(),
+        });
+        await db
+          .collection("users")
+          .updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { classCode: newCode, school, grade: className } },
+          );
+        return res.status(200).json({ success: true, code: newCode });
+      }
+      if (action === "join") {
+        const targetClass = await db
+          .collection("classes")
+          .findOne({ code: classCode });
+        if (!targetClass)
+          return res
+            .status(404)
+            .json({ success: false, message: "Анги олдсонгүй" });
+        await db.collection("users").updateOne(
+          { _id: new ObjectId(userId) },
+          {
+            $set: {
+              classCode: classCode,
+              school: targetClass.school,
+              grade: targetClass.className,
+            },
+          },
+        );
+        return res.status(200).json({ success: true });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
 }

@@ -2,58 +2,61 @@ import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 export default async function handler(req, res) {
+  const client = await clientPromise;
+  const db = client.db("physics_db");
+  const { pageId, classCode, id } = req.query;
+
   try {
-    const client = await clientPromise;
-    const db = client.db("physics_db");
-    const { pageId, id } = req.query;
-
-    // GET: Картнуудыг унших
+    // --- УНШИХ (GET) ---
     if (req.method === "GET") {
-      if (!pageId)
-        return res.status(400).json({ error: "pageId шаардлагатай" });
-
+      if (!pageId || !classCode) {
+        return res
+          .status(400)
+          .json({ error: "pageId болон classCode шаардлагатай" });
+      }
       const data = await db
         .collection("cards")
-        .find({ pageId: pageId })
+        .find({ pageId, classCode })
         .toArray();
       return res.status(200).json(data);
     }
 
-    // POST: Шинээр нэмэх эсвэл Засах
+    // --- ХАДГАЛАХ БОЛОН ЗАСАХ (POST) ---
     if (req.method === "POST") {
-      const { id: bodyId, question, answer, pageId: bodyPageId } = req.body;
+      const { id: editId, ...data } = req.body;
 
-      if (bodyId) {
-        // Засах логик
+      if (!data.classCode || !data.pageId) {
+        return res
+          .status(400)
+          .json({ error: "Мэдээлэл дутуу байна (classCode, pageId)" });
+      }
+
+      if (editId) {
+        // Засах
         await db
           .collection("cards")
           .updateOne(
-            { _id: new ObjectId(bodyId) },
-            { $set: { question, answer, updatedAt: new Date() } },
+            { _id: new ObjectId(editId) },
+            { $set: { ...data, updatedAt: new Date() } },
           );
-        return res.status(200).json({ message: "Амжилттай шинэчлэгдлээ" });
+        return res.status(200).json({ message: "Карт амжилттай шинэчлэгдлээ" });
       } else {
-        // Шинээр нэмэх логик
+        // Шинээр нэмэх
         const result = await db.collection("cards").insertOne({
-          question,
-          answer,
-          pageId: bodyPageId,
+          ...data,
           createdAt: new Date(),
         });
         return res.status(200).json(result);
       }
     }
 
-    // DELETE: Устгах
+    // --- УСТГАХ (DELETE) ---
     if (req.method === "DELETE") {
       if (!id) return res.status(400).json({ error: "ID шаардлагатай" });
       await db.collection("cards").deleteOne({ _id: new ObjectId(id) });
-      return res.status(200).json({ message: "Устгагдлаа" });
+      return res.status(200).json({ message: "Карт устгагдлаа" });
     }
-
-    return res.status(405).json({ message: "Method not allowed" });
   } catch (err) {
-    console.error("API Error:", err);
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }

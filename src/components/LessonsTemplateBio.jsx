@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Slider from "./Slider";
 import {
@@ -23,31 +23,25 @@ import {
   PlusCircle,
 } from "lucide-react";
 import NavAll from "./NavAll";
-import NavBio from "./NavBio";
+import NavH from "./NavH";
 import { useAuth } from "@/context/AuthContext";
+import NavBio from "./NavBio";
 
-export default function LessonTemplateB({ pageId, config }) {
+export default function LessonTemplate({ pageId, config }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
-
-  // --- АЧААЛАХ ҮЕИЙН ХАМГААЛАЛТ ---
-  if (!config || !config.page) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#312C85]"></div>
-      </div>
-    );
-  }
+  const userClassCode = user?.classCode || "";
 
   // States
   const [displayUrl, setDisplayUrl] = useState("");
-  const [videoUrl, setVideoUrl] = useState(config.page.videoUrl || "");
+  const [videoUrl, setVideoUrl] = useState(config?.page?.videoUrl || "");
   const [dbExperiments, setDbExperiments] = useState([]);
   const [dynamicLessons, setDynamicLessons] = useState([]);
   const [dbTests, setDbTests] = useState([]);
   const [dbCards, setDbCards] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Admin Panel States
   const [activePanel, setActivePanel] = useState(null);
@@ -69,76 +63,72 @@ export default function LessonTemplateB({ pageId, config }) {
     theory: null,
   });
 
-  const fetchData = async () => {
-    if (!pageId) return;
+  // Data Fetching
+  const fetchData = useCallback(async () => {
+    if (!pageId || !userClassCode) return;
+    setLoading(true);
     try {
-      const query = `?pageId=${pageId}`;
-      const [canvaRes, expRes, lessonRes, videoRes, testRes, cardRes] =
-        await Promise.all([
+      const query = `?pageId=${pageId}&classCode=${userClassCode}`;
+      const [canvaRes, expRes, lessonRes, testRes, cardRes] = await Promise.all(
+        [
           fetch(`/api/presentation${query}`),
           fetch(`/api/experiment${query}`),
           fetch(`/api/lessons${query}`),
-          fetch(`/api/video${query}`),
           fetch(`/api/test${query}`),
           fetch(`/api/card${query}`),
-        ]);
+        ],
+      );
 
       if (canvaRes.ok) {
         const d = await canvaRes.json();
-        const urlFromDb = d?.url || "";
-        setDisplayUrl(urlFromDb);
-        setCanvaInput(urlFromDb);
+        setDisplayUrl(d?.url || "");
+        setCanvaInput(d?.url || "");
       }
-      if (videoRes.ok) {
-        const d = await videoRes.json();
-        const vUrl = d?.url || config.page.videoUrl;
-        setVideoUrl(vUrl);
-        setVideoInput(d?.url || "");
-      }
-
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
       if (testRes.ok) setDbTests(await testRes.json());
       if (cardRes.ok) setDbCards(await cardRes.json());
     } catch (err) {
       console.error("Data fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [pageId, userClassCode]);
 
   useEffect(() => {
     fetchData();
     setShowAll(false);
     setActivePanel(null);
-  }, [pageId]);
+  }, [fetchData]);
 
+  // Handle Save
   const handleSave = async (type, data, editId = null) => {
-    let finalData = data;
+    let finalData = { ...data, classCode: userClassCode, pageId: pageId };
 
-    if (type === "presentation" && data.url.includes("<iframe")) {
+    if (type === "presentation" && data.url?.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
-      if (srcMatch && srcMatch[1]) {
-        finalData = { ...data, url: srcMatch[1] };
-      }
+      if (srcMatch && srcMatch[1]) finalData.url = srcMatch[1];
     }
 
-    let apiPath = type === "cards" ? "card" : type;
-    const body = editId
-      ? { ...finalData, id: editId, pageId }
-      : { ...finalData, pageId };
+    let apiPath = type;
+    if (type === "cards") apiPath = "card";
+    if (type === "experiment") apiPath = "experiment";
+    if (type === "lessons") apiPath = "lessons";
 
     try {
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(editId ? { ...finalData, id: editId } : finalData),
       });
+
       if (res.ok) {
         alert("Амжилттай хадгалагдлаа!");
         fetchData();
         resetForm(type);
       }
     } catch (err) {
-      alert("Алдаа гарлаа");
+      alert("Хадгалахад алдаа гарлаа");
     }
   };
 
@@ -189,6 +179,14 @@ export default function LessonTemplateB({ pageId, config }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  if (!config || !config.page) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#312C85]"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
@@ -198,7 +196,7 @@ export default function LessonTemplateB({ pageId, config }) {
         <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
           <div className="flex items-center w-full xl:w-auto">
             <Link
-              href="/biology"
+              href="/indexH"
               className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
             >
               <ArrowLeft className="text-[#312C85]" size={24} />
@@ -209,19 +207,20 @@ export default function LessonTemplateB({ pageId, config }) {
                 {config.page.title}
               </h1>
               <p className="text-slate-500 text-[10px] md:text-xs font-bold flex items-center gap-1 uppercase tracking-tighter">
-                <Users size={12} /> {config.page.subtitle}
+                <Users size={12} /> {userClassCode} АНГИ |{" "}
+                {config.page.subtitle}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
             <Link
-              href={`/testBiology?pageId=${pageId}`}
+              href={`/testMolecular?pageId=${pageId}`}
               className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:opacity-90"
             >
               <Award size={16} /> ТЕСТ ӨГӨХ
             </Link>
             <Link
-              href={`/cartBiology?pageId=${pageId}`}
+              href={`/cartMolecular?pageId=${pageId}`}
               className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:opacity-90"
             >
               <BookOpen size={16} /> КАРТ ҮЗЭХ
@@ -242,11 +241,11 @@ export default function LessonTemplateB({ pageId, config }) {
         {/* Admin Panels */}
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            {/* Video */}
+            {/* Video Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
-                  <Video size={16} /> Видео
+                  <Video size={16} /> Видео ({userClassCode})
                 </p>
                 <button
                   onClick={() =>
@@ -275,7 +274,7 @@ export default function LessonTemplateB({ pageId, config }) {
               )}
             </div>
 
-            {/* Test */}
+            {/* Test Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -356,7 +355,7 @@ export default function LessonTemplateB({ pageId, config }) {
               </div>
             </div>
 
-            {/* Card */}
+            {/* Card Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -425,7 +424,7 @@ export default function LessonTemplateB({ pageId, config }) {
               </div>
             </div>
 
-            {/* Experiment */}
+            {/* Experiment Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -478,7 +477,7 @@ export default function LessonTemplateB({ pageId, config }) {
               )}
             </div>
 
-            {/* Theory */}
+            {/* Theory Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -532,7 +531,7 @@ export default function LessonTemplateB({ pageId, config }) {
           </div>
         )}
 
-        {/* Content */}
+        {/* Content Section */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[75%] space-y-4">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
@@ -566,9 +565,10 @@ export default function LessonTemplateB({ pageId, config }) {
             )}
           </div>
 
+          {/* Experiments Sidebar */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
-              <Beaker size={14} /> Туршилтууд
+              <Beaker size={14} /> Туршилтууд ({userClassCode})
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {[...dbExperiments]
@@ -620,7 +620,7 @@ export default function LessonTemplateB({ pageId, config }) {
         {/* Theory Section */}
         <section className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12">
           <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85]">
-            Биологийн Онол
+            Онолын Мэдээлэл - {userClassCode}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {[...dynamicLessons]
@@ -649,7 +649,7 @@ export default function LessonTemplateB({ pageId, config }) {
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="text-red-500 bg-slate-50 rounded p-1"
+                          className="p-1 text-red-500 bg-slate-50 rounded"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -677,7 +677,7 @@ export default function LessonTemplateB({ pageId, config }) {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-1"
             >
-              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-all">
+              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-colors">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (

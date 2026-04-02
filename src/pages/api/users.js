@@ -5,7 +5,6 @@ export default async function handler(req, res) {
   const client = await clientPromise;
   const db = client.db("science_digital_db");
 
-  // GET: Хэрэглэгчийн мэдээлэл авах
   if (req.method === "GET") {
     const { userId } = req.query;
     try {
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // POST: Бүртгэл эсвэл Оноо нэмэх
   if (req.method === "POST") {
     try {
       const {
@@ -39,10 +37,11 @@ export default async function handler(req, res) {
         name,
         school,
         grade,
+        classCode,
         teacherCode,
       } = req.body;
 
-      // ОНОО НЭМЭХ ЛОГИК
+      // 1. ОНОО НЭМЭХ
       if (userId && xpToAdd !== undefined) {
         const result = await db.collection("users").findOneAndUpdate(
           { _id: new ObjectId(userId) },
@@ -52,19 +51,15 @@ export default async function handler(req, res) {
           },
           { returnDocument: "after" },
         );
-        const updatedUser = result.value || result;
-        return res
-          .status(200)
-          .json({ success: true, totalXp: updatedUser.totalXp });
+        return res.status(200).json({ success: true, totalXp: result.totalXp });
       }
 
-      // ШИНЭ БҮРТГЭЛ ҮҮСГЭХ ЛОГИК
+      // 2. ШИНЭ БҮРТГЭЛ
       if (email) {
-        // Багш бол кодыг заавал шалгана
         if (role === "teacher" && teacherCode !== "teacher2026") {
           return res
             .status(400)
-            .json({ message: "Багшийн баталгаажуулах код буруу байна!" });
+            .json({ message: "Багшийн баталгаажуулах код буруу!" });
         }
 
         const existingUser = await db.collection("users").findOne({ email });
@@ -76,8 +71,8 @@ export default async function handler(req, res) {
           password,
           name: name || "Хэрэглэгч",
           role: role || "student",
-          school:
-            role === "teacher" ? "Захиргаа / Багш" : school || "Тодорхойгүй",
+          classCode: classCode || "NO_CLASS",
+          school: school || "Тодорхойгүй",
           grade: role === "teacher" ? "Teacher" : grade || "10B",
           totalXp: 0,
           createdAt: new Date(),

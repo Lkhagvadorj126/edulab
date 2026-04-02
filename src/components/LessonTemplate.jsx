@@ -30,6 +30,9 @@ export default function LessonTemplate({ pageId, config }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
+  // Хэрэглэгчийн ангийн кодыг Context-оос авах (Жишээ нь: "10B", "9A" гэх мэт)
+  const userClassCode = user?.classCode || "";
+
   // --- 1. АЧААЛАХ ҮЕИЙН ХАМГААЛАЛТ ---
   if (!config || !config.page) {
     return (
@@ -70,33 +73,27 @@ export default function LessonTemplate({ pageId, config }) {
   });
 
   const fetchData = async () => {
-    if (!pageId) return;
+    if (!pageId || !userClassCode) return;
     try {
-      const query = `?pageId=${pageId}`;
-      const [canvaRes, expRes, lessonRes, videoRes, testRes, cardRes] =
-        await Promise.all([
+      // Бүх API руу classCode-ыг шүүлтүүр болгож илгээнэ
+      const query = `?pageId=${pageId}&classCode=${userClassCode}`;
+
+      const [canvaRes, expRes, lessonRes, testRes, cardRes] = await Promise.all(
+        [
           fetch(`/api/presentation${query}`),
           fetch(`/api/experiment${query}`),
           fetch(`/api/lessons${query}`),
-          fetch(`/api/video${query}`),
           fetch(`/api/test${query}`),
           fetch(`/api/card${query}`),
-        ]);
+        ],
+      );
 
       if (canvaRes.ok) {
         const d = await canvaRes.json();
-        // Хэрэв дата баазад байгаа бол утгыг онооно
-        const urlFromDb = d?.url || "";
-        setDisplayUrl(urlFromDb);
-        setCanvaInput(urlFromDb);
+        setDisplayUrl(d?.url || "");
+        setCanvaInput(d?.url || "");
       }
-      if (videoRes.ok) {
-        const d = await videoRes.json();
-        const vUrl = d?.url || config.page.videoUrl;
-        setVideoUrl(vUrl);
-        setVideoInput(d?.url || "");
-      }
-
+      // Бусад state-үүдийг шинэчлэх...
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
       if (testRes.ok) setDbTests(await testRes.json());
@@ -110,39 +107,42 @@ export default function LessonTemplate({ pageId, config }) {
     fetchData();
     setShowAll(false);
     setActivePanel(null);
-  }, [pageId]);
+  }, [pageId, userClassCode]);
 
-  // Хадгалах функцийг presentation төрлийг дэмждэг болгож засав
-  // handleSave функц доторх presentation хэсгийг ингэж өөрчил:
+  // Хадгалах функц - classCode-ыг объект бүрт нэмнэ
+  // handleSave функцийг ийнхүү шинэчилнэ:
   const handleSave = async (type, data, editId = null) => {
-    let finalData = data;
+    // 1. Үндсэн дата дээр ангийн кодыг нэмэх
+    let finalData = { ...data, classCode: userClassCode, pageId: pageId };
 
-    // Хэрэв Canva-ийн бүхэл бүтэн HTML код орж ирвэл зөвхөн URL-ийг нь салгаж авах логик
-    if (type === "presentation" && data.url.includes("<iframe")) {
+    // 2. Хэрэв Canva link бол URL-ыг цэвэрлэх
+    if (type === "presentation" && data.url?.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
       if (srcMatch && srcMatch[1]) {
-        finalData = { ...data, url: srcMatch[1] };
+        finalData.url = srcMatch[1];
       }
     }
 
-    let apiPath = type === "cards" ? "card" : type;
-    const body = editId
-      ? { ...finalData, id: editId, pageId }
-      : { ...finalData, pageId };
+    // 3. Төрлөөс хамаарч API замыг тодорхойлох
+    let apiPath = type;
+    if (type === "cards") apiPath = "card";
+    if (type === "experiment") apiPath = "experiment";
+    if (type === "lessons") apiPath = "lessons";
 
     try {
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(editId ? { ...finalData, id: editId } : finalData),
       });
+
       if (res.ok) {
         alert("Амжилттай хадгалагдлаа!");
-        fetchData();
+        fetchData(); // Датаг дахин ачаалах
         resetForm(type);
       }
     } catch (err) {
-      alert("Алдаа гарлаа");
+      alert("Хадгалахад алдаа гарлаа");
     }
   };
 
@@ -162,6 +162,7 @@ export default function LessonTemplate({ pageId, config }) {
   const deleteItem = async (type, id) => {
     if (!confirm("Устгахдаа итгэлтэй байна уу?")) return;
     const apiPath = type === "cards" ? "card" : type;
+    // Устгахдаа ч бас classCode шаардлагатай бол API дээрээ шалгаж болно
     const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
     if (res.ok) fetchData();
   };
@@ -213,7 +214,8 @@ export default function LessonTemplate({ pageId, config }) {
                 {config.page.title}
               </h1>
               <p className="text-slate-500 text-[10px] md:text-xs font-bold flex items-center gap-1 uppercase tracking-tighter">
-                <Users size={12} /> {config.page.subtitle}
+                <Users size={12} /> {userClassCode} АНГИ |{" "}
+                {config.page.subtitle}
               </p>
             </div>
           </div>
@@ -250,7 +252,7 @@ export default function LessonTemplate({ pageId, config }) {
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
-                  <Video size={16} /> Видео
+                  <Video size={16} /> Видео ({userClassCode})
                 </p>
                 <button
                   onClick={() =>
@@ -536,7 +538,7 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         )}
 
-        {/* Content */}
+        {/* Content Section */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[75%] space-y-4">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
@@ -570,9 +572,10 @@ export default function LessonTemplate({ pageId, config }) {
             )}
           </div>
 
+          {/* Experiments sidebar */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
-              <Beaker size={14} /> Туршилтууд
+              <Beaker size={14} /> Туршилтууд ({userClassCode})
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {[...dbExperiments]
@@ -624,7 +627,7 @@ export default function LessonTemplate({ pageId, config }) {
         {/* Theory Section */}
         <section className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12">
           <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85]">
-            Онолын Мэдээлэл
+            Онолын Мэдээлэл - {userClassCode}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {[...dynamicLessons]
@@ -681,7 +684,7 @@ export default function LessonTemplate({ pageId, config }) {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-1"
             >
-              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#312C85] hover:text-white">
+              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#312C85] hover:text-white transition-colors">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
@@ -709,7 +712,7 @@ export default function LessonTemplate({ pageId, config }) {
           >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-red-500 text-white rounded-full border border-white/20"
+              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-red-500 text-white rounded-full border border-white/20 transition-colors"
             >
               <X size={24} />
             </button>

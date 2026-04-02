@@ -21,6 +21,7 @@ import {
   Award,
   BookOpen,
   PlusCircle,
+  Loader2,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import Nav from "./Nav";
@@ -29,6 +30,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function LessonTemplateP({ pageId, config }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
+  const userClassCode = user?.classCode || "";
 
   // --- States ---
   const [displayUrl, setDisplayUrl] = useState("");
@@ -39,6 +41,7 @@ export default function LessonTemplateP({ pageId, config }) {
   const [dbCards, setDbCards] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // --- Admin States ---
   const [activePanel, setActivePanel] = useState(null);
@@ -62,9 +65,12 @@ export default function LessonTemplateP({ pageId, config }) {
 
   // --- Data Fetching ---
   const fetchData = async () => {
-    if (!pageId) return;
+    if (!pageId || !userClassCode) return;
+    setLoading(true);
     try {
-      const query = `?pageId=${pageId}`;
+      // Анги болон Хичээлийн ID-аар шүүнэ
+      const query = `?pageId=${pageId}&classCode=${userClassCode}`;
+
       const [canvaRes, expRes, lessonRes, videoRes, testRes, cardRes] =
         await Promise.all([
           fetch(`/api/presentation${query}`),
@@ -91,6 +97,8 @@ export default function LessonTemplateP({ pageId, config }) {
       if (cardRes.ok) setDbCards(await cardRes.json());
     } catch (err) {
       console.error("Data fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,37 +106,42 @@ export default function LessonTemplateP({ pageId, config }) {
     fetchData();
     setShowAll(false);
     setActivePanel(null);
-  }, [pageId]);
+  }, [pageId, userClassCode]);
 
   // --- Action Handlers ---
   const handleSave = async (type, data, editId = null) => {
-    let finalData = data;
+    // 1. Ангийн код заавал байх ёстой
+    let finalData = { ...data, classCode: userClassCode, pageId: pageId };
 
-    // Canva HTML код дотроос src-г ялгаж авах (regex ашиглав)
+    // 2. Canva Link цэвэрлэх
     if (type === "presentation" && data.url && data.url.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
       if (srcMatch && srcMatch[1]) {
-        finalData = { ...data, url: srcMatch[1] };
+        finalData.url = srcMatch[1];
       }
     }
 
-    const apiPath = type === "cards" ? "card" : type;
-    const body = editId
-      ? { ...finalData, id: editId, pageId }
-      : { ...finalData, pageId };
+    // 3. API замыг тодорхойлох
+    let apiPath = type;
+    if (type === "cards") apiPath = "card";
+    if (type === "exp") apiPath = "experiment";
+    if (type === "theory") apiPath = "lessons";
 
     try {
+      const body = editId ? { ...finalData, id: editId } : finalData;
+
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (res.ok) {
         alert("Амжилттай хадгалагдлаа!");
         fetchData();
         resetForm(type);
       } else {
-        alert("Алдаа гарлаа");
+        alert("Хадгалахад алдаа гарлаа");
       }
     } catch (err) {
       alert("Сервертэй холбогдож чадсангүй");
@@ -150,7 +163,9 @@ export default function LessonTemplateP({ pageId, config }) {
 
   const deleteItem = async (type, id) => {
     if (!confirm("Устгах уу?")) return;
-    const apiPath = type === "cards" ? "card" : type;
+    let apiPath = type;
+    if (type === "cards") apiPath = "card";
+
     const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
     if (res.ok) fetchData();
   };
@@ -185,7 +200,7 @@ export default function LessonTemplateP({ pageId, config }) {
   if (!config || !config.page) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#312C85]"></div>
+        <Loader2 className="animate-spin text-[#312C85]" size={40} />
       </div>
     );
   }
@@ -206,30 +221,31 @@ export default function LessonTemplateP({ pageId, config }) {
             </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase leading-none">
                 {config.page.title}
               </h1>
-              <p className="text-slate-500 text-[10px] md:text-xs font-bold flex items-center gap-1 uppercase tracking-tighter">
-                <Users size={12} /> {config.page.subtitle}
+              <p className="text-slate-400 text-[10px] md:text-xs font-black flex items-center gap-1 uppercase tracking-tighter mt-1">
+                <Users size={12} /> {config.page.subtitle} | {userClassCode}{" "}
+                АНГИ
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
             <Link
               href={`/testPhysics?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
             >
               <Award size={16} /> ТЕСТ ӨГӨХ
             </Link>
             <Link
               href={`/cartPhysics?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
             >
               <BookOpen size={16} /> КАРТ ҮЗЭХ
             </Link>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
             >
               <Play size={16} fill="currentColor" /> ҮЗЭХ
             </button>
@@ -244,7 +260,7 @@ export default function LessonTemplateP({ pageId, config }) {
         {/* --- Teacher Admin Panels --- */}
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            {/* Video Admin */}
+            {/* Видео удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -260,7 +276,7 @@ export default function LessonTemplateP({ pageId, config }) {
                 </button>
               </div>
               {activePanel === "video" && (
-                <div className="flex gap-1 animate-in fade-in duration-300">
+                <div className="flex gap-1 animate-in slide-in-from-top-1 duration-200">
                   <input
                     className="flex-1 p-2 rounded-lg border text-xs"
                     value={videoInput}
@@ -277,7 +293,7 @@ export default function LessonTemplateP({ pageId, config }) {
               )}
             </div>
 
-            {/* Test Admin */}
+            {/* Тест удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -289,11 +305,11 @@ export default function LessonTemplateP({ pageId, config }) {
                   }
                   className="text-[10px] font-bold border border-[#312C85]/30 text-[#312C85] px-2 py-1 rounded-md"
                 >
-                  Удирдах
+                  Нэмэх
                 </button>
               </div>
               {activePanel === "test" && (
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in slide-in-from-top-1">
                   <input
                     className="w-full p-2 rounded-lg border text-xs"
                     placeholder="Асуулт..."
@@ -324,19 +340,19 @@ export default function LessonTemplateP({ pageId, config }) {
                   ))}
                   <button
                     onClick={() => handleSave("test", newTest, editIds.test)}
-                    className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black"
+                    className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black uppercase"
                   >
-                    {editIds.test ? "ШИНЭЧЛЭХ" : "НЭМЭХ"}
+                    Хадгалах
                   </button>
                 </div>
               )}
-              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1">
+              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1 custom-scrollbar">
                 {dbTests.map((t) => (
                   <div
                     key={t._id}
-                    className="flex justify-between items-center bg-slate-50 p-1 rounded"
+                    className="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100"
                   >
-                    <span className="text-[9px] truncate w-24">
+                    <span className="text-[9px] truncate w-24 font-bold text-slate-600">
                       {t.question}
                     </span>
                     <div className="flex gap-1">
@@ -358,7 +374,7 @@ export default function LessonTemplateP({ pageId, config }) {
               </div>
             </div>
 
-            {/* Card Admin */}
+            {/* Карт удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -370,11 +386,11 @@ export default function LessonTemplateP({ pageId, config }) {
                   }
                   className="text-[10px] font-bold border border-[#312C85]/30 text-[#312C85] px-2 py-1 rounded-md"
                 >
-                  Удирдах
+                  Нэмэх
                 </button>
               </div>
               {activePanel === "card" && (
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in slide-in-from-top-1">
                   <input
                     className="w-full p-2 rounded-lg border text-xs"
                     placeholder="Асуулт..."
@@ -393,19 +409,19 @@ export default function LessonTemplateP({ pageId, config }) {
                   />
                   <button
                     onClick={() => handleSave("cards", newCard, editIds.card)}
-                    className="w-full bg-slate-800 text-white py-2 rounded-lg text-[10px] font-black"
+                    className="w-full bg-slate-800 text-white py-2 rounded-lg text-[10px] font-black uppercase"
                   >
-                    {editIds.card ? "ШИНЭЧЛЭХ" : "НЭМЭХ"}
+                    Хадгалах
                   </button>
                 </div>
               )}
-              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1">
+              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1 custom-scrollbar">
                 {dbCards.map((c) => (
                   <div
                     key={c._id}
-                    className="flex justify-between items-center bg-slate-50 p-1 rounded"
+                    className="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100"
                   >
-                    <span className="text-[9px] truncate w-24">
+                    <span className="text-[9px] truncate w-24 font-bold text-slate-600">
                       {c.question}
                     </span>
                     <div className="flex gap-1">
@@ -427,7 +443,7 @@ export default function LessonTemplateP({ pageId, config }) {
               </div>
             </div>
 
-            {/* Experiment Admin */}
+            {/* Туршилт удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -439,11 +455,11 @@ export default function LessonTemplateP({ pageId, config }) {
                   }
                   className="text-[10px] font-bold border border-[#312C85]/30 text-[#312C85] px-2 py-1 rounded-md"
                 >
-                  Удирдах
+                  Нэмэх
                 </button>
               </div>
               {activePanel === "exp" && (
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in slide-in-from-top-1">
                   <input
                     className="w-full p-1.5 rounded border text-[10px]"
                     placeholder="Нэр..."
@@ -454,7 +470,7 @@ export default function LessonTemplateP({ pageId, config }) {
                   />
                   <input
                     className="w-full p-1.5 rounded border text-[10px]"
-                    placeholder="Link..."
+                    placeholder="URL..."
                     value={newExp.href}
                     onChange={(e) =>
                       setNewExp({ ...newExp, href: e.target.value })
@@ -469,18 +485,16 @@ export default function LessonTemplateP({ pageId, config }) {
                     }
                   />
                   <button
-                    onClick={() =>
-                      handleSave("experiment", newExp, editIds.exp)
-                    }
-                    className="w-full bg-[#312C85] text-white py-2 rounded text-[10px] font-black"
+                    onClick={() => handleSave("exp", newExp, editIds.exp)}
+                    className="w-full bg-[#312C85] text-white py-2 rounded text-[10px] font-black uppercase"
                   >
-                    {editIds.exp ? "ШИНЭЧЛЭХ" : "НЭМЭХ"}
+                    Хадгалах
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Theory Admin */}
+            {/* Онол удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -492,11 +506,11 @@ export default function LessonTemplateP({ pageId, config }) {
                   }
                   className="text-[10px] font-bold border border-[#312C85]/30 text-[#312C85] px-2 py-1 rounded-md"
                 >
-                  Удирдах
+                  Нэмэх
                 </button>
               </div>
               {activePanel === "theory" && (
-                <div className="space-y-2">
+                <div className="space-y-2 animate-in slide-in-from-top-1">
                   <input
                     className="w-full p-1.5 rounded border text-[10px]"
                     placeholder="Гарчиг..."
@@ -516,7 +530,7 @@ export default function LessonTemplateP({ pageId, config }) {
                   <button
                     onClick={() =>
                       handleSave(
-                        "lessons",
+                        "theory",
                         {
                           title: newTheory.title,
                           content: newTheory.content.split("\n"),
@@ -524,9 +538,9 @@ export default function LessonTemplateP({ pageId, config }) {
                         editIds.theory,
                       )
                     }
-                    className="w-full bg-slate-800 text-white py-2 rounded text-[10px] font-black"
+                    className="w-full bg-slate-800 text-white py-2 rounded text-[10px] font-black uppercase"
                   >
-                    {editIds.theory ? "ШИНЭЧЛЭХ" : "НЭМЭХ"}
+                    Хадгалах
                   </button>
                 </div>
               )}
@@ -536,9 +550,8 @@ export default function LessonTemplateP({ pageId, config }) {
 
         {/* --- Presentation & Experiments Row --- */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Presentation Area */}
           <div className="w-full lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
+            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative group">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -561,7 +574,7 @@ export default function LessonTemplateP({ pageId, config }) {
                   onClick={() =>
                     handleSave("presentation", { url: canvaInput })
                   }
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"
                 >
                   <Save size={18} /> Хадгалах
                 </button>
@@ -571,7 +584,7 @@ export default function LessonTemplateP({ pageId, config }) {
 
           {/* Experiments Sidebar */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
-            <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
+            <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
               <Beaker size={14} /> Туршилтууд
             </h3>
             <div className="grid grid-cols-1 gap-4">
@@ -588,13 +601,13 @@ export default function LessonTemplateP({ pageId, config }) {
                       <div className="absolute top-2 left-2 z-10 flex gap-1">
                         <button
                           onClick={() => handleEdit("exp", exp)}
-                          className="p-1 bg-white rounded shadow-sm text-[#312C85]"
+                          className="p-1 bg-white/90 rounded shadow-sm text-[#312C85] hover:bg-white"
                         >
                           <Edit2 size={10} />
                         </button>
                         <button
                           onClick={() => deleteItem("experiment", exp._id)}
-                          className="p-1 bg-white rounded shadow-sm text-red-500"
+                          className="p-1 bg-white/90 rounded shadow-sm text-red-500 hover:bg-white"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -621,12 +634,13 @@ export default function LessonTemplateP({ pageId, config }) {
           </div>
         </div>
 
-        {/* --- Theory / Lessons Section --- */}
-        <section className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12">
-          <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85]">
+        {/* --- Theory Section --- */}
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#312C85]/5 rounded-bl-full" />
+          <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85] tracking-tighter">
             Онолын Мэдээлэл
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 relative z-10">
             {[...dynamicLessons]
               .reverse()
               .concat(config.theory)
@@ -634,11 +648,11 @@ export default function LessonTemplateP({ pageId, config }) {
               .map((item, i) => (
                 <div
                   key={i}
-                  className="relative bg-white rounded-2xl p-6 border border-slate-50 shadow-sm"
+                  className="relative bg-white rounded-3xl p-6 border border-slate-50 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-base font-bold text-[#312C85] flex items-center gap-3">
-                      <span className="min-w-[32px] h-8 rounded-lg bg-[#312C85] text-white flex items-center justify-center text-xs font-bold">
+                    <h3 className="text-base font-black text-[#312C85] flex items-center gap-3">
+                      <span className="min-w-[32px] h-8 rounded-xl bg-[#312C85] text-white flex items-center justify-center text-xs font-black">
                         {i + 1}
                       </span>
                       {item.title}
@@ -647,13 +661,13 @@ export default function LessonTemplateP({ pageId, config }) {
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEdit("theory", item)}
-                          className="p-1 text-[#312C85] bg-slate-50 rounded"
+                          className="p-1.5 text-[#312C85] bg-slate-50 rounded-lg hover:bg-white"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button
                           onClick={() => deleteItem("lessons", item._id)}
-                          className="p-1 text-red-500 bg-slate-50 rounded"
+                          className="p-1.5 text-red-500 bg-slate-50 rounded-lg hover:bg-white"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -667,7 +681,7 @@ export default function LessonTemplateP({ pageId, config }) {
                     ).map((text, j) => (
                       <p
                         key={j}
-                        className="text-sm text-slate-600 border-l-2 border-[#312C85]/10 pl-4 leading-relaxed"
+                        className="text-sm text-slate-600 border-l-2 border-[#312C85]/10 pl-4 leading-relaxed font-medium"
                       >
                         {text}
                       </p>
@@ -681,7 +695,7 @@ export default function LessonTemplateP({ pageId, config }) {
               onClick={() => setShowAll(!showAll)}
               className="flex flex-col items-center gap-1 group"
             >
-              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-colors">
+              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-10 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all shadow-sm">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
@@ -700,16 +714,16 @@ export default function LessonTemplateP({ pageId, config }) {
       {/* --- Video Modal --- */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-red-500 text-white rounded-full border border-white/20 transition-colors"
+              className="absolute top-4 right-4 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full border border-white/20 transition-all active:scale-90"
             >
               <X size={24} />
             </button>
