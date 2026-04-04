@@ -83,35 +83,10 @@ export default function ChemistryPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {!isTeacher ? (
-              <div className="w-full sm:w-auto">
-                <NavbarH />
-              </div>
-            ) : (
-              <>
-                <Link
-                  href="/chemistryTable"
-                  className="group relative flex items-center justify-center sm:justify-start gap-3 bg-white border-2 border-[#312C85]/10 hover:border-[#312C85] px-5 py-3 md:py-3.5 rounded-xl md:rounded-2xl transition-all shadow-sm"
-                >
-                  <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#312C85]/5 group-hover:bg-[#312C85] transition-colors">
-                    <TableIcon
-                      className="w-3.5 h-3.5 text-[#312C85] group-hover:text-white"
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                  <span className="font-black text-xs md:text-sm text-[#312C85] uppercase">
-                    Үелэх систем
-                  </span>
-                </Link>
-                <Link
-                  href="/students-progress"
-                  className="bg-[#312C85] text-white px-6 py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm shadow-lg hover:bg-[#312C85]/90 transition-all flex items-center justify-center gap-2"
-                >
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Сурагчдын зэрэглэл
-                </Link>
-              </>
-            )}
+            {/* NavbarH-г бүх хэрэглэгчид (багш, сурагч) харуулна */}
+            <div className="w-full sm:w-auto">
+              <NavbarH />
+            </div>
           </div>
         </div>
 

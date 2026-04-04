@@ -91,19 +91,10 @@ export default function PhysicsPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {!isTeacher ? (
-              <div className="w-full sm:w-auto">
-                <Navbar />
-              </div>
-            ) : (
-              <Link
-                href="/students-progress"
-                className="bg-[#312C85] text-white px-6 py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm shadow-lg shadow-[#312C85]/20 hover:bg-[#312C85]/90 transition-all flex items-center justify-center gap-2"
-              >
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                Сурагчдын зэрэглэл
-              </Link>
-            )}
+            {/* Navbar-ыг багш болон сурагч хоёуланд нь харуулна */}
+            <div className="w-full sm:w-auto">
+              <Navbar />
+            </div>
           </div>
         </div>
 
