@@ -84,16 +84,6 @@ export default function NavbarBio() {
       {/* --- MOBILE DROPDOWN --- */}
       {isOpen && (
         <div className="absolute top-full right-0 mt-4 w-60 p-2.5 bg-white/95 backdrop-blur-xl border border-slate-100 rounded-[2rem] shadow-2xl md:hidden flex flex-col gap-1.5 animate-in fade-in zoom-in duration-200 origin-top-right">
-          {/* Нүүр хуудас руу буцах нэмэлт товч */}
-          <Link
-            href="/"
-            onClick={() => setIsOpen(false)}
-            className="p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 text-slate-400 hover:bg-slate-50 transition-colors"
-          >
-            <Home size={16} />
-            Нүүр хуудас
-          </Link>
-
           <div className="h-px bg-slate-100 mx-4 my-1" />
 
           {links.map((link) => {
@@ -119,14 +109,6 @@ export default function NavbarBio() {
               </Link>
             );
           })}
-
-          {/* Чимэглэл болон статус илэрхийлэх хэсэг (Mobile-д илүү тохиромжтой) */}
-          <div className="mt-2 p-4 bg-indigo-50/50 rounded-2xl flex items-center gap-3">
-            <Activity size={14} className="text-indigo-400" />
-            <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-tighter">
-              Сүүлчийн идэвх: Одоо
-            </span>
-          </div>
         </div>
       )}
     </nav>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import {
   FaFlask,
   FaAtom,
@@ -11,7 +11,7 @@ import {
   FaChalkboardTeacher,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
@@ -22,9 +22,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [modal, setModal] = useState({
+    show: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user, router]);
+
+  const showAlert = (type, title, message) => {
+    setModal({ show: true, type, title, message });
+  };
 
   const items = [
     { name: "Хими", icon: FaFlask, desc: "Молекул, урвал" },
@@ -45,17 +56,26 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        login(data.user);
-        // LocalStorage-д мэдээллээ хадгалах
-        localStorage.setItem("userId", data.user.id);
+        await login(data.user);
+        localStorage.setItem("userId", data.user.id || data.user._id);
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userRole", data.user.role);
-        router.push("/dashboard");
+
+        showAlert(
+          "success",
+          "Амжилттай",
+          "Тавтай морил! Dashboard руу шилжиж байна...",
+        );
+
+        setTimeout(() => {
+          router.push("/dashboard");
+          router.refresh();
+        }, 1200);
       } else {
-        alert(data.message || "Мэдээлэл буруу байна");
+        showAlert("error", "Алдаа", data.message || "Мэдээлэл буруу байна");
       }
     } catch (err) {
-      alert("Сервертэй холбогдоход алдаа гарлаа");
+      showAlert("error", "Алдаа", "Сервертэй холбогдоход алдаа гарлаа");
     } finally {
       setLoading(false);
     }
@@ -67,9 +87,34 @@ export default function Login() {
     "w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-[#312C85]/5 focus:border-[#312C85] transition-all outline-none text-sm";
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-900 font-sans">
-      <div className="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white bg-white">
-        {/* Зүүн тал - Дизайн */}
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-900 font-sans relative">
+      {modal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-200">
+            <div
+              className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${modal.type === "success" ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}`}
+            >
+              {modal.type === "success" ? (
+                <CheckCircle2 size={32} />
+              ) : (
+                <AlertCircle size={32} />
+              )}
+            </div>
+            <h3 className="text-xl font-black mb-2">{modal.title}</h3>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+              {modal.message}
+            </p>
+            <button
+              onClick={() => setModal({ ...modal, show: false })}
+              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#312C85] text-white"
+            >
+              Ойлголоо
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-6xl flex flex-col md:flex-row overflow-hidden rounded-[2.5rem] shadow-xl border border-white bg-white">
         <div className="hidden md:flex w-5/12 flex-col justify-center items-start p-12 bg-[#312C85] text-white relative overflow-hidden">
           <div className="absolute -top-10 -right-10 text-white/10 pointer-events-none">
             <FaAtom size={280} className="animate-spin-slow opacity-20" />
@@ -98,7 +143,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Баруун тал - Форм */}
         <div className="w-full md:w-7/12 p-8 md:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-8 text-center md:text-left">
@@ -110,34 +154,24 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Role Switcher */}
             <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
               <button
                 type="button"
                 onClick={() => setRole("student")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
-                  role === "student"
-                    ? "bg-white text-[#312C85] shadow-sm"
-                    : "text-slate-400"
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${role === "student" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-400"}`}
               >
                 <FaUserGraduate size={14} /> Сурагч
               </button>
               <button
                 type="button"
                 onClick={() => setRole("teacher")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${
-                  role === "teacher"
-                    ? "bg-white text-[#312C85] shadow-sm"
-                    : "text-slate-400"
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase transition-all ${role === "teacher" ? "bg-white text-[#312C85] shadow-sm" : "text-slate-400"}`}
               >
                 <FaChalkboardTeacher size={14} /> Багш
               </button>
             </div>
 
             <form className="space-y-5" onSubmit={handleLogin}>
-              {/* И-мэйл */}
               <div className="space-y-1">
                 <label className={labelStyle}>И-мэйл хаяг</label>
                 <input
@@ -149,8 +183,6 @@ export default function Login() {
                   placeholder="name@science.mn"
                 />
               </div>
-
-              {/* Нууц үг */}
               <div className="space-y-1">
                 <label className={labelStyle}>Нууц үг</label>
                 <div className="relative">
@@ -171,22 +203,18 @@ export default function Login() {
                   </button>
                 </div>
               </div>
-
-              {/* Нэвтрэх товч */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-5 rounded-2xl font-black text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-xs mt-4 ${
-                  loading
-                    ? "bg-slate-400"
-                    : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"
-                }`}
+                className={`w-full py-5 rounded-2xl font-black text-white shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest text-xs mt-4 ${loading ? "bg-slate-400" : "bg-[#312C85] hover:bg-[#28246d] shadow-[#312C85]/20"}`}
               >
-                {loading
-                  ? "Шалгаж байна..."
-                  : role === "teacher"
-                    ? "Багшаар нэвтрэх"
-                    : "Нэвтрэх"}
+                {loading ? (
+                  <Loader2 className="animate-spin inline mr-2" size={16} />
+                ) : role === "teacher" ? (
+                  "Багшаар нэвтрэх"
+                ) : (
+                  "Нэвтрэх"
+                )}
               </button>
             </form>
 

@@ -31,7 +31,7 @@ import NavAll from "./NavAll";
 import Nav from "./Nav"; // Эсвэл NavH
 import { useAuth } from "@/context/AuthContext";
 
-export default function LessonTemplateP({ pageId, config }) {
+export default function LessonTemplateP({ pageId, config, backUrl }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
   const userClassCode = user?.classCode || "10B";
@@ -273,7 +273,7 @@ export default function LessonTemplateP({ pageId, config }) {
         <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
           <div className="flex items-center w-full xl:w-auto">
             <Link
-              href="/indexP"
+              href={backUrl || "/indexP"}
               className="mr-4 p-2 hover:bg-slate-100 rounded-xl transition-all"
             >
               <ArrowLeft className="text-[#312C85]" size={24} />
@@ -311,8 +311,6 @@ export default function LessonTemplateP({ pageId, config }) {
           </div>
         </div>
       </section>
-
-      <Nav />
 
       {/* ADMIN PANELS */}
       <div className="max-w-[1400px] mx-auto mt-6">

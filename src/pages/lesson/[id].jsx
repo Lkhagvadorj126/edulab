@@ -1,7 +1,9 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import LessonTemplateP from "@/components/LessonTemplateP";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function DynamicLessonPage() {
   const router = useRouter();
@@ -13,20 +15,40 @@ export default function DynamicLessonPage() {
     if (!id) return;
     const fetchLesson = async () => {
       try {
-        // Энд мөн адил /api/physics-topics гэж дуудна
         const res = await fetch(`/api/physics-topics?id=${id}`);
         if (res.ok) {
           const data = await res.json();
           setLessonData(data);
         }
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
     fetchLesson();
   }, [id]);
+
+  // Ангиллаас хамаарч буцах замыг шийдэх
+  const getBackPath = () => {
+    if (!lessonData) return "/dashboard";
+
+    // Ангиллыг шалгах
+    const category = lessonData.category?.toLowerCase();
+
+    switch (category) {
+      case "physics":
+        return "/indexP";
+      case "chemistry":
+        return "/indexH"; // Хими бол indexH руу буцна
+      case "biology":
+        return "/biology";
+      case "geography":
+        return "/indexGeo";
+      default:
+        return "/dashboard";
+    }
+  };
 
   if (loading || !id)
     return (
@@ -35,20 +57,14 @@ export default function DynamicLessonPage() {
       </div>
     );
 
-  const finalConfig = lessonData?.config || {
-    page: {
-      title: lessonData?.title || "Хичээл",
-      subtitle: "Цахим хичээл",
-      videoUrl: "",
-    },
-    slider: [],
-    experiments: [],
-    theory: [],
-  };
-
   return (
-    <div className="min-h-screen bg-white">
-      <LessonTemplateP pageId={id} config={finalConfig} />
+    <div className="min-h-screen bg-white relative">
+      <LessonTemplateP
+        pageId={id}
+        config={lessonData?.config || { page: { title: lessonData?.title } }}
+        backUrl={getBackPath()} // Энэ утга Template доторх буцах товчинд очих ёстой
+        categoryName={lessonData?.category}
+      />
     </div>
   );
 }

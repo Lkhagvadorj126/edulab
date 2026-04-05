@@ -324,8 +324,6 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       </section>
 
-      <NavH />
-
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">

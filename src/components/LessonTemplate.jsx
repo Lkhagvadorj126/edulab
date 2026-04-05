@@ -315,8 +315,6 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       </section>
 
-      <NavH />
-
       <div className="max-w-[1400px] mx-auto mt-6">
         {/* --- Teacher Admin Panels --- */}
         {isTeacher && (

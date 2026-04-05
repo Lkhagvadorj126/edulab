@@ -321,8 +321,6 @@ export default function LessonTemplateB({ pageId, config }) {
         </div>
       </section>
 
-      <NavBio />
-
       <div className="max-w-[1400px] mx-auto mt-6">
         {/* Admin Panels */}
         {isTeacher && (

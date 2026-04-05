@@ -1,32 +1,43 @@
 import { useState } from "react";
 
-export default function Slider({ slides }) {
+export default function Slider({ slides = [] }) {
+  // 1. Анхны утгыг хоосон массив болгож оноов
   const [current, setCurrent] = useState(0);
-  const length = slides.length;
+
+  // 2. slides байгаа эсэхийг шалгаж length-ийг авна
+  const length = slides?.length || 0;
 
   const nextSlide = () => {
+    if (length === 0) return;
     setCurrent(current === length - 1 ? 0 : current + 1);
   };
 
   const prevSlide = () => {
+    if (length === 0) return;
     setCurrent(current === 0 ? length - 1 : current - 1);
   };
 
-  if (!Array.isArray(slides) || slides.length === 0) return null;
+  // 3. Хэрэв дата байхгүй бол ямар нэг зүйл зурахгүй (null)
+  if (!Array.isArray(slides) || slides.length === 0) {
+    return (
+      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+        Зураг ачаалж байна...
+      </div>
+    );
+  }
 
   return (
-    // max-w-xl-ийг устгаж, h-full нэмсэн
     <div className="relative w-full h-full overflow-hidden">
-      {/* Сумнуудыг илүү цэвэрхэн, хагас тунгалаг болгов */}
+      {/* Сумнууд */}
       <button
         onClick={prevSlide}
-        className="absolute z-10 top-1/2 left-4 transform -translate-y-1/2 p-2 bg-white/50 hover:bg-white/80 rounded-full transition-all"
+        className="absolute z-10 top-1/2 left-4 -translate-y-1/2 p-2 bg-white/50 hover:bg-white/80 rounded-full transition-all"
       >
         &#10094;
       </button>
       <button
         onClick={nextSlide}
-        className="absolute z-10 top-1/2 right-4 transform -translate-y-1/2 p-2 bg-white/50 hover:bg-white/80 rounded-full transition-all"
+        className="absolute z-10 top-1/2 right-4 -translate-y-1/2 p-2 bg-white/50 hover:bg-white/80 rounded-full transition-all"
       >
         &#10095;
       </button>
@@ -40,9 +51,8 @@ export default function Slider({ slides }) {
         >
           {index === current && (
             <img
-              src={slide.image}
-              alt={slide.alt}
-              // Зургийг контейнерт дүүргэх хамгийн чухал хэсэг:
+              src={slide.img || slide.image} // Таны LessonTemplateP дээр 'img' гэж байгаа тул хоёуланг нь шалгав
+              alt={slide.title || slide.alt}
               className="w-full h-full object-cover"
             />
           )}
