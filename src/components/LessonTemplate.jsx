@@ -22,6 +22,8 @@ import {
   BookOpen,
   PlusCircle,
   Loader2,
+  AlertCircle,
+  HelpCircle,
 } from "lucide-react";
 import NavAll from "./NavAll";
 import NavH from "./NavH";
@@ -43,6 +45,20 @@ export default function LessonTemplate({ pageId, config }) {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // --- Мэдэгдлийн (Status Modal) States ---
+  const [statusModal, setStatusModal] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  // --- Устгах баталгаажуулах (Confirm Modal) States ---
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    type: "",
+    id: null,
+  });
+
   // --- Админ Panel States ---
   const [activePanel, setActivePanel] = useState(null);
   const [videoInput, setVideoInput] = useState("");
@@ -63,13 +79,16 @@ export default function LessonTemplate({ pageId, config }) {
     theory: null,
   });
 
-  // --- Өгөгдөл татах (Fetch Data) ---
+  const closeStatus = () => setStatusModal({ ...statusModal, show: false });
+  const closeConfirm = () =>
+    setConfirmModal({ show: false, type: "", id: null });
+
+  // --- Өгөгдөл татах ---
   const fetchData = async () => {
     if (!pageId || !userClassCode) return;
     setLoading(true);
     try {
       const query = `?pageId=${pageId}&classCode=${userClassCode}`;
-
       const [canvaRes, expRes, lessonRes, videoRes, testRes, cardRes] =
         await Promise.all([
           fetch(`/api/presentation${query}`),
@@ -111,7 +130,6 @@ export default function LessonTemplate({ pageId, config }) {
   const handleSave = async (type, data, editId = null) => {
     let finalData = { ...data, classCode: userClassCode, pageId: pageId };
 
-    // 1. YouTube Link Embed болгох
     if (type === "video" && data.url) {
       let videoId = "";
       if (data.url.includes("v=")) {
@@ -124,7 +142,6 @@ export default function LessonTemplate({ pageId, config }) {
       }
     }
 
-    // 2. Canva Iframe Link цэвэрлэх
     if (type === "presentation" && data.url && data.url.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
       if (srcMatch && srcMatch[1]) {
@@ -132,7 +149,6 @@ export default function LessonTemplate({ pageId, config }) {
       }
     }
 
-    // 3. API Path тохируулах
     let apiPath = type;
     if (type === "cards") apiPath = "card";
     if (type === "exp") apiPath = "experiment";
@@ -146,14 +162,61 @@ export default function LessonTemplate({ pageId, config }) {
       });
 
       if (res.ok) {
-        alert("Амжилттай хадгалагдлаа!");
+        setStatusModal({
+          show: true,
+          message: "Амжилттай хадгалагдлаа!",
+          type: "success",
+        });
         fetchData();
         resetForm(type);
       } else {
-        alert("Хадгалахад алдаа гарлаа.");
+        setStatusModal({
+          show: true,
+          message: "Хадгалахад алдаа гарлаа.",
+          type: "error",
+        });
       }
     } catch (err) {
-      alert("Сервертэй холбогдож чадсангүй.");
+      setStatusModal({
+        show: true,
+        message: "Сервертэй холбогдож чадсангүй.",
+        type: "error",
+      });
+    }
+  };
+
+  // --- Устгах функцийг Modal-тай холбох ---
+  const handleDeleteConfirm = (type, id) => {
+    setConfirmModal({ show: true, type, id });
+  };
+
+  const executeDelete = async () => {
+    const { type, id } = confirmModal;
+    closeConfirm();
+
+    let apiPath = type === "cards" ? "card" : type;
+    try {
+      const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setStatusModal({
+          show: true,
+          message: "Мэдээлэл амжилттай устлаа.",
+          type: "success",
+        });
+        fetchData();
+      } else {
+        setStatusModal({
+          show: true,
+          message: "Устгахад алдаа гарлаа.",
+          type: "error",
+        });
+      }
+    } catch (err) {
+      setStatusModal({
+        show: true,
+        message: "Хүсэлт илгээхэд алдаа гарлаа.",
+        type: "error",
+      });
     }
   };
 
@@ -167,13 +230,6 @@ export default function LessonTemplate({ pageId, config }) {
     if (type === "exp") setNewExp({ title: "", href: "", img: "" });
     if (type === "theory") setNewTheory({ title: "", content: "" });
     if (type === "video") setVideoInput("");
-  };
-
-  const deleteItem = async (type, id) => {
-    if (!confirm("Устгахдаа итгэлтэй байна уу?")) return;
-    let apiPath = type === "cards" ? "card" : type;
-    const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
   };
 
   const handleEdit = (type, item) => {
@@ -265,9 +321,8 @@ export default function LessonTemplate({ pageId, config }) {
         {/* --- Teacher Admin Panels --- */}
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            {/* Видео удирдах */}
-            <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
-              <div className="flex justify-between items-center mb-2">
+            <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm text-center">
+              <div className="flex justify-between items-center mb-2 text-left">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
                   <Video size={16} /> Видео
                 </p>
@@ -298,7 +353,6 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
-            {/* Тест удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -337,7 +391,11 @@ export default function LessonTemplate({ pageId, config }) {
                       />
                       <button
                         onClick={() => setNewTest({ ...newTest, answer: opt })}
-                        className={`p-1.5 rounded-md border ${newTest.answer === opt && opt !== "" ? "bg-[#312C85] text-white" : "bg-white text-slate-300"}`}
+                        className={`p-1.5 rounded-md border ${
+                          newTest.answer === opt && opt !== ""
+                            ? "bg-[#312C85] text-white"
+                            : "bg-white text-slate-300"
+                        }`}
                       >
                         <Check size={14} />
                       </button>
@@ -368,7 +426,7 @@ export default function LessonTemplate({ pageId, config }) {
                         <Edit2 size={10} />
                       </button>
                       <button
-                        onClick={() => deleteItem("test", t._id)}
+                        onClick={() => handleDeleteConfirm("test", t._id)}
                         className="text-red-500"
                       >
                         <Trash2 size={10} />
@@ -379,7 +437,6 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
-            {/* Карт удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -437,7 +494,7 @@ export default function LessonTemplate({ pageId, config }) {
                         <Edit2 size={10} />
                       </button>
                       <button
-                        onClick={() => deleteItem("cards", c._id)}
+                        onClick={() => handleDeleteConfirm("cards", c._id)}
                         className="text-red-500"
                       >
                         <Trash2 size={10} />
@@ -448,7 +505,6 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
-            {/* Туршилт удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -499,7 +555,6 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
-            {/* Онол удирдах */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -587,7 +642,6 @@ export default function LessonTemplate({ pageId, config }) {
             )}
           </div>
 
-          {/* Sidebar Experiments */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
               <Beaker size={14} /> Туршилтууд
@@ -611,7 +665,9 @@ export default function LessonTemplate({ pageId, config }) {
                           <Edit2 size={10} />
                         </button>
                         <button
-                          onClick={() => deleteItem("experiment", exp._id)}
+                          onClick={() =>
+                            handleDeleteConfirm("experiment", exp._id)
+                          }
                           className="p-1 bg-white/90 rounded shadow-sm text-red-500"
                         >
                           <Trash2 size={10} />
@@ -670,7 +726,9 @@ export default function LessonTemplate({ pageId, config }) {
                           <Edit2 size={14} />
                         </button>
                         <button
-                          onClick={() => deleteItem("lessons", item._id)}
+                          onClick={() =>
+                            handleDeleteConfirm("lessons", item._id)
+                          }
                           className="p-1.5 text-red-500 bg-slate-50 rounded-lg hover:bg-white"
                         >
                           <Trash2 size={14} />
@@ -737,6 +795,83 @@ export default function LessonTemplate({ pageId, config }) {
               allowFullScreen
               allow="autoplay; encrypted-media"
             />
+          </div>
+        </div>
+      )}
+
+      {/* --- Confirm Delete Modal --- */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeConfirm}
+          ></div>
+          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+            <div className="mx-auto w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-6">
+              <HelpCircle size={40} strokeWidth={3} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+              Устгах уу?
+            </h3>
+            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
+              Та энэ мэдээллийг устгахдаа итгэлтэй байна уу? Устгасан тохиолдолд
+              сэргээх боломжгүй.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={closeConfirm}
+                className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 uppercase text-xs"
+              >
+                Болих
+              </button>
+              <button
+                onClick={executeDelete}
+                className="flex-1 py-4 rounded-2xl font-black text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 uppercase text-xs"
+              >
+                Устгах
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Status Message Modal --- */}
+      {statusModal.show && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeStatus}
+          ></div>
+          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+            <div
+              className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
+                statusModal.type === "success"
+                  ? "bg-green-50 text-green-500"
+                  : "bg-red-50 text-red-500"
+              }`}
+            >
+              {statusModal.type === "success" ? (
+                <Check size={40} strokeWidth={3} />
+              ) : (
+                <AlertCircle size={40} strokeWidth={3} />
+              )}
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+              {statusModal.type === "success" ? "Амжилттай" : "Алдаа гарлаа"}
+            </h3>
+            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
+              {statusModal.message}
+            </p>
+            <button
+              onClick={closeStatus}
+              className={`w-full py-4 rounded-2xl font-black text-white transition-all shadow-lg active:scale-95 ${
+                statusModal.type === "success"
+                  ? "bg-green-500 hover:bg-green-600 shadow-green-200"
+                  : "bg-red-500 hover:bg-red-600 shadow-red-200"
+              }`}
+            >
+              ОК
+            </button>
           </div>
         </div>
       )}
