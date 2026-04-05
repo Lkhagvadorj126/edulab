@@ -22,7 +22,7 @@ export default function Nav() {
     label: PHYSICS_CONFIG[key].page.title.split(" ")[0],
   }));
 
-  const links = [{ href: "/index", label: "Нүүр" }, ...dynamicLinks];
+  const links = [{ href: "/indexP", label: "Нүүр" }, ...dynamicLinks];
 
   return (
     <nav className="w-full mb-10 relative z-50">

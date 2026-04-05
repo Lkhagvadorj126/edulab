@@ -21,7 +21,7 @@ export default function NavBio() {
     label: BIOLOGY_CONFIG[key].page.title.split(" ")[0],
   }));
 
-  const links = [{ href: "/dashboard", label: "Нүүр" }, ...dynamicLinks];
+  const links = [{ href: "/biology", label: "Нүүр" }, ...dynamicLinks];
 
   return (
     <nav className="w-full mb-10 relative z-50">

@@ -27,7 +27,7 @@ export default function NavGeo() {
   }));
 
   // Үндсэн цэс болон динамик линкүүдийг нэгтгэх
-  const links = [{ href: "/dashboard", label: "Нүүр" }, ...dynamicLinks];
+  const links = [{ href: "/indexGeo", label: "Нүүр" }, ...dynamicLinks];
 
   return (
     <nav className="w-full mb-10 relative z-50">

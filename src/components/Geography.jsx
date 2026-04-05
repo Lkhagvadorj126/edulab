@@ -11,18 +11,18 @@ import {
   Languages,
   X,
   Phone,
+  LayoutGrid, // LayoutCards-ыг LayoutGrid болгож өөрчлөх
 } from "lucide-react";
 
 import { ALL_COUNTRIES, regionNames } from "@/constants/geoData";
+import NavAll from "./NavAll";
 
 export default function Geography() {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [searchText, setSearchText] = useState("");
-  // 1. Сонгосон тивийг хадгалах state ("All" гэвэл бүх улс)
   const [selectedRegion, setSelectedRegion] = useState("All");
 
-  // 2. Хайлт болон Тивийг хамтад нь шүүх логик
   const filtered = ALL_COUNTRIES.filter((c) => {
     const matchesSearch =
       (c.name || "").toLowerCase().includes(searchText.toLowerCase()) ||
@@ -34,12 +34,12 @@ export default function Geography() {
     return matchesSearch && matchesRegion;
   });
 
-  // Тивүүдийн жагсаалтыг 'regionNames'-ээс авч байна
   const regions = ["All", ...Object.keys(regionNames)];
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] pt-32 pb-20 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
+        <NavAll />
         {/* Header Section */}
         <div className="flex flex-col gap-8 mb-12">
           <div className="flex flex-col md:flex-row justify-between gap-6">
@@ -53,6 +53,13 @@ export default function Geography() {
               <h1 className="text-3xl font-black text-slate-900">
                 Дэлхийн улс орнууд
               </h1>
+              <Link
+                href="/flashcard"
+                className="bg-[#312C85] text-white px-5 py-3 rounded-2xl flex items-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:scale-105 transition-all"
+              >
+                <LayoutGrid size={16} />
+                Флашкарт
+              </Link>
             </div>
 
             <div className="relative">
@@ -69,21 +76,31 @@ export default function Geography() {
             </div>
           </div>
 
-          {/* 3. Тив сонгох хэсэг (Tabs) */}
-          <div className="flex flex-wrap gap-2">
-            {regions.map((reg) => (
-              <button
-                key={reg}
-                onClick={() => setSelectedRegion(reg)}
-                className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
-                  selectedRegion === reg
-                    ? "bg-[#312C85] text-white shadow-lg shadow-indigo-200 scale-105"
-                    : "bg-white text-slate-400 hover:bg-slate-50 border border-slate-100"
-                }`}
-              >
-                {reg === "All" ? "БҮГД" : regionNames[reg]}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-2">
+              {regions.map((reg) => (
+                <button
+                  key={reg}
+                  onClick={() => setSelectedRegion(reg)}
+                  className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+                    selectedRegion === reg
+                      ? "bg-[#312C85] text-white shadow-lg shadow-indigo-200 scale-105"
+                      : "bg-white text-slate-400 hover:bg-slate-50 border border-slate-100"
+                  }`}
+                >
+                  {reg === "All" ? "БҮГД" : regionNames[reg]}
+                </button>
+              ))}
+            </div>
+
+            {(searchText || selectedRegion !== "All") && (
+              <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-right-4">
+                <p className="text-[#312C85] text-xs font-black uppercase tracking-tighter">
+                  Илэрц: <span className="text-lg ml-1">{filtered.length}</span>{" "}
+                  улс олдлоо
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -116,17 +133,34 @@ export default function Geography() {
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-20 text-slate-300 italic">
-              Ийм улс олдсонгүй...
+            <div className="col-span-full flex flex-col items-center justify-center py-32 bg-white rounded-[45px] border border-dashed border-slate-200">
+              <div className="bg-slate-50 p-6 rounded-full mb-4">
+                <Search size={40} className="text-slate-300" />
+              </div>
+              <h3 className="text-xl font-black text-slate-400">
+                Улс олдсонгүй
+              </h3>
+              <p className="text-slate-300 text-sm mt-2">
+                Хайх үг эсвэл шүүлтүүрээ шалгана уу.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchText("");
+                  setSelectedRegion("All");
+                }}
+                className="mt-6 text-[#312C85] font-black text-xs uppercase underline decoration-2 underline-offset-4"
+              >
+                Бүх улсыг харах
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Modal - Хэвээрээ */}
+      {/* Modal */}
       {isOpen && selected && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-          <div className="bg-white max-w-lg w-full rounded-[45px] p-8 relative shadow-2xl my-auto">
+          <div className="bg-white max-w-lg w-full rounded-[45px] p-8 relative shadow-2xl my-auto animate-in zoom-in-95 duration-300">
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-8 right-8 text-slate-400 hover:text-red-500 p-2 bg-slate-50 rounded-full transition-colors"
