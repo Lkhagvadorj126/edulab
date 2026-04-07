@@ -239,7 +239,7 @@ export default function LessonTemplate({ pageId, config }) {
       setNewTest({
         question: item.question,
         options: item.options,
-        answer: item.answer,
+        answer: item.answer.trim(),
       });
     } else if (type === "card") {
       setEditIds((p) => ({ ...p, card: item._id }));
@@ -319,6 +319,7 @@ export default function LessonTemplate({ pageId, config }) {
         {/* --- Teacher Admin Panels --- */}
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            {/* Video Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm text-center">
               <div className="flex justify-between items-center mb-2 text-left">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -351,6 +352,7 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
+            {/* Test Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -388,11 +390,16 @@ export default function LessonTemplate({ pageId, config }) {
                         }}
                       />
                       <button
-                        onClick={() => setNewTest({ ...newTest, answer: opt })}
-                        className={`p-1.5 rounded-md border ${
+                        type="button"
+                        onClick={() => {
+                          if (opt.trim() !== "") {
+                            setNewTest({ ...newTest, answer: opt });
+                          }
+                        }}
+                        className={`p-1.5 rounded-md border transition-all ${
                           newTest.answer === opt && opt !== ""
-                            ? "bg-[#312C85] text-white"
-                            : "bg-white text-slate-300"
+                            ? "bg-[#312C85] text-white border-[#312C85]"
+                            : "bg-white text-slate-300 border-slate-200"
                         }`}
                       >
                         <Check size={14} />
@@ -435,6 +442,7 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
+            {/* Card Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -503,6 +511,7 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
+            {/* Experiment Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -553,6 +562,7 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
+            {/* Theory Panel */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -579,7 +589,7 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <textarea
                     className="w-full p-1.5 rounded border text-[10px] h-12"
-                    placeholder="Агуулга..."
+                    placeholder="Агуулга (Мөр бүр шинэ санаа)..."
                     value={newTheory.content}
                     onChange={(e) =>
                       setNewTheory({ ...newTheory, content: e.target.value })
@@ -606,7 +616,7 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         )}
 
-        {/* --- Үндсэн агуулга --- */}
+        {/* --- Main Content --- */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[75%] space-y-4">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative group">
@@ -693,7 +703,7 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         </div>
 
-        {/* --- Онол Section --- */}
+        {/* --- Theory Section --- */}
         <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden">
           <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85]">
             Онолын Мэдээлэл
@@ -771,7 +781,7 @@ export default function LessonTemplate({ pageId, config }) {
         </section>
       </div>
 
-      {/* --- Video Modal --- */}
+      {/* --- Modals --- */}
       {isModalOpen && (
         <div
           className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
@@ -783,7 +793,7 @@ export default function LessonTemplate({ pageId, config }) {
           >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full border border-white/20 transition-all"
+              className="absolute top-4 right-4 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full transition-all"
             >
               <X size={24} />
             </button>
@@ -797,79 +807,57 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       )}
 
-      {/* --- Confirm Delete Modal --- */}
+      {statusModal.show && (
+        <div className="fixed bottom-10 right-10 z-[3000] animate-in slide-in-from-right-10">
+          <div
+            className={`flex items-center gap-3 p-4 rounded-2xl shadow-2xl border ${statusModal.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}
+          >
+            {statusModal.type === "success" ? (
+              <Check size={20} />
+            ) : (
+              <AlertCircle size={20} />
+            )}
+            <p className="font-bold text-sm">{statusModal.message}</p>
+            <button
+              onClick={closeStatus}
+              className="ml-4 opacity-50 hover:opacity-100"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {confirmModal.show && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={closeConfirm}
           ></div>
-          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-sm w-full text-center">
             <div className="mx-auto w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-6">
               <HelpCircle size={40} strokeWidth={3} />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase">
               Устгах уу?
             </h3>
-            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
-              Та энэ мэдээллийг устгахдаа итгэлтэй байна уу? Устгасан тохиолдолд
-              сэргээх боломжгүй.
+            <p className="text-slate-500 text-sm mb-8">
+              Энэ үйлдлийг буцаах боломжгүй.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={closeConfirm}
-                className="flex-1 py-4 rounded-2xl font-black text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 uppercase text-xs"
+                className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all uppercase text-xs"
               >
                 Болих
               </button>
               <button
                 onClick={executeDelete}
-                className="flex-1 py-4 rounded-2xl font-black text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 uppercase text-xs"
+                className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all uppercase text-xs shadow-lg shadow-red-200"
               >
-                Устгах
+                Тийм, устга
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- Status Message Modal --- */}
-      {statusModal.show && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            onClick={closeStatus}
-          ></div>
-          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
-            <div
-              className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
-                statusModal.type === "success"
-                  ? "bg-green-50 text-green-500"
-                  : "bg-red-50 text-red-500"
-              }`}
-            >
-              {statusModal.type === "success" ? (
-                <Check size={40} strokeWidth={3} />
-              ) : (
-                <AlertCircle size={40} strokeWidth={3} />
-              )}
-            </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">
-              {statusModal.type === "success" ? "Амжилттай" : "Алдаа гарлаа"}
-            </h3>
-            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
-              {statusModal.message}
-            </p>
-            <button
-              onClick={closeStatus}
-              className={`w-full py-4 rounded-2xl font-black text-white transition-all shadow-lg active:scale-95 ${
-                statusModal.type === "success"
-                  ? "bg-green-500 hover:bg-green-600 shadow-green-200"
-                  : "bg-red-500 hover:bg-red-600 shadow-red-200"
-              }`}
-            >
-              ОК
-            </button>
           </div>
         </div>
       )}

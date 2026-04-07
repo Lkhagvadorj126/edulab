@@ -13,6 +13,7 @@ import {
   TestTube2,
   FlaskConical,
   Zap,
+  Focus,
 } from "lucide-react";
 import NavAll from "@/components/NavAll";
 import { useAuth } from "@/context/AuthContext";
@@ -30,7 +31,7 @@ const chemistryPlaceholders = [
   },
   {
     _id: "c2",
-    title: "Диффузи",
+    title: "Диффуз",
     desc: "Бодисын молекулууд нэг орчноос нөгөөд шилжих хөдөлгөөн, түүнд нөлөөлөх хүчин зүйлс.",
     icon: <TestTube2 />,
     isStatic: true,
@@ -38,11 +39,11 @@ const chemistryPlaceholders = [
   },
   {
     _id: "c3",
-    title: "Үелэх систем",
-    desc: "Элементүүдийн шинж чанарын үет өөрчлөлт, металл ба металл биш шинжийн зүй тогтол.",
-    icon: <FlaskConical />,
+    title: "Лазер",
+    desc: "Албадмал цацралын замаар гэрлийг хүчтэй болгох үзэгдэл...",
+    icon: <Focus />, // Zap-ын оронд Focus ашиглаж үзээрэй
     isStatic: true,
-    href: "/chemistryTable",
+    href: "/chemistry/laser",
   },
 ];
 

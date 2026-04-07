@@ -14,6 +14,7 @@ import {
   Zap,
   Leaf,
   LayoutGrid,
+  Activity,
 } from "lucide-react";
 import NavAll from "@/components/NavAll";
 import { useAuth } from "@/context/AuthContext";
@@ -23,24 +24,24 @@ import NavbarBio from "./NavbarBio";
 const biologyPlaceholders = [
   {
     _id: "b1",
-    title: "Эсийн бүтэц",
-    desc: "Амьд биеийн үндсэн нэгж эсийн онол ба эрхтэнцэрүүд, тэдгээрийн үүрэг.",
-    icon: <Dna />,
+    title: "Бие махбодын зохицуулга",
+    desc: "Дотоод орчны тогтмол байдал (гомеостаз) ба мэдрэл, шингэний зохицуулгын механизм.",
+    icon: <Activity />, // Зохицуулга, тэнцвэрт байдлыг Activity эсвэл Shield икон илүү сайн илэрхийлнэ
     isStatic: true,
-    href: "/biology/es",
+    href: "/biology/es", // Сэдэвтэйгээ нийцүүлэн замыг шинэчлэв
   },
   {
     _id: "b2",
-    title: "Фотосинтез",
-    desc: "Ургамал нарны гэрлийг ашиглан шим тэжээл үйлдвэрлэх процесс, хлоропласт.",
-    icon: <Leaf />,
+    title: "Рекомбинант инсулин",
+    desc: "Генетик инженерчлэлийн аргаар бактерийн эсэд хүний инсулин үйлдвэрлэх биотехнологийн процесс.",
+    icon: <Dna />, // Инсулины сэдэвт ДНХ (Dna) эсвэл Тариур (Syringe) икон илүү тохиромжтой
     isStatic: true,
-    href: "/biology/urgamal",
+    href: "/biology/urgamal", // Өмнөх /urgamal замыг шинэ сэдэвтэй нь нийцүүлж өөрчлөв
   },
   {
     _id: "b3",
-    title: "Амьтны ангилал",
-    desc: "Амьд биеийг гадаад, дотоод бүтэц болон гарал үүслээр нь бүлэглэх зүй тогтол.",
+    title: "Ялгаруулах тогтолцоо",
+    desc: "Хүний биеэс бодисын солилцооны эцсийн бүтээгдэхүүнийг гадагшлуулах эрхтнүүдийн бүтэц, үйл ажиллагаа болон бөөрний үүрэг.",
     icon: <LayoutGrid />,
     isStatic: true,
     href: "/biology/angilal",

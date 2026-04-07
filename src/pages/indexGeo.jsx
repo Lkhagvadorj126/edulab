@@ -23,16 +23,16 @@ import NavbarGeo from "@/components/NavbarGeo";
 const geoPlaceholders = [
   {
     _id: "g1",
-    title: "Эх газар ба Далай",
-    desc: "Дэлхийн царцдас, плитийн хөдөлгөөн, далайн ёроолын бүтэц болон рельеф.",
+    title: "Дэлхийн амьдралын тархалт",
+    desc: "Шим мандал дахь амьд биесийн тархалт, байгалийн бүс бүслүүр ба экосистемийн онцлог.",
     icon: <Map />,
     isStatic: true,
     href: "/geography/eh_gazar",
   },
   {
     _id: "g2",
-    title: "Уур амьсгал",
-    desc: "Агаар мандлын бүтэц, салхи, даралт, дэлхийн уур амьсгалын гол бүсүүд.",
+    title: "Усан мандал",
+    desc: "Дэлхийн усны нөөц, далай тэнгис, гол мөрний систем ба усны тасралтгүй эргэлт.",
     icon: <CloudSun />,
     isStatic: true,
     href: "/geography/uur_amisgal",

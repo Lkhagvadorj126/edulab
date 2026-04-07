@@ -1,111 +1,30 @@
 // src/constants/lessonsData.js
 
 export const LESSONS_CONFIG = {
-  molecular: {
-    page: {
-      title: "Молекулын туйлшрал",
-      subtitle: "Физикийн цахим хичээл",
-      videoUrl: "https://www.youtube.com/embed/PVL24HAesnc",
-    },
-    slider: [
-      {
-        image: "https://physic-dmts.vercel.app/laser1.png",
-        alt: "Molecular 1",
-      },
-      {
-        image: "https://physic-dmts.vercel.app/laser2.png",
-        alt: "Molecular 2",
-      },
-    ],
-    experiments: [
-      {
-        title: "Молекулын туйлшрал",
-        href: "https://phet.colorado.edu/sims/html/molecule-polarity/latest/molecule-polarity_all.html",
-        img: "https://phet.colorado.edu/sims/html/molecule-polarity/latest/molecule-polarity-600.png",
-      },
-      {
-        title: "Молекулын хэлбэрүүд",
-        href: "https://phet.colorado.edu/sims/html/molecule-shapes/latest/molecule-shapes_all.html",
-        img: "https://phet.colorado.edu/sims/html/molecule-shapes/latest/molecule-shapes-600.png",
-      },
-      {
-        title: "Атомын харилцан үйлчлэл",
-        href: "https://phet.colorado.edu/sims/html/atomic-interactions/latest/atomic-interactions_all.html",
-        img: "https://phet.colorado.edu/sims/html/atomic-interactions/latest/atomic-interactions-600.png",
-      },
-    ],
-    theory: [
-      {
-        title: "Молекулын туйлшрал",
-        content: [
-          "Гадаад цахилгаан орны нөлөөгөөр молекул дахь цэнэгийн төвүүд шилжиж, диполь үүсэх үзэгдэл.",
-          "Электронт туйлшрал: Электрон үүлний шилжилтээр үүснэ.",
-          "Ионт туйлшрал: Кристалл торон дахь ионуудын шилжилтээр үүснэ.",
-        ],
-      },
-      {
-        title: "Цахилгаан диполь момент",
-        content: [
-          "Молекулын туйлшралыг тодорхойлох вектор хэмжигдэхүүн.",
-          "Томьёо: p = q · l (q — цэнэг, l — цэнэг хоорондын зай).",
-          "Нэгж: Кл·м (Кулон·метр) эсвэл Дебай (D).",
-        ],
-      },
-      {
-        title: "Туйлтай ба Туйлгүй молекул",
-        content: [
-          "Туйлтай: Цэнэгийн төвүүд нь давхцдаггүй молекул (Ус H₂O, Аммиак NH₃).",
-          "Туйлгүй: Цэнэгийн төвүүд нь давхцдаг молекул (O₂, N₂, CH₄).",
-        ],
-      },
-      {
-        title: "Диэлектрик нэвтрүүлэлт",
-        content: [
-          "Орчин дахь цахилгаан харилцан үйлчлэлийн хүч вакуумынхаас хэд дахин сулрахыг заана.",
-          "Томьёо: ε = F₀ / F.",
-        ],
-      },
-      {
-        title: "Конденсатор ба Диэлектрик",
-        content: [
-          "Ялтсуудын хооронд диэлектрик оруулахад багтаамж ε дахин нэмэгдэнэ.",
-          "Томьөо: C = ε · C₀ = ε (ε₀ · S / d).",
-        ],
-      },
-      {
-        title: "Химийн холбооны туйлшрал",
-        content: [
-          "Электроны сөрөг чанарын зөрүү их байх тусам холбоо илүү туйлтай байна.",
-          "Ковалентын туйлтай холбоо: Электрон үүл нэг атом руугаа илүү шилжсэн холбоо.",
-        ],
-      },
-      {
-        title: "Диэлектрик доторх орон",
-        content: [
-          "Диэлектрик туйлшрах үед түүний дотор эсрэг чиглэсэн цахилгаан орон үүснэ.",
-          "Үр дүнд нь нийлбэр цахилгаан орны хүчлэг буурдаг: E = E₀ / ε.",
-        ],
-      },
-    ],
-  },
   density: {
     page: {
-      title: "Нягтрал",
-      subtitle: "Физикийн цахим хичээл",
+      title: "Нягтрал ба Архимедийн хүч",
+      subtitle: "Бодисын шинж чанар, шингэн ба хийн даралт",
       videoUrl: "https://www.youtube.com/embed/ycCDX3WIqpc",
     },
     slider: [
-      { image: "https://physic-dmts.vercel.app/pre1.png", alt: "Density 1" },
-      { image: "https://physic-dmts.vercel.app/pre2.png", alt: "Density 2" },
+      {
+        image: "https://physic-dmts.vercel.app/pre1.png",
+        alt: "Density and Floating Concept",
+      },
+      {
+        image: "https://physic-dmts.vercel.app/pre2.png",
+        alt: "Archimedes Principle Experiment",
+      },
     ],
     experiments: [
       {
-        title: "Нягтрал (Үндсэн)",
+        title: "Нягтралын лаборатори",
         href: "https://phet.colorado.edu/sims/html/density/latest/density_all.html",
-        img: "https://phet.colorado.edu/sims/html/density/latest/density-420.png",
+        img: "https://phet.colorado.edu/sims/html/density/latest/density-600.png",
       },
       {
-        title: "Буянтын хүч",
+        title: "Буянтын хүч (Хөвөх)",
         href: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy_all.html",
         img: "https://phet.colorado.edu/sims/html/buoyancy/latest/buoyancy-600.png",
       },
@@ -117,50 +36,54 @@ export const LESSONS_CONFIG = {
     ],
     theory: [
       {
-        title: " Нягтрал гэж юу вэ?",
+        title: "Нягтрал гэж юу вэ?",
         content: [
           "Бодисын нэгж эзлэхүүнд ногдох массын хэмжээг нягтрал гэнэ.",
-          "Энэ нь тухайн бодисын молекулууд хэр зэрэг 'шагшуу' эсвэл 'сийрэг' байрласныг илтгэнэ.",
+          "Энэ нь молекулуудын байрлал хэр зэрэг 'шагшуу' эсвэл 'сийрэг' байгааг илтгэнэ.",
         ],
       },
       {
         title: "Үндсэн томьёо",
         content: [
-          "Нягтралыг тодорхойлохдоо массыг эзлэхүүнд хуваана: ρ = m / V",
-          "ρ (ро) - нягтрал, m - масс, V - эзлэхүүн.",
+          "Нягтралыг тодорхойлохдоо массыг эзлэхүүнд хуваана: ρ = m / V.",
+          "ρ (ро) - нягтрал, m - масс (кг), V - эзлэхүүн (м³).",
         ],
       },
       {
-        title: " Хэмжих нэгж",
+        title: "Хэмжих нэгж",
         content: [
           "Олон улсын СИ систем дэх үндсэн нэгж нь кг/м³ юм.",
-          "Лабораторийн нөхцөлд ихэвчлэн г/см³ нэгжийг ашигладаг (1 г/см³ = 1000 кг/м³).",
+          "1 г/см³ нягтрал нь 1000 кг/м³-тэй тэнцүү байдаг.",
         ],
       },
       {
-        title: " Бодисын төлөв ба Нягтрал",
+        title: "Бодисын төлөв ба Нягтрал",
         content: [
-          "Ихэнх бодисын нягтрал хатуу төлөвт хамгийн их, хийн төлөвт хамгийн бага байдаг.",
-          "Анхаар: Ус нь 4°C-т хамгийн их нягтралтай байдаг тул мөс усан дээр хөвдөг.",
+          "Хатуу төлөвт нягтрал их, хийн төлөвт хамгийн бага байна.",
+          "Ус 4°C-т хамгийн их нягтралтай (1000 кг/м³) байдаг.",
         ],
       },
       {
         title: "Хөвөх ба живэх нөхцөл",
         content: [
-          "Биеийн нягтрал шингэнийхээс бага бол хөвнө (ρ_бие < ρ_шингэн).",
-          "Биеийн нягтрал их бол живнэ (ρ_бие > ρ_шингэн).",
+          "ρ_бие < ρ_шингэн: Бие хөвнө (жишээ нь: мод усан дээр).",
+          "ρ_бие > ρ_шингэн: Бие живнэ (жишээ нь: төмөр усанд).",
+          "ρ_бие = ρ_шингэн: Бие шингэн дотор хаана ч тогтоно.",
         ],
       },
       {
-        title: " Архимедийн хүч",
+        title: "Архимедийн хүч",
         content: [
-          "Шингэн дотор байгаа биед дэшүүлэх хүч үйлчилдэг. Үүнийг Архимедийн хүч гэнэ.",
-          "Томьёо: Fₐ = ρ_ш * g * V_ш",
+          "Шингэн эсвэл хий дотор байгаа биед үйлчлэх дээш түлхэх хүч.",
+          "Томьёо: Fₐ = ρ_ш * g * V_ш (ρ_ш - шингэний нягтрал, V_ш - живсэн хэсгийн эзлэхүүн).",
         ],
       },
       {
         title: "Температурын нөлөө",
-        content: ["Бодисыг халаахад эзлэхүүн нь тэлж, нягтрал нь багасдаг."],
+        content: [
+          "Бие халахад эзлэхүүн тэлж, нягтрал нь багасдаг.",
+          "Энэ зарчмаар агаарын бөмбөлөг дээшээ хөөрдөг.",
+        ],
       },
     ],
   },
@@ -239,106 +162,85 @@ export const LESSONS_CONFIG = {
   laser: {
     page: {
       title: "Лазер",
-      subtitle: "Физикийн цахим хичээл",
+      subtitle: "Квант физик ба Оптик",
+      // Видео хичээл: Лазерын ажиллах зарчмыг тайлбарласан илүү чанартай бичлэгээр сольж болно
       videoUrl: "https://www.youtube.com/embed/y3SBSbsdiYg",
     },
     slider: [
       {
-        image: "https://physic-dmts.vercel.app/hudulguun1.png",
-        alt: "Laser 1",
+        image: "https://physic-dmts.vercel.app/laser_structure.png", // Боломжтой бол Лазерын бүтцийн зураг
+        alt: "Лазерын бүтэц",
       },
       {
-        image: "https://physic-dmts.vercel.app/hudulguun2.png",
-        alt: "Laser 2",
+        image: "https://physic-dmts.vercel.app/laser_types.png",
+        alt: "Лазерын төрлүүд",
       },
     ],
     experiments: [
       {
-        title: "Гэрлийн хугарал",
+        title: "Лазер ба Гэрлийн хугарал",
         href: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html",
         img: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light-600.png",
       },
       {
-        title: "Квантын үзэгдэл",
+        title: "Лазерын лаборатори (Квант)",
+        href: "https://phet.colorado.edu/sims/html/lasers/latest/lasers_all.html",
+        img: "https://phet.colorado.edu/sims/html/isotopes-and-atomic-mass/latest/isotopes-and-atomic-mass-420.png", // PhET дээрх Лазерын тусгай лаборатори
+      },
+      {
+        title: "Фото эффект ба Лазер",
         href: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect_all.html",
-        img: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect-600.png",
+        img: "https://phet.colorado.edu/sims/photoelectric/photoelectric-420.png",
       },
     ],
     theory: [
       {
-        title: "Лазер гэж юу вэ?",
+        title: "Лазерын үндсэн ойлголт",
         content: [
-          "Light Amplification by Stimulated Emission of Radiation буюу албадмал цацаргалтаар гэрлийг хүчжүүлэх гэсэн утгатай.",
-        ],
-      },
-      {
-        title: "Үүсэл",
-        content: ["Анхны ажилладаг лазерыг 1960 онд Теодор Майман бүтээсэн."],
-      },
-      {
-        title: "Шинж чанарууд",
-        content: [
-          "Монохромат: Нэг өнгө, нэг долгионы уртаас тогтоно.",
-          "Когерент: Долгионууд ижил фазтай, синхрон хөдөлдөг.",
-          "Чиглэлт: Маш бага сарнилттай, нарийн багц хэлбэртэй.",
+          "LASER нь 'Light Amplification by Stimulated Emission of Radiation' буюу албадмал цацаргалтаар гэрлийг хүчжүүлэх гэсэн үгсийн товчлол юм.",
+          "Энгийн гэрэл бүх зүгт сарнидаг бол лазер нь маш нарийн, өндөр энергийн нягтралтай багц гэрэл үүсгэдэгээрээ онцлог.",
         ],
       },
       {
         title: "Албадмал цацаргалт",
         content: [
-          "Фотоны нөлөөгөөр өдөөгдсөн электрон доод түвшинд шилжихдээ ижил энергитэй фотон гаргах процесс.",
-        ],
-      },
-    ],
-  },
-  measurement: {
-    page: {
-      title: "Квантын хэмжилт",
-      subtitle: "Физикийн цахим хичээл",
-      videoUrl: "https://www.youtube.com/embed/5eW6u_kS9r4",
-    },
-    slider: [
-      {
-        image: "https://physic-dmts.vercel.app/laser1.png",
-        alt: "Molecular 1",
-      },
-      {
-        image: "https://physic-dmts.vercel.app/laser2.png",
-        alt: "Molecular 2",
-      },
-    ],
-    experiments: [
-      {
-        title: "Нэгж шилжүүлэх",
-        href: "https://phet.colorado.edu/sims/html/unit-rates/latest/unit-rates_all.html",
-        img: "https://phet.colorado.edu/sims/html/unit-rates/latest/unit-rates-600.png",
-      },
-      {
-        title: "Хэмжилтийн нарийвчлал",
-        href: "https://phet.colorado.edu/sims/html/estimation/latest/estimation_all.html",
-        img: "https://phet.colorado.edu/sims/html/estimation/latest/estimation-600.png",
-      },
-    ],
-    theory: [
-      {
-        title: " Хэмжигдэхүүн",
-        content: [
-          "Биеийн болон үзэгдлийн шинж чанарыг тоогоор илэрхийлэхийг хэлнэ.",
-          "Үндсэн хэмжигдэхүүн: Урт (l), Хугацаа (t), Масс (m), Гүйдэл (I).",
+          "Өдөөгдсөн төлөвт байгаа электрон гадны фотоны нөлөөгөөр үндсэн төлөвт шилжихдээ ижил энерги, фаз, чиглэлтэй хоёр дахь фотоныг гаргах үзэгдэл юм.",
+          "Энэ процесс нь гэрлийг хүчжүүлэх буюу ижил шинж чанартай олон тэрбум фотоныг нэгэн зэрэг үүсгэх боломжийг олгодог.",
         ],
       },
       {
-        title: "Хэмжилтийн алдаа",
+        title: "Популяцийн урвуу байрлал",
         content: [
-          "Үнэмлэхүй алдаа (Δa): Хэмжсэн утга ба бодит утгын зөрүү.",
-          "Харьцангуй алдаа (ε): Үнэмлэхүй алдааг бодит утгад харьцуулсан хувь.",
+          "Лазер үүсэхийн тулд идэвхтэй орчин дахь өдөөгдсөн төлөвт байгаа электроны тоо үндсэн төлөвт байгаа электроноос олон байх ёстой.",
+          "Үүнийг популяцийн урвуу байрлал гэх бөгөөд үүний тулд гаднаас энерги өгч электронуудыг өдөөдөг.",
         ],
       },
       {
-        title: "Багажийн нарийвчлал",
+        title: "Лазер гэрлийн гол шинж чанарууд",
         content: [
-          "Хуваарийн утга (C): Хоёр зураасны хоорондох хамгийн бага зай.",
-          "Багажийн алдаа: Ихэвчлэн хуваарийн утгын хагастай тэнцүү (Δa = C/2).",
+          "Монохромат чанар нь зөвхөн нэг долгионы урттай буюу маш нарийн нэг өнгөтэй байхыг хэлнэ.",
+          "Когерент чанар нь бүх гэрлийн долгионууд хугацаа болон орон зайн хувьд синхрон хөдлөхийг, нарийн чиглэлт чанар нь маш бага сарнилттайгаар шулуун тарахыг хэлнэ.",
+        ],
+      },
+      {
+        title: "Лазерын үндсэн бүтэц",
+        content: [
+          "Лазер нь лазер үүсгэх идэвхтэй орчин, электронуудыг өдөөх энергийн үүсгүүр, болон гэрлийг ойлгож хүчжүүлэх оптик резонатор гэсэн хэсгээс бүрдэнэ.",
+          "Резонатор нь хоёр талдаа байрлах толиноос бүрдэх бөгөөд нэг нь бүтэн ойлгодог, нөгөө нь гэрлийг гадагш гаргахын тулд хагас ойлгодог байна.",
+        ],
+      },
+      {
+        title: "Төрлүүд ба практик хэрэглээ",
+        content: [
+          "Орчин үед хийн, хатуу биеийн, шингэн болон хагас дамжуулагч лазерын төрлүүдийг шинжлэх ухаан, техникт өргөн ашиглаж байна.",
+          "Хэрэглээний хувьд мэдээлэл дамжуулах шилэн кабель, мэс засал, металл зүсэх болон барилгын тэгш хэм тогтооход голчлон ашигладаг.",
+        ],
+      },
+      {
+        title: "Аюулгүй ажиллагааны дүрэм",
+        content: [
+          "Лазерын туяа нь нүдний торлог бүрхэвчийг маш богино хугацаанд гэмтээх аюултай тул тусгай хамгаалалтын шил заавал зүүх шаардлагатай.",
+          "Хүчин чадлаас хамаарч ангилалд хуваагддаг бөгөөд өндөр зэрэглэлийн лазер нь арьс түлэх болон гал гаргах эрсдэлтэй байдаг тул сонор сэрэмжтэй ажиллах ёстой.",
         ],
       },
     ],

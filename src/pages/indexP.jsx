@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
   Zap,
+  ThermometerSnowflake,
 } from "lucide-react";
 import NavAll from "../components/NavAll";
 import { useAuth } from "@/context/AuthContext";
@@ -22,9 +23,9 @@ import Navbar from "@/components/Navbar";
 const mainTopics = [
   {
     _id: "mechanics-001",
-    title: "Хөдөлгөөн",
-    desc: "Биетүүдийн байрлал хугацааны явцад өөрчлөгдөх зүй тогтол, хурд ба хурдатгал.",
-    icon: <MoveRight />,
+    title: "Уурших ба хайлах",
+    desc: "Бодисын төлөв шилжих үзэгдэл: талст бие хайлах, шингэн уурших процесс ба энерги шингээлт.",
+    icon: <ThermometerSnowflake />, // Эсвэл <FlameKindle />
     href: "/physics/motion",
     iconBg: "bg-[#312C85]/5",
     isStatic: true,
@@ -40,8 +41,8 @@ const mainTopics = [
   },
   {
     _id: "heat-001",
-    title: "Дулаан",
-    desc: "Энергийн шилжилт ба температурын өөрчлөлт, термодинамикийн хууль.",
+    title: "Орбитын хөдөлгөөн",
+    desc: "Гариг эрхсийн хөдөлгөөний Кеплерийн хуулиуд, хиймэл дагуул ба сансрын биетүүдийн тойрог зам дахь хөдөлгөөний зүй тогтол.",
     icon: <Thermometer />,
     href: "/physics/heat",
     iconBg: "bg-[#312C85]/5",

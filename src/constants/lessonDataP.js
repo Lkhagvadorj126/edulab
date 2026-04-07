@@ -3,84 +3,84 @@
 export const PHYSICS_CONFIG = {
   motion: {
     page: {
-      title: "Хөдөлгөөн",
-      subtitle: "Механик хөдөлгөөний үндэс",
-      videoUrl: "https://www.youtube.com/embed/fTht9OInTms",
+      title: "Уурших ба хайлах",
+      subtitle: "Бодисын төлөвийн өөрчлөлт, дулааны үзэгдэл",
+      videoUrl: "https://www.youtube.com/embed/G6jWl_vAAsU", // Дулааны үзэгдлийн видео
     },
     slider: [
       {
-        image: "https://physic-dmts.vercel.app/hudulguun1.png",
-        alt: "Motion 1",
-      },
-      {
-        image: "https://physic-dmts.vercel.app/hudulguun2.png",
-        alt: "Motion 2",
+        image: "https://physic-dmts.vercel.app/pre1.png", // Дулааны сэдэвтэй зураг
+        alt: "Heat and States of Matter",
       },
     ],
     experiments: [
       {
-        title: "Хөдөлгөөний график",
-        href: "https://phet.colorado.edu/sims/html/calculating-slope/latest/calculating-slope_all.html",
-        img: "https://phet.colorado.edu/sims/html/calculating-slope/latest/calculating-slope-600.png",
+        title: "Бодисын төлөв",
+        href: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_all.html",
+        img: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics-600.png",
       },
       {
-        title: "Хүч ба Хөдөлгөөн",
-        href: "https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics_all.html",
-        img: "https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics-600.png",
+        title: "Дулааны энерги",
+        href: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_all.html",
+        img: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes-600.png",
       },
       {
-        title: "Төвд тэмүүлэх хүч",
-        href: "https://phet.colorado.edu/sims/html/forces-and-motion/latest/forces-and-motion_all.html",
-        img: "https://phet.colorado.edu/sims/html/forces-and-motion/latest/forces-and-motion-600.png",
+        title: "Хийн шинж чанар",
+        href: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties_all.html",
+        img: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties-600.png",
       },
     ],
     theory: [
       {
-        title: "Механик хөдөлгөөн",
+        title: "Бодисын төлөв шилжих",
         content: [
-          "Хугацааны явцад биеийн байрлал бусад биеттэй харьцуулахад өөрчлөгдөх үзэгдэл.",
-          "Тооллын бие: Хөдөлгөөнийг харьцуулан үзэж буй бие.",
+          "Бодис нэг төлөвөөс нөгөө төлөвт шилжих үзэгдлийг төлөвийн шилжилт гэнэ.",
+          "Хайлах, уурших, царцах, конденсацлах зэрэг нь үүнд хамаарна.",
         ],
       },
       {
-        title: "Траектори ба Зам",
+        title: "Хайлах үзэгдэл",
         content: [
-          "Траектори: Биеийн хөдөлгөөний явцад үлдээх мөр.",
-          "Зам (s): Траекторийн урт. Скаляр хэмжигдэхүүн.",
+          "Бодис хатуу төлөвөөс шингэн төлөвт шилжих процесс.",
+          "Хайлах үед бодис гаднаас дулаан шингээдэг.",
+          "Томьёо: Q = λ * m. λ - хайлахын хувийн дулаан.",
         ],
       },
       {
-        title: "Шилжилт",
+        title: "Уурших үзэгдэл",
         content: [
-          "Хөдөлгөөний эхлэл ба төгсгөлийн цэгийг холбосон чиглэлт хэрчим.",
-          "Замнаас ялгаатай нь вектор хэмжигдэхүүн юм.",
+          "Бодис шингэн төлөвөөс хийн төлөвт шилжих процесс.",
+          "Ууршилт нь шингэний гадаргуу дээр ямар ч температурт явагдана.",
+          "Томьёо: Q = L * m. L - ууршихын хувийн дулаан.",
         ],
       },
       {
-        title: "Хурд",
+        title: "Буцлах үзэгдэл",
         content: [
-          "Нэгж хугацаанд туулсан замыг хурд гэнэ.",
-          "Томьёо: v = s / t. Нэгж: м/с.",
+          "Шингэний бүх эзэлхүүн дотор явагдах эрчимтэй ууршилт.",
+          "Тодорхой тогтмол температурт (буцлах температур) явагддаг.",
         ],
       },
       {
-        title: "Хурдатгал",
+        title: "Дулааны тоо хэмжээ",
         content: [
-          "Хурд хугацааны явцад өөрчлөгдөх хурдацыг хэлнэ.",
-          "Томьёо: a = (v - v₀) / t. Нэгж: м/с².",
+          "Биеийг халаах эсвэл хөргөхөд авсан буюу алдсан энерги.",
+          "Томьёо: Q = c * m * Δt.",
+          "c - хувийн дулаан багтаамж.",
         ],
       },
       {
-        title: "Жигд хөдөлгөөн",
+        title: "Дотоод энерги",
         content: [
-          "Ижил хугацаанд ижил зам туулах хөдөлгөөн.",
-          "Хурд тогтмол байдаг (v = const).",
+          "Биеийг бүрдүүлэгч молекулуудын хөдөлгөөний ба харилцан үйлчлэлийн энерги.",
+          "Температур ихсэхэд молекулуудын хөдөлгөөн эрчимжиж, дотоод энерги нэмэгдэнэ.",
         ],
       },
       {
-        title: "Ньютоны 1-р хууль",
+        title: "Энерги хадгалагдах хууль",
         content: [
-          "Биед гадны хүч үйлчлэхгүй бол тайван байсан бие тайван, хөдөлж байсан нь жигд шулуун хөдөлгөөндөө байна.",
+          "Дулааны тэнцвэрийн үед: Авсан дулаан = Алдсан дулаан (Q_авсан = Q_алдсан).",
+          "Энерги устахгүй, шинээр үүсэхгүй, зөвхөн нэг хэлбэрээс нөгөөд шилжинэ.",
         ],
       },
     ],
@@ -166,296 +166,82 @@ export const PHYSICS_CONFIG = {
   },
   heat: {
     page: {
-      title: "Дулаан",
-      subtitle: "Термодинамикийн үндэс",
-      videoUrl: "https://www.youtube.com/embed/G6jWl_vAAsU",
-    },
-    slider: [
-      { image: "https://physic-dmts.vercel.app/pre1.png", alt: "Heat 1" },
-    ],
-    experiments: [
-      {
-        title: "Дулааны энерги",
-        href: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_all.html",
-        img: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes-600.png",
-      },
-      {
-        title: "Бодисын төлөв",
-        href: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_all.html",
-        img: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics-600.png",
-      },
-      {
-        title: "Хийн хууль",
-        href: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties_all.html",
-        img: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties-600.png",
-      },
-    ],
-    theory: [
-      {
-        title: "Дотоод энерги",
-        content: [
-          "Биеийг бүрдүүлэгч жижиг хэсгүүдийн хөдөлгөөний ба харилцан үйлчлэлийн энерги.",
-        ],
-      },
-      {
-        title: "Дулаан дамжуулал",
-        content: [
-          "Кондукци: Хатуу биед (мөргөлдөх замаар).",
-          "Конвекци: Шингэн ба хийд (урсгалаар).",
-          "Цацраг: Вакуумд (долгионоор).",
-        ],
-      },
-      {
-        title: "Дулааны тоо хэмжээ",
-        content: [
-          "Биеийн температур өөрчлөгдөхөд авсан буюу алдсан энерги.",
-          "Томьёо: Q = c * m * Δt.",
-        ],
-      },
-      {
-        title: "Хайлах ба Уурших",
-        content: ["Хайлах дулаан: Q = λ * m.", "Уурших дулаан: Q = L * m."],
-      },
-      {
-        title: "Хувийн дулаан багтаамж",
-        content: [
-          "1 кг бодисыг 1 градусаар халаахад шаардлагатай энерги (c).",
-          "Усны хувийн дулаан багтаамж хамгийн их (4200 Ж/кг*К).",
-        ],
-      },
-      {
-        title: "Термодинамикийн 1-р хууль",
-        content: [
-          "Системд өгсөн дулаан нь түүний дотоод энергийг нэмэгдүүлэх ба ажил хийхэд зарцуулагдана: Q = ΔU + A.",
-        ],
-      },
-      {
-        title: "Дулааны тэнцвэр",
-        content: [
-          "Хоёр биеийн температур ижил болох хүртэл энерги солилцох процесс.",
-        ],
-      },
-    ],
-  },
-  quantum: {
-    page: {
-      title: "Квантын үзэгдэл",
-      subtitle: "Атом ба Цөмийн физик",
-      videoUrl: "https://www.youtube.com/embed/5eW6u_kS9r4",
-    },
-    slider: [
-      { image: "https://physic-dmts.vercel.app/laser1.png", alt: "Quantum 1" },
-    ],
-    experiments: [
-      {
-        title: "Фотоэффект",
-        href: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect_all.html",
-        img: "https://phet.colorado.edu/sims/html/photoelectric-effect/latest/photoelectric-effect-600.png",
-      },
-      {
-        title: "Резерфордын сарнилт",
-        href: "https://phet.colorado.edu/sims/html/rutherford-scattering/latest/rutherford-scattering_all.html",
-        img: "https://phet.colorado.edu/sims/html/rutherford-scattering/latest/rutherford-scattering-600.png",
-      },
-      {
-        title: "Атомын загвар",
-        href: "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom_all.html",
-        img: "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom-600.png",
-      },
-    ],
-    theory: [
-      {
-        title: "Квант онол",
-        content: [
-          "Энерги тасралтгүй биш, харин тодорхой хэсэг буюу порцоор цацардаг (E = h*ν).",
-        ],
-      },
-      {
-        title: "Фотоэффект",
-        content: [
-          "Гэрлийн нөлөөгөөр бодисоос электрон сугаран гарах үзэгдэл.",
-          "Эйнштейний томьёо: hν = A + E_k.",
-        ],
-      },
-      {
-        title: "Гэрлийн хоёрдмол шинж",
-        content: [
-          "Гэрэл нь долгион (интерференц) ба бөөм (фотоэффект) шинжийг зэрэг агуулдаг.",
-        ],
-      },
-      {
-        title: "Атомын бүтэц",
-        content: [
-          "Төвдөө эерэг цэнэгтэй цөм, түүнийг тойрон электронууд эргэлдэнэ.",
-        ],
-      },
-      {
-        title: "Цөмийн хүч",
-        content: [
-          "Цөм доторх протон ба нейтронуудыг барьж байдаг маш хүчтэй, богино зайн үйлчлэлтэй хүч.",
-        ],
-      },
-      {
-        title: "Радиоидэвхт чанар",
-        content: [
-          "Тогтворгүй цөмүүд аяндаа задарч цацраг гаргах үзэгдэл (Альфа, Бета, Гамма).",
-        ],
-      },
-      {
-        title: "Цөмийн нэгдэх ба задрах",
-        content: [
-          "Задрах: Хүнд цөм хуваагдах (АЦС).",
-          "Нэгдэх: Хөнгөн цөмүүд нийлэх (Нарны энерги).",
-        ],
-      },
-    ],
-  },
-  light: {
-    page: {
-      title: "Гэрэл ба Оптик",
-      subtitle: "Цахилгаан соронзон долгион",
-      videoUrl: "https://www.youtube.com/embed/y3SBSbsdiYg",
+      title: "Орбитын хөдөлгөөн",
+      subtitle: "Тэнгэрийн механик ба Гравитаци",
+      videoUrl: "https://www.youtube.com/embed/unWGVH9N_pY", // Орбитын хөдөлгөөний тайлбар видео
     },
     slider: [
       {
-        image: "https://physic-dmts.vercel.app/hudulguun1.png",
-        alt: "Light 1",
+        image: "https://physic-dmts.vercel.app/orbit1.png",
+        alt: "Planetary Orbits",
+      },
+      {
+        image: "https://physic-dmts.vercel.app/orbit2.png",
+        alt: "Satellite Motion",
       },
     ],
     experiments: [
       {
-        title: "Гэрлийн хугарал",
-        href: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html",
-        img: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light-600.png",
+        title: "Орбитын лаборатори",
+        href: "https://phet.colorado.edu/sims/html/gravity-and-orbits/latest/gravity-and-orbits_all.html",
+        img: "https://phet.colorado.edu/sims/html/gravity-and-orbits/latest/gravity-and-orbits-600.png",
       },
       {
-        title: "Линз",
-        href: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_all.html",
-        img: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics-600.png",
+        title: "Гравитацийн хүч",
+        href: "https://phet.colorado.edu/sims/html/gravity-force-lab-basics/latest/gravity-force-lab-basics_all.html",
+        img: "https://phet.colorado.edu/sims/html/gravity-force-lab-basics/latest/gravity-force-lab-basics-600.png",
       },
       {
-        title: "Өнгө холилдох",
-        href: "https://phet.colorado.edu/sims/html/color-vision/latest/color-vision_all.html",
-        img: "https://phet.colorado.edu/sims/html/color-vision/latest/color-vision-600.png",
-      },
-    ],
-    theory: [
-      {
-        title: "Гэрлийн ойлт",
-        content: [
-          "Гэрэл саад дээр тусаад буцах үзэгдэл.",
-          "Ойлтын хууль: Туссан өнцөг ойсон өнцөгтэй тэнцүү.",
-        ],
-      },
-      {
-        title: "Гэрлийн хугарал",
-        content: [
-          "Нэг орчноос нөгөөд шилжихэд гэрлийн чиглэл өөрчлөгдөх үзэгдэл.",
-          "Хугарлын илтгэгч: n = c / v.",
-        ],
-      },
-      {
-        title: "Бүрэн дотоод ойлт",
-        content: [
-          "Гэрэл нягт ихтэй орчноос нягт багатай руу орохдоо бүрэн ойх үзэгдэл (Шилэн кабель).",
-        ],
-      },
-      {
-        title: "Линз",
-        content: [
-          "Цуглуулагч ба Сарниулагч линз.",
-          "Линзний томьёо: 1/F = 1/d + 1/f.",
-        ],
-      },
-      {
-        title: "Дисперси",
-        content: ["Цагаан гэрэл долоон өнгө болон задрах үзэгдэл (Солонго)."],
-      },
-      {
-        title: "Интерференц ба Дифракци",
-        content: [
-          "Гэрлийн долгион шинжийг батлах үзэгдлүүд.",
-          "Долгионууд давхцах ба саадыг тойрч гарах.",
-        ],
-      },
-      {
-        title: "Гэрлийн хурд",
-        content: [
-          "Вакуум дахь хурд c = 3*10⁸ м/с.",
-          "Ертөнцийн хамгийн дээд хурд.",
-        ],
-      },
-    ],
-  },
-  energy: {
-    page: {
-      title: "Цахилгаан ба Соронз",
-      subtitle: "Цахилгаан хэлхээ, соронзон орон",
-      videoUrl: "https://www.youtube.com/embed/PVL24HAesnc",
-    },
-    slider: [
-      { image: "https://physic-dmts.vercel.app/laser1.png", alt: "Energy 1" },
-    ],
-    experiments: [
-      {
-        title: "Цахилгаан хэлхээ",
-        href: "https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab_all.html",
-        img: "https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab-600.png",
-      },
-      {
-        title: "Омын хууль",
-        href: "https://phet.colorado.edu/sims/html/ohms-law/latest/ohms-law_all.html",
-        img: "https://phet.colorado.edu/sims/html/ohms-law/latest/ohms-law-600.png",
-      },
-      {
-        title: "Фарадейн хууль",
-        href: "https://phet.colorado.edu/sims/html/faradays-law/latest/faradays-law_all.html",
-        img: "https://phet.colorado.edu/sims/html/faradays-law/latest/faradays-law-600.png",
+        title: "Төвд тэмүүлэх хүч",
+        href: "https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics_all.html",
+        img: "https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics-600.png",
       },
     ],
     theory: [
       {
-        title: "Цахилгаан цэнэг",
+        title: "Бүх ертөнцийн таталцлын хууль",
         content: [
-          "Кулоны хууль: F = k * q₁q₂ / r².",
-          "Эерэг ба сөрөг цэнэгүүд харилцан үйлчлэлцэнэ.",
+          "Аливаа хоёр бие биеэ массын үржвэрээс шууд, хоорондох зайн квадратаас урвуу хамааралтай хүчээр татдаг.",
+          "Томьёо: F = G * (m1 * m2) / r².",
         ],
       },
       {
-        title: "Гүйдлийн хүч",
+        title: "Кеплерийн 1-р хууль",
         content: [
-          "Нэгж хугацаанд дамжуулагчийн хөндлөн огтлолоор өнгөрөх цэнэг.",
-          "Томьёо: I = q / t. Нэгж: Ампер (А).",
+          "Гаригууд Нарыг нэг фокус дээрээ байрлуулсан эллипс орбитоор тойрон эргэдэг.",
         ],
       },
       {
-        title: "Омын хууль",
+        title: "Кеплерийн 2-р хууль",
         content: [
-          "Хэлхээний хэсгийн хувьд: I = U / R.",
-          "Гүйдэл хүчдэлд шууд, эсэргүүцэлд урвуу пропорциональ.",
+          "Нарыг гаригтай холбосон радиус-вектор ижил хугацаанд ижил хэмжээний талбай зураглан өнгөрнө (Талбайн хууль).",
         ],
       },
       {
-        title: "Эсэргүүцэл",
+        title: "Кеплерийн 3-р хууль",
         content: [
-          "Дамжуулагчийн гүйдэлд саад болох шинж чанар.",
-          "Дараа ба зэрэгцээ холболт.",
+          "Гаригуудын Нарыг тойрох үеийн квадрат нь тэдгээрийн орбитын их хагас тэнхлэгийн кубтай пропорциональ байна.",
+          "Томьёо: T² / a³ = const.",
         ],
       },
       {
-        title: "Цахилгаан соронзон индукц",
+        title: "Орбитын хурд",
         content: [
-          "Хувьсах соронзон орны нөлөөгөөр цахилгаан гүйдэл үүсэх үзэгдэл.",
+          "Биеийг тойрог орбитоор тогтвортой аялуулахад шаардлагатай хурд.",
+          "Томьёо: v = sqrt(G * M / r).",
         ],
       },
       {
-        title: "Цахилгаан чадал",
-        content: ["Гүйдлийн хийх ажил.", "Томьёо: P = U * I. Нэгж: Ватт (Вт)."],
+        title: "Төвд тэмүүлэх хурдатгал",
+        content: [
+          "Орбитоор эргэж буй биеийн хурдны чиглэлийг байнга өөрчилж байдаг хурдатгал.",
+          "Томьёо: a = v² / r.",
+        ],
       },
       {
-        title: "Соронзон орон",
+        title: "Жингүйдэл",
         content: [
-          "Гүйдэлтэй дамжуулагч эсвэл соронзон биеийн эргэн тойронд үүсэх орон.",
+          "Орбитын хөдөлгөөнд байгаа бие зөвхөн таталцлын хүчний нөлөөгөөр чөлөөт уналтанд байх үеийн төлөв.",
         ],
       },
     ],
