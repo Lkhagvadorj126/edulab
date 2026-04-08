@@ -23,16 +23,16 @@ import {
   Loader2,
   AlertCircle,
   HelpCircle,
-  Layers,
+  Presentation,
+  Globe,
 } from "lucide-react";
 
 // Components
-import Slider from "./Slider";
 import NavAll from "./NavAll";
 import NavH from "./NavH";
 import { useAuth } from "@/context/AuthContext";
 
-export default function LessonTemplate({ pageId, config }) {
+export default function LessonTemplateGeo({ pageId, config }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
   const userClassCode = user?.classCode || "10B";
@@ -48,14 +48,14 @@ export default function LessonTemplate({ pageId, config }) {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // --- МЭДЭГДЛИЙН (STATUS MODAL) ---
+  // --- МЭДЭГДЛИЙН МОДАЛ (STATUS MODAL) ---
   const [statusModal, setStatusModal] = useState({
     show: false,
     message: "",
     type: "success",
   });
 
-  // --- УСТГАХ БАТАЛГААЖУУЛАХ (CONFIRM MODAL) ---
+  // --- УСТГАХ БАТАЛГААЖУУЛАХ МОДАЛ (CONFIRM MODAL) ---
   const [confirmModal, setConfirmModal] = useState({
     show: false,
     type: "",
@@ -71,7 +71,6 @@ export default function LessonTemplate({ pageId, config }) {
   const [newCard, setNewCard] = useState({ question: "", answer: "" });
   const [newTheory, setNewTheory] = useState({ title: "", content: "" });
 
-  // Тестийн answer-ийг индексээр (0, 1, 2) хадгална
   const [newTest, setNewTest] = useState({
     question: "",
     options: ["", "", ""],
@@ -86,13 +85,19 @@ export default function LessonTemplate({ pageId, config }) {
   });
 
   // --- ТУСЛАХ ФУНКЦУУД ---
-  const closeStatus = () => setStatusModal({ ...statusModal, show: false });
-  const closeConfirm = () =>
-    setConfirmModal({ show: false, type: "", id: null });
-
   const showStatus = (message, type = "success") => {
     setStatusModal({ show: true, message, type });
   };
+
+  const closeStatus = () =>
+    setStatusModal((prev) => ({ ...prev, show: false }));
+
+  const askDelete = (type, id) => {
+    setConfirmModal({ show: true, type, id });
+  };
+
+  const closeConfirm = () =>
+    setConfirmModal({ show: false, type: "", id: null });
 
   // --- ӨГӨГДӨЛ ТАТАХ ---
   const fetchData = useCallback(async () => {
@@ -112,9 +117,13 @@ export default function LessonTemplate({ pageId, config }) {
 
       if (canvaRes.ok) {
         const d = await canvaRes.json();
-        setDisplayUrl(d?.url || "");
-        setCanvaInput(d?.url || "");
+        const finalCanva = d?.url || config?.page?.presentationUrl || "";
+        setDisplayUrl(finalCanva);
+        setCanvaInput(finalCanva);
+      } else {
+        setDisplayUrl(config?.page?.presentationUrl || "");
       }
+
       if (videoRes.ok) {
         const d = await videoRes.json();
         setVideoUrl(d?.url || config?.page?.videoUrl || "");
@@ -130,7 +139,7 @@ export default function LessonTemplate({ pageId, config }) {
     } finally {
       setLoading(false);
     }
-  }, [pageId, userClassCode, config?.page?.videoUrl]);
+  }, [pageId, userClassCode, config]);
 
   useEffect(() => {
     fetchData();
@@ -140,9 +149,14 @@ export default function LessonTemplate({ pageId, config }) {
 
   // --- ХАДГАЛАХ ЛОГИК ---
   const handleSave = async (type, data, editId = null) => {
-    let dataToSave = { ...data };
+    // handleSave функц дотор:
+    const dataToSave = {
+      ...data,
+      classCode: user?.classCode || "10B",
+      pageId: pageId,
+      subject: "geography", // Энэ мөр заавал байх ёстой
+    };
 
-    // ТЕСТ ЗАСВАР: Индексийг утга руу хөрвүүлж хадгалах
     if (type === "test") {
       if (data.answer === null) {
         showStatus("Зөв хариултыг сонгоно уу!", "error");
@@ -150,25 +164,19 @@ export default function LessonTemplate({ pageId, config }) {
       }
       const selectedValue = data.options[data.answer];
       if (!selectedValue || selectedValue.trim() === "") {
-        showStatus("Сонгосон хариулт хоосон байна!", "error");
+        showStatus("Сонгосон хариултын талбар хоосон байна!", "error");
         return;
       }
       dataToSave.answer = selectedValue;
     }
 
-    let finalData = { ...dataToSave, classCode: userClassCode, pageId: pageId };
+    let finalData = {
+      ...dataToSave,
+      classCode: userClassCode,
+      pageId: pageId,
+      subject: "geography", // Ингэснээр багшийн нэмсэн дата Физик рүү орохгүй
+    };
 
-    // YouTube URL
-    if (type === "video" && data.url) {
-      let videoId = "";
-      if (data.url.includes("v="))
-        videoId = data.url.split("v=")[1].split("&")[0];
-      else if (data.url.includes("youtu.be/"))
-        videoId = data.url.split("youtu.be/")[1].split("?")[0];
-      if (videoId) finalData.url = `https://www.youtube.com/embed/${videoId}`;
-    }
-
-    // Canva Embed
     if (type === "presentation" && data.url?.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
       if (srcMatch && srcMatch[1]) finalData.url = srcMatch[1];
@@ -184,10 +192,13 @@ export default function LessonTemplate({ pageId, config }) {
             : type;
 
     try {
+      const apiPath = type === "cards" ? "card" : "test";
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editId ? { ...finalData, id: editId } : finalData),
+        body: JSON.stringify(
+          editId ? { ...dataToSave, id: editId } : dataToSave,
+        ),
       });
 
       if (res.ok) {
@@ -212,24 +223,24 @@ export default function LessonTemplate({ pageId, config }) {
     if (type === "cards") setNewCard({ question: "", answer: "" });
     if (type === "exp") setNewExp({ title: "", href: "", img: "" });
     if (type === "theory") setNewTheory({ title: "", content: "" });
-    if (type === "video") setVideoInput("");
-  };
-
-  // --- УСТГАХ ЛОГИК ---
-  const handleDeleteConfirm = (type, id) => {
-    setConfirmModal({ show: true, type, id });
   };
 
   const executeDelete = async () => {
     const { type, id } = confirmModal;
     closeConfirm();
     let apiPath =
-      type === "cards" ? "card" : type === "exp" ? "experiment" : type;
+      type === "cards"
+        ? "card"
+        : type === "exp"
+          ? "experiment"
+          : type === "lessons"
+            ? "lessons"
+            : type;
 
     try {
       const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        showStatus("Мэдээлэл амжилттай устлаа.");
+        showStatus("Амжилттай устгагдлаа.");
         fetchData();
       } else {
         showStatus("Устгахад алдаа гарлаа.", "error");
@@ -239,12 +250,10 @@ export default function LessonTemplate({ pageId, config }) {
     }
   };
 
-  // --- ЗАСАХ ЛОГИК ---
   const handleEdit = (type, item) => {
     setActivePanel(type);
     if (type === "test") {
       setEditIds((p) => ({ ...p, test: item._id }));
-      // Буцаагаад индексийг нь олж тогтоох
       const foundIndex = item.options.indexOf(item.answer);
       setNewTest({
         question: item.question,
@@ -269,20 +278,21 @@ export default function LessonTemplate({ pageId, config }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!config || !config.page)
+  if (loading && !config?.page) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#312C85]" size={48} />
+        <Loader2 className="animate-spin text-[#312C85]" size={40} />
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
       <NavAll />
 
-      {/* HEADER */}
+      {/* HEADER SECTION */}
       <section className="pt-24 md:pt-28">
-        <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
+        <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4 font-black">
           <div className="flex items-center w-full xl:w-auto">
             <Link
               href="/indexGeo"
@@ -292,10 +302,10 @@ export default function LessonTemplate({ pageId, config }) {
             </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase leading-none">
+              <h1 className="text-xl md:text-2xl text-slate-900 uppercase leading-none">
                 {config.page.title}
               </h1>
-              <p className="text-slate-400 text-[10px] md:text-xs font-black flex items-center gap-1 uppercase mt-1">
+              <p className="text-slate-400 text-[10px] md:text-xs flex items-center gap-1 uppercase mt-1 tracking-tighter">
                 <Users size={12} /> {config.page.subtitle} | {userClassCode}{" "}
                 АНГИ
               </p>
@@ -303,20 +313,20 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
             <Link
-              href={`/testMolecular?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              href={`/testGeo?pageId=${pageId}`}
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <Award size={16} /> ТЕСТ ӨГӨХ
             </Link>
             <Link
-              href={`/cartMolecular?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              href={`/cartGeo?pageId=${pageId}`}
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <BookOpen size={16} /> КАРТ ҮЗЭХ
             </Link>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <Play size={16} fill="currentColor" /> ҮЗЭХ
             </button>
@@ -324,10 +334,11 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       </section>
 
+      {/* ADMIN PANELS */}
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            {/* Video Panel */}
+            {/* Video Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -343,7 +354,7 @@ export default function LessonTemplate({ pageId, config }) {
                 </button>
               </div>
               {activePanel === "video" && (
-                <div className="flex gap-1 animate-in slide-in-from-top-1">
+                <div className="flex gap-1 animate-in slide-in-from-top-1 duration-200">
                   <input
                     className="flex-1 p-2 rounded-lg border text-xs"
                     value={videoInput}
@@ -360,7 +371,7 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
-            {/* Test Panel - ЗӨВ ХАРИУЛТЫН ЛОГИК ЗАСВАРТАЙ */}
+            {/* Test Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -372,7 +383,7 @@ export default function LessonTemplate({ pageId, config }) {
                   }
                   className="text-[10px] font-bold border border-[#312C85]/30 text-[#312C85] px-2 py-1 rounded-md"
                 >
-                  Удирдах
+                  Нэмэх
                 </button>
               </div>
               {activePanel === "test" && (
@@ -408,19 +419,19 @@ export default function LessonTemplate({ pageId, config }) {
                   ))}
                   <button
                     onClick={() => handleSave("test", newTest, editIds.test)}
-                    className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                    className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black uppercase"
                   >
                     {editIds.test ? "Засах" : "Нэмэх"}
                   </button>
                 </div>
               )}
-              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1">
+              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1 custom-scrollbar">
                 {dbTests.map((t) => (
                   <div
                     key={t._id}
-                    className="flex justify-between items-center bg-slate-50 p-1 rounded"
+                    className="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100"
                   >
-                    <span className="text-[9px] truncate w-24 font-bold">
+                    <span className="text-[9px] truncate w-24 font-bold text-slate-600">
                       {t.question}
                     </span>
                     <div className="flex gap-1">
@@ -431,7 +442,7 @@ export default function LessonTemplate({ pageId, config }) {
                         <Edit2 size={10} />
                       </button>
                       <button
-                        onClick={() => handleDeleteConfirm("test", t._id)}
+                        onClick={() => askDelete("test", t._id)}
                         className="text-red-500"
                       >
                         <Trash2 size={10} />
@@ -442,7 +453,7 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
-            {/* Card Panel */}
+            {/* Card Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -477,19 +488,19 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <button
                     onClick={() => handleSave("cards", newCard, editIds.card)}
-                    className="w-full bg-slate-800 text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                    className="w-full bg-slate-800 text-white py-2 rounded-lg text-[10px] font-black uppercase"
                   >
-                    {editIds.card ? "Засах" : "Нэмэх"}
+                    Хадгалах
                   </button>
                 </div>
               )}
-              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1">
+              <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1 custom-scrollbar">
                 {dbCards.map((c) => (
                   <div
                     key={c._id}
-                    className="flex justify-between items-center bg-slate-50 p-1 rounded"
+                    className="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100"
                   >
-                    <span className="text-[9px] truncate w-24 font-bold">
+                    <span className="text-[9px] truncate w-24 font-bold text-slate-600">
                       {c.question}
                     </span>
                     <div className="flex gap-1">
@@ -500,7 +511,7 @@ export default function LessonTemplate({ pageId, config }) {
                         <Edit2 size={10} />
                       </button>
                       <button
-                        onClick={() => handleDeleteConfirm("cards", c._id)}
+                        onClick={() => askDelete("cards", c._id)}
                         className="text-red-500"
                       >
                         <Trash2 size={10} />
@@ -511,7 +522,7 @@ export default function LessonTemplate({ pageId, config }) {
               </div>
             </div>
 
-            {/* Experiment Panel */}
+            {/* Experiment/Tool Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -538,7 +549,7 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <input
                     className="w-full p-1.5 rounded border text-[10px]"
-                    placeholder="Link..."
+                    placeholder="URL..."
                     value={newExp.href}
                     onChange={(e) =>
                       setNewExp({ ...newExp, href: e.target.value })
@@ -546,7 +557,7 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <input
                     className="w-full p-1.5 rounded border text-[10px]"
-                    placeholder="Зураг..."
+                    placeholder="Зураг URL..."
                     value={newExp.img}
                     onChange={(e) =>
                       setNewExp({ ...newExp, img: e.target.value })
@@ -554,7 +565,7 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <button
                     onClick={() => handleSave("exp", newExp, editIds.exp)}
-                    className="w-full bg-[#312C85] text-white py-2 rounded text-[10px] font-black uppercase tracking-widest"
+                    className="w-full bg-[#312C85] text-white py-2 rounded text-[10px] font-black uppercase"
                   >
                     Хадгалах
                   </button>
@@ -562,7 +573,7 @@ export default function LessonTemplate({ pageId, config }) {
               )}
             </div>
 
-            {/* Theory Panel */}
+            {/* Theory Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -606,7 +617,7 @@ export default function LessonTemplate({ pageId, config }) {
                         editIds.theory,
                       )
                     }
-                    className="w-full bg-slate-800 text-white py-2 rounded text-[10px] font-black uppercase tracking-widest"
+                    className="w-full bg-slate-800 text-white py-2 rounded text-[10px] font-black uppercase"
                   >
                     Хадгалах
                   </button>
@@ -616,10 +627,10 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         )}
 
-        {/* MAIN DISPLAY */}
+        {/* MAIN VISUAL CONTENT */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
+            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative group">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -627,25 +638,39 @@ export default function LessonTemplate({ pageId, config }) {
                   allowFullScreen
                 />
               ) : (
-                <Slider slides={config.slider} />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1e1a5a] to-[#312C85] text-white p-10 text-center">
+                  <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
+                    <Globe size={40} />
+                  </div>
+                  <h2 className="text-2xl md:text-4xl font-black uppercase mb-4 tracking-tighter">
+                    Газарзүйн интерактив хичээл
+                  </h2>
+                  <p className="text-white/60 max-w-md text-sm md:text-base font-medium mb-8 leading-relaxed">
+                    Уучлаарай, энэ сэдвийн интерактив презентаци хараахан
+                    ороогүй байна.
+                  </p>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-white text-[#312C85] px-8 py-4 rounded-2xl font-black text-sm uppercase transition-all hover:bg-emerald-400 hover:text-white shadow-xl flex items-center gap-2"
+                  >
+                    <Play size={20} fill="currentColor" /> Видео хичээл үзэх
+                  </button>
+                </div>
               )}
             </div>
             {isTeacher && (
               <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 flex gap-2 shadow-sm items-center">
-                <div className="p-3 bg-[#312C85]/5 rounded-xl text-[#312C85]">
-                  <Layers size={20} />
-                </div>
                 <input
-                  className="flex-1 p-3 rounded-xl border-none bg-slate-50 text-xs font-bold outline-none"
+                  className="flex-1 p-3 rounded-xl border bg-slate-50 text-xs outline-none focus:border-[#312C85] font-bold"
                   value={canvaInput}
                   onChange={(e) => setCanvaInput(e.target.value)}
-                  placeholder="Canva Embed холбоос..."
+                  placeholder="Canva Embed Link..."
                 />
                 <button
                   onClick={() =>
                     handleSave("presentation", { url: canvaInput })
                   }
-                  className="bg-[#312C85] text-white px-8 py-3 rounded-xl font-black text-xs hover:bg-black transition-all shadow-lg"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-black transition-all shadow-lg text-xs"
                 >
                   <Save size={18} /> ХАДГАЛАХ
                 </button>
@@ -653,10 +678,10 @@ export default function LessonTemplate({ pageId, config }) {
             )}
           </div>
 
-          {/* Side Experiments */}
+          {/* Right: Experiments Sidebar */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
-            <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-              <Beaker size={14} className="text-[#312C85]" /> ТУРШИЛТУУД
+            <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
+              <Beaker size={14} /> ТУРШИЛТУУД
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {[...dbExperiments]
@@ -666,35 +691,36 @@ export default function LessonTemplate({ pageId, config }) {
                 .map((exp, idx) => (
                   <div
                     key={idx}
-                    className="relative bg-white rounded-2xl p-2 border border-slate-100 shadow-sm group hover:border-[#312C85]/30 transition-all hover:-translate-y-1"
+                    className="relative bg-white rounded-2xl p-2 border border-slate-100 shadow-sm group hover:border-[#312C85]/30 transition-all"
                   >
                     {isTeacher && exp._id && (
-                      <div className="absolute top-3 left-3 z-10 flex gap-1">
+                      <div className="absolute top-2 left-2 z-10 flex gap-1">
                         <button
                           onClick={() => handleEdit("exp", exp)}
-                          className="p-1.5 bg-white/90 rounded-lg text-[#312C85]"
+                          className="p-1 bg-white/90 rounded text-[#312C85] shadow-sm"
                         >
-                          <Edit2 size={12} />
+                          <Edit2 size={10} />
                         </button>
                         <button
-                          onClick={() => handleDeleteConfirm("exp", exp._id)}
-                          className="p-1.5 bg-white/90 rounded-lg text-red-500"
+                          onClick={() => askDelete("exp", exp._id)}
+                          className="p-1 bg-white/90 rounded text-red-500 shadow-sm"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={10} />
                         </button>
                       </div>
                     )}
                     <Link href={exp.href || "#"} target="_blank">
-                      <div className="h-32 rounded-xl bg-slate-50 overflow-hidden relative">
+                      <div className="h-28 rounded-xl bg-slate-50 overflow-hidden relative">
                         <img
-                          src={exp.img || "https://via.placeholder.com/400x300"}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-duration-500"
+                          src={exp.img || "/placeholder.png"}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          alt={exp.title}
                         />
-                        <div className="absolute top-2 right-2 p-2 bg-white/90 rounded-xl">
+                        <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg">
                           <ExternalLink size={14} className="text-[#312C85]" />
                         </div>
                       </div>
-                      <div className="py-3 px-1 font-black text-[11px] text-slate-700 truncate uppercase">
+                      <div className="py-2 px-1 font-black text-[12px] text-slate-700 truncate uppercase">
                         {exp.title}
                       </div>
                     </Link>
@@ -704,9 +730,10 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         </div>
 
-        {/* Theory Section */}
-        <section className="bg-white rounded-[3rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden">
-          <h2 className="text-center text-xl md:text-4xl font-black uppercase mb-12 text-[#312C85] tracking-tight">
+        {/* THEORY SECTION */}
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden font-black">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#312C85]/5 rounded-bl-full" />
+          <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85] tracking-tighter">
             Онолын Мэдээлэл
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 relative z-10">
@@ -717,11 +744,11 @@ export default function LessonTemplate({ pageId, config }) {
               .map((item, i) => (
                 <div
                   key={i}
-                  className="relative bg-white rounded-[2rem] p-8 border border-slate-50 shadow-sm border-b-4 border-b-[#312C85]/10"
+                  className="relative bg-white rounded-3xl p-6 border border-slate-50 shadow-sm hover:shadow-md transition-all"
                 >
-                  <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-black text-[#312C85] flex items-center gap-4">
-                      <span className="min-w-[40px] h-10 rounded-2xl bg-[#312C85] text-white flex items-center justify-center text-sm font-black shadow-lg shadow-[#312C85]/20">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-base font-black text-[#312C85] flex items-center gap-3">
+                      <span className="min-w-[32px] h-8 rounded-xl bg-[#312C85] text-white flex items-center justify-center text-xs font-black">
                         {i + 1}
                       </span>
                       {item.title}
@@ -730,29 +757,27 @@ export default function LessonTemplate({ pageId, config }) {
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEdit("theory", item)}
-                          className="p-2 text-[#312C85] bg-slate-50 rounded-xl hover:bg-white"
+                          className="p-1.5 text-[#312C85] bg-slate-50 rounded-lg"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={14} />
                         </button>
                         <button
-                          onClick={() =>
-                            handleDeleteConfirm("lessons", item._id)
-                          }
-                          className="p-2 text-red-500 bg-slate-50 rounded-xl hover:bg-white"
+                          onClick={() => askDelete("lessons", item._id)}
+                          className="p-1.5 text-red-500 bg-slate-50 rounded-lg"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {(Array.isArray(item.content)
                       ? item.content
                       : [item.content]
                     ).map((text, j) => (
                       <p
                         key={j}
-                        className="text-sm text-slate-600 border-l-4 border-[#312C85]/5 pl-5 leading-relaxed font-bold"
+                        className="text-sm text-slate-600 border-l-2 border-[#312C85]/10 pl-4 leading-relaxed font-bold"
                       >
                         {text}
                       </p>
@@ -761,19 +786,19 @@ export default function LessonTemplate({ pageId, config }) {
                 </div>
               ))}
           </div>
-          <div className="flex justify-center mt-16">
+          <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
-              className="flex flex-col items-center gap-2 group"
+              className="flex flex-col items-center gap-1 group"
             >
-              <div className="bg-white border-2 border-[#312C85]/20 text-[#312C85] px-12 py-3 rounded-full text-[11px] font-black uppercase group-hover:bg-[#312C85] group-hover:text-white transition-all shadow-md group-hover:-translate-y-1">
+              <div className="bg-white border border-[#312C85]/30 text-[#312C85] px-10 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-[#312C85] group-hover:text-white transition-all">
                 {showAll ? "Хураах" : "Дэлгэрэнгүй үзэх"}
               </div>
               {showAll ? (
-                <ChevronUp size={24} className="text-[#312C85] opacity-50" />
+                <ChevronUp size={20} className="text-[#312C85]" />
               ) : (
                 <ChevronDown
-                  size={24}
+                  size={20}
                   className="text-[#312C85] animate-bounce"
                 />
               )}
@@ -782,21 +807,21 @@ export default function LessonTemplate({ pageId, config }) {
         </section>
       </div>
 
-      {/* VIDEO MODAL */}
+      {/* --- ВИДЕО МОДАЛ --- */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-5xl aspect-video bg-black rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95"
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full transition-all"
+              className="absolute top-4 right-4 z-10 p-3 bg-white/10 hover:bg-red-500 text-white rounded-full transition-all"
             >
-              <X size={28} />
+              <X size={24} />
             </button>
             <iframe
               className="w-full h-full"
@@ -808,69 +833,69 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       )}
 
-      {/* CONFIRM DELETE MODAL */}
+      {/* --- БАТАЛГААЖУУЛАХ МОДАЛ --- */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={closeConfirm}
           ></div>
-          <div className="relative bg-white rounded-[3rem] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
-            <div className="mx-auto w-24 h-24 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6">
-              <HelpCircle size={48} strokeWidth={2.5} />
+          <div className="relative bg-white rounded-[2.5rem] p-8 shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
+            <div className="mx-auto w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+              <HelpCircle size={32} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase">
               Устгах уу?
             </h3>
-            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
-              Системээс бүрмөсөн устгахдаа итгэлтэй байна уу?
+            <p className="text-slate-500 text-sm mb-6 font-bold">
+              Энэ үйлдлийг буцаах боломжгүй.
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={closeConfirm}
-                className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-3xl font-black text-xs hover:bg-slate-200 transition-all uppercase tracking-widest"
+                className="flex-1 py-3 rounded-2xl font-black text-xs bg-slate-100 text-slate-500 hover:bg-slate-200 uppercase"
               >
-                БОЛИХ
+                Болих
               </button>
               <button
                 onClick={executeDelete}
-                className="flex-1 bg-red-500 text-white py-4 rounded-3xl font-black text-xs hover:bg-red-600 transition-all shadow-lg uppercase tracking-widest"
+                className="flex-1 py-3 rounded-2xl font-black text-xs bg-red-500 text-white hover:bg-red-600 shadow-lg uppercase"
               >
-                УСТГАХ
+                Устгах
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* STATUS RESULT MODAL (SUCCESS/ERROR) */}
+      {/* --- STATUS МОДАЛ --- */}
       {statusModal.show && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={closeStatus}
           ></div>
-          <div className="relative bg-white rounded-[3rem] p-10 shadow-2xl border border-slate-100 max-w-sm w-full text-center animate-in zoom-in-95">
+          <div className="relative bg-white rounded-[2.5rem] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
             <div
-              className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ${statusModal.type === "success" ? "bg-green-50 text-green-500 shadow-green-100" : "bg-red-50 text-red-500 shadow-red-100"}`}
+              className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 ${statusModal.type === "success" ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}`}
             >
               {statusModal.type === "success" ? (
-                <Check size={48} strokeWidth={3} />
+                <Check size={40} />
               ) : (
-                <AlertCircle size={48} strokeWidth={3} />
+                <AlertCircle size={40} />
               )}
             </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">
               {statusModal.type === "success" ? "Амжилттай" : "Алдаа гарлаа"}
             </h3>
-            <p className="text-slate-500 text-sm font-bold mb-10 leading-relaxed px-2">
+            <p className="text-slate-500 text-sm font-bold mb-8 leading-relaxed">
               {statusModal.message}
             </p>
             <button
               onClick={closeStatus}
-              className={`w-full py-5 rounded-[2rem] font-black text-xs text-white transition-all shadow-xl active:scale-95 uppercase tracking-[0.2em] ${statusModal.type === "success" ? "bg-green-500 hover:bg-green-600 shadow-green-200" : "bg-red-500 hover:bg-red-600 shadow-red-200"}`}
+              className={`w-full py-4 rounded-2xl font-black text-xs text-white shadow-xl uppercase tracking-widest transition-all active:scale-95 ${statusModal.type === "success" ? "bg-green-500 hover:bg-green-600 shadow-green-100" : "bg-red-500 hover:bg-red-600 shadow-red-100"}`}
             >
-              ОК
+              Ойлголоо
             </button>
           </div>
         </div>

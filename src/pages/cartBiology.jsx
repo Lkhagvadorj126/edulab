@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,20 +7,20 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCw,
-  Layers,
-  ArrowLeft,
+  Globe,
   Loader2,
   AlertCircle,
+  RefreshCcw,
 } from "lucide-react";
-import { BIOLOGY_CONFIG } from "@/constants/lessonDataBio";
+import { GEOGRAPHY_CONFIG } from "@/constants/lessonDataGeo";
 import { useAuth } from "@/context/AuthContext";
 
-function CardContent() {
+function CardContentGeo() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const pageId = searchParams.get("pageId") || "hoollolt";
+  const pageId = searchParams.get("pageId") || "eh_gazar";
   const userClassCode = user?.classCode || "10B";
 
   const [cards, setCards] = useState([]);
@@ -30,23 +31,22 @@ function CardContent() {
   const loadCards = useCallback(async () => {
     setLoading(true);
     try {
-      const staticCards = BIOLOGY_CONFIG[pageId]?.cards || [];
-
-      // Ангийн кодоор шүүж авах
+      const staticCards = GEOGRAPHY_CONFIG[pageId]?.cards || [];
       const res = await fetch(
-        `/api/card?pageId=${pageId}&classCode=${userClassCode}`,
+        `/api/card?pageId=${pageId}&classCode=${userClassCode}&subject=geography`,
       );
+
       let dbCards = [];
       if (res.ok) {
         dbCards = await res.json();
       }
 
-      // Динамик картуудыг (Багшийн нэмсэн) эхэнд нь харуулах
+      // Баазаас ирсэн датаг эхэнд нь, статик датаг араас нь оруулна
       const combined = [...dbCards].reverse().concat(staticCards);
       setCards(combined);
     } catch (err) {
       console.error("Карт ачаалахад алдаа гарлаа:", err);
-      setCards(BIOLOGY_CONFIG[pageId]?.cards || []);
+      setCards(GEOGRAPHY_CONFIG[pageId]?.cards || []);
     } finally {
       setLoading(false);
     }
@@ -60,8 +60,8 @@ function CardContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
         <Loader2 className="animate-spin text-[#312C85]" size={40} />
-        <p className="font-black text-slate-400 uppercase tracking-widest text-[10px]">
-          Картуудыг ачаалж байна...
+        <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">
+          Ачаалж байна...
         </p>
       </div>
     );
@@ -69,18 +69,13 @@ function CardContent() {
   if (cards.length === 0)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#F8FAFC]">
-        <div className="p-10 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 text-center">
-          <AlertCircle className="mx-auto text-slate-200 mb-4" size={50} />
-          <p className="font-black text-slate-400 uppercase tracking-widest text-sm mb-2">
-            Карт олдсонгүй
-          </p>
-          <p className="text-[10px] font-bold text-slate-300 uppercase">
-            {userClassCode} АНГИ
-          </p>
-        </div>
+        <AlertCircle className="text-slate-200" size={80} />
+        <h2 className="font-black text-slate-800 text-xl uppercase tracking-tighter">
+          Карт олдсонгүй
+        </h2>
         <button
           onClick={() => router.back()}
-          className="px-10 py-3 bg-[#312C85] text-white font-black rounded-2xl shadow-lg hover:opacity-90 transition-all"
+          className="px-10 py-3 bg-white border border-slate-200 rounded-2xl text-[#312C85] font-black text-xs shadow-sm hover:bg-slate-50 transition-all"
         >
           БУЦАХ
         </button>
@@ -88,136 +83,145 @@ function CardContent() {
     );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#312C85]/5 rounded-full blur-[100px]" />
+    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Чимэглэлийн дэвсгэр икон */}
+      <div className="absolute -bottom-20 -right-20 opacity-[0.03] text-[#312C85] -rotate-12 pointer-events-none">
+        <Globe size={400} />
+      </div>
 
+      {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="absolute top-8 left-8 p-4 bg-white text-[#312C85] rounded-2xl shadow-sm border border-slate-100 hover:bg-slate-50 transition-all z-20"
+        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] z-20 transition-all border border-slate-100"
       >
-        <ArrowLeft size={24} />
+        <ChevronLeft size={24} />
       </button>
 
-      <div className="mb-8 text-center relative z-10">
-        <span className="bg-white px-4 py-1.5 rounded-full border border-slate-100 text-[10px] font-black text-[#312C85] uppercase tracking-widest shadow-sm">
-          {userClassCode} АНГИЙН САНТАКС
-        </span>
-      </div>
-
-      <div
-        className="w-full max-w-[360px] md:max-w-md aspect-[3/4] cursor-pointer relative z-10"
-        style={{ perspective: "2000px" }}
-        onClick={() => setFlipped(!flipped)}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, x: 50, rotateY: 0 }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              rotateY: flipped ? 180 : 0,
-            }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="relative w-full h-full shadow-2xl rounded-[3.5rem]"
-            style={{ transformStyle: "preserve-3d" }}
-          >
-            {/* FRONT SIDE */}
-            <div
-              className="absolute inset-0 bg-white rounded-[3.5rem] border border-slate-100 p-10 flex flex-col items-center justify-center text-center shadow-inner"
-              style={{ backfaceVisibility: "hidden" }}
-            >
-              <div className="p-4 bg-indigo-50 text-[#312C85] rounded-2xl mb-8 border border-indigo-100">
-                <Layers size={36} />
-              </div>
-              <h3 className="text-xl md:text-2xl font-black text-slate-800 uppercase leading-snug tracking-tighter">
-                {cards[idx]?.question}
-              </h3>
-              <div className="mt-12 flex items-center gap-2 text-slate-300 font-black text-[9px] uppercase tracking-[0.2em] animate-pulse">
-                <RotateCw size={12} /> ДАРЖ ЭРГҮҮЛ
-              </div>
-            </div>
-
-            {/* BACK SIDE */}
-            <div
-              className="absolute inset-0 bg-[#312C85] rounded-[3.5rem] p-10 flex flex-col items-center justify-center text-center text-white"
-              style={{
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-              }}
-            >
-              <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.5em] mb-10">
-                ХАРИУЛТ / ТАЙЛБАР
-              </p>
-              <h3 className="text-xl md:text-2xl font-bold leading-relaxed italic px-4">
-                "{cards[idx]?.answer}"
-              </h3>
-              <div className="mt-12 text-[9px] font-black opacity-30 uppercase tracking-widest border border-white/20 px-5 py-2 rounded-full">
-                БУЦАЖ ЭРГҮҮЛЭХ
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* CONTROLS */}
-      <div className="flex items-center gap-10 mt-14 bg-white/90 backdrop-blur-md px-8 py-5 rounded-[2.5rem] shadow-xl border border-white relative z-20">
-        <button
-          disabled={idx === 0}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIdx(idx - 1);
-            setFlipped(false);
-          }}
-          className="p-2 text-[#312C85] disabled:opacity-20 active:scale-90 hover:bg-slate-50 rounded-xl transition-all"
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="w-full max-w-2xl flex flex-col items-center"
         >
-          <ChevronLeft size={36} strokeWidth={3} />
-        </button>
-
-        <div className="flex flex-col items-center min-w-[80px]">
-          <span className="font-black text-[#312C85] text-xl tabular-nums leading-none">
-            {idx + 1}
-          </span>
-          <div className="w-12 h-1 bg-slate-100 rounded-full my-2 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${((idx + 1) / cards.length) * 100}%` }}
-              className="h-full bg-[#312C85]"
-            />
+          {/* Progress Header */}
+          <div className="w-full mb-10 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+            <span className="bg-slate-100 text-slate-500 px-5 py-2 rounded-full border border-slate-200">
+              Карт {idx + 1} / {cards.length}
+            </span>
+            <span className="text-blue-600 bg-blue-50 px-5 py-2 rounded-full border border-blue-100 uppercase">
+              Газарзүй
+            </span>
           </div>
-          <span className="font-bold text-slate-300 text-[10px]">
-            НИЙТ {cards.length}
-          </span>
-        </div>
 
-        <button
-          disabled={idx === cards.length - 1}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIdx(idx + 1);
-            setFlipped(false);
-          }}
-          className="p-2 text-[#312C85] disabled:opacity-20 active:scale-90 hover:bg-slate-50 rounded-xl transition-all"
-        >
-          <ChevronRight size={36} strokeWidth={3} />
-        </button>
-      </div>
+          {/* Flashcard Component */}
+          <div
+            className="w-full aspect-[4/3] md:aspect-[16/10] cursor-pointer relative"
+            style={{ perspective: "2000px" }}
+            onClick={() => setFlipped(!flipped)}
+          >
+            <motion.div
+              animate={{ rotateY: flipped ? 180 : 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="w-full h-full relative"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              {/* FRONT SIDE */}
+              <div
+                className="absolute inset-0 bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-slate-100 flex flex-col items-center justify-center text-center"
+                style={{ backfaceVisibility: "hidden" }}
+              >
+                <div className="p-4 bg-blue-50 text-[#312C85] rounded-2xl mb-6">
+                  <Globe size={32} />
+                </div>
+                <h2 className="text-xl md:text-3xl font-black text-slate-800 leading-tight">
+                  {cards[idx]?.question}
+                </h2>
+                <p className="mt-8 text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                  <RotateCw size={12} className="animate-pulse" /> Дарж
+                  хариултыг үзэх
+                </p>
+              </div>
+
+              {/* BACK SIDE */}
+              <div
+                className="absolute inset-0 bg-[#312C85] rounded-[2.5rem] p-8 md:p-12 shadow-2xl flex flex-col items-center justify-center text-center text-white"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              >
+                <div className="mb-6 opacity-20">
+                  <Globe size={60} />
+                </div>
+                <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.3em] mb-4">
+                  ХАРИУЛТ
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold leading-relaxed px-4">
+                  {cards[idx]?.answer}
+                </h2>
+                <div className="mt-10 py-2 px-5 rounded-full border border-white/20 text-[9px] font-black uppercase tracking-widest opacity-50">
+                  Буцаж эргүүлэх
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Controls Footer */}
+          <div className="flex gap-4 mt-12 w-full max-w-lg">
+            <button
+              disabled={idx === 0}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIdx(idx - 1);
+                setFlipped(false);
+              }}
+              className="flex-1 py-4 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 disabled:opacity-30 transition-all flex items-center justify-center gap-2 shadow-sm"
+            >
+              <ChevronLeft size={18} /> Өмнөх
+            </button>
+
+            {idx === cards.length - 1 ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIdx(0);
+                  setFlipped(false);
+                }}
+                className="flex-[2] py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:opacity-95 transition-all"
+              >
+                <RefreshCcw size={16} /> Дахин эхлэх
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIdx(idx + 1);
+                  setFlipped(false);
+                }}
+                className="flex-[2] py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:opacity-95 transition-all"
+              >
+                Дараах <ChevronRight size={18} />
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
 
-export default function CardBiology() {
+export default function CardGeography() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-          <Loader2 className="animate-spin text-[#312C85]" size={40} />
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="animate-spin text-[#312C85]" />
         </div>
       }
     >
-      <CardContent />
+      <CardContentGeo />
     </Suspense>
   );
 }

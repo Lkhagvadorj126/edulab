@@ -23,12 +23,11 @@ import {
   Loader2,
   AlertCircle,
   HelpCircle,
+  Presentation,
 } from "lucide-react";
 
 // Components
-import Slider from "./Slider";
 import NavAll from "./NavAll";
-import Nav from "./Nav"; // Эсвэл NavH
 import { useAuth } from "@/context/AuthContext";
 
 export default function LessonTemplateP({ pageId, config, backUrl }) {
@@ -47,14 +46,14 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // --- ШИНЭ: МЭДЭГДЛИЙН МОДАЛ (STATUS MODAL) ---
+  // --- МЭДЭГДЛИЙН МОДАЛ (STATUS MODAL) ---
   const [statusModal, setStatusModal] = useState({
     show: false,
     message: "",
-    type: "success", // 'success' эсвэл 'error'
+    type: "success",
   });
 
-  // --- ШИНЭ: УСТГАХ БАТАЛГААЖУУЛАХ МОДАЛ (CONFIRM MODAL) ---
+  // --- УСТГАХ БАТАЛГААЖУУЛАХ МОДАЛ (CONFIRM MODAL) ---
   const [confirmModal, setConfirmModal] = useState({
     show: false,
     type: "",
@@ -70,7 +69,6 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
   const [newCard, setNewCard] = useState({ question: "", answer: "" });
   const [newTheory, setNewTheory] = useState({ title: "", content: "" });
 
-  // ТЕСТ ЗАСВАР: answer-ийг индексээр (0, 1, 2) хадгална
   const [newTest, setNewTest] = useState({
     question: "",
     options: ["", "", ""],
@@ -89,7 +87,8 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
     setStatusModal({ show: true, message, type });
   };
 
-  const closeStatus = () => setStatusModal({ ...statusModal, show: false });
+  const closeStatus = () =>
+    setStatusModal((prev) => ({ ...prev, show: false }));
 
   const askDelete = (type, id) => {
     setConfirmModal({ show: true, type, id });
@@ -116,9 +115,13 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
 
       if (canvaRes.ok) {
         const d = await canvaRes.json();
-        setDisplayUrl(d?.url || "");
-        setCanvaInput(d?.url || "");
+        const finalCanva = d?.url || config?.page?.presentationUrl || "";
+        setDisplayUrl(finalCanva);
+        setCanvaInput(finalCanva);
+      } else {
+        setDisplayUrl(config?.page?.presentationUrl || "");
       }
+
       if (videoRes.ok) {
         const d = await videoRes.json();
         setVideoUrl(d?.url || config?.page?.videoUrl || "");
@@ -134,7 +137,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
     } finally {
       setLoading(false);
     }
-  }, [pageId, userClassCode, config?.page?.videoUrl]);
+  }, [pageId, userClassCode, config]);
 
   useEffect(() => {
     fetchData();
@@ -146,7 +149,6 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
   const handleSave = async (type, data, editId = null) => {
     let dataToSave = { ...data };
 
-    // ТЕСТ ЗАСВАР: Индексийг утга руу хөрвүүлж хадгалах
     if (type === "test") {
       if (data.answer === null) {
         showStatus("Зөв хариултыг сонгоно уу!", "error");
@@ -162,7 +164,6 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
 
     let finalData = { ...dataToSave, classCode: userClassCode, pageId: pageId };
 
-    // Canva Link Fix
     if (type === "presentation" && data.url?.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
       if (srcMatch && srcMatch[1]) finalData.url = srcMatch[1];
@@ -208,12 +209,17 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
     if (type === "theory") setNewTheory({ title: "", content: "" });
   };
 
-  // --- УСТГАХ ЛОГИК (БАТАЛГААЖУУЛАЛТТАЙ) ---
   const executeDelete = async () => {
     const { type, id } = confirmModal;
     closeConfirm();
     let apiPath =
-      type === "cards" ? "card" : type === "exp" ? "experiment" : type;
+      type === "cards"
+        ? "card"
+        : type === "exp"
+          ? "experiment"
+          : type === "lessons"
+            ? "lessons"
+            : type;
 
     try {
       const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
@@ -228,7 +234,6 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
     }
   };
 
-  // --- ЗАСАХ ЛОГИК ---
   const handleEdit = (type, item) => {
     setActivePanel(type);
     if (type === "test") {
@@ -257,12 +262,13 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!config || !config.page)
+  if (loading && !config?.page) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-[#312C85]" size={40} />
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
@@ -270,7 +276,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
 
       {/* HEADER SECTION */}
       <section className="pt-24 md:pt-28">
-        <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4">
+        <div className="flex flex-col xl:flex-row bg-white py-4 px-5 rounded-2xl shadow-sm justify-between items-center border border-slate-200 mb-6 gap-4 font-black">
           <div className="flex items-center w-full xl:w-auto">
             <Link
               href={backUrl || "/indexP"}
@@ -280,10 +286,10 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
             </Link>
             <div className="w-1.5 h-10 bg-[#312C85] rounded-full mr-4"></div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase leading-none">
+              <h1 className="text-xl md:text-2xl text-slate-900 uppercase leading-none">
                 {config.page.title}
               </h1>
-              <p className="text-slate-400 text-[10px] md:text-xs font-black flex items-center gap-1 uppercase mt-1 tracking-tighter">
+              <p className="text-slate-400 text-[10px] md:text-xs flex items-center gap-1 uppercase mt-1 tracking-tighter">
                 <Users size={12} /> {config.page.subtitle} | {userClassCode}{" "}
                 АНГИ
               </p>
@@ -292,19 +298,19 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
             <Link
               href={`/testPhysics?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <Award size={16} /> ТЕСТ ӨГӨХ
             </Link>
             <Link
               href={`/cartPhysics?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <BookOpen size={16} /> КАРТ ҮЗЭХ
             </Link>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:bg-black transition-all"
+              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
             >
               <Play size={16} fill="currentColor" /> ҮЗЭХ
             </button>
@@ -316,7 +322,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
       <div className="max-w-[1400px] mx-auto mt-6">
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            {/* Video */}
+            {/* Video Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -349,7 +355,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
               )}
             </div>
 
-            {/* Test (Fixed Logic) */}
+            {/* Test Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -431,7 +437,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
               </div>
             </div>
 
-            {/* Card */}
+            {/* Card Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -500,7 +506,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
               </div>
             </div>
 
-            {/* Experiment */}
+            {/* Experiment Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -551,7 +557,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
               )}
             </div>
 
-            {/* Theory */}
+            {/* Theory Admin */}
             <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
@@ -605,10 +611,11 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
           </div>
         )}
 
-        {/* MAIN CONTENT ROW */}
+        {/* MAIN VISUAL CONTENT */}
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left: Presentation or Placeholder */}
           <div className="w-full lg:w-[75%] space-y-4">
-            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative">
+            <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative group">
               {displayUrl ? (
                 <iframe
                   src={displayUrl}
@@ -616,22 +623,40 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
                   allowFullScreen
                 />
               ) : (
-                <Slider slides={config.slider} />
+                /* ХИЧЭЭЛ БАЙХГҮЙ ҮЕД ХАРАГДАХ PLACEHOLDER */
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#312C85] to-[#1e1a5a] text-white p-10 text-center">
+                  <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
+                    <Presentation size={40} />
+                  </div>
+                  <h2 className="text-2xl md:text-4xl font-black uppercase mb-4 tracking-tighter">
+                    Багшийн бэлтгэсэн хичээл
+                  </h2>
+                  <p className="text-white/60 max-w-md text-sm md:text-base font-medium mb-8 leading-relaxed">
+                    Уучлаарай, энэ сэдвийн интерактив презентаци хараахан
+                    ороогүй байна. Видео болон онолын хэсгээс мэдээллээ авна уу.
+                  </p>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-white text-[#312C85] px-8 py-4 rounded-2xl font-black text-sm uppercase transition-all hover:bg-emerald-400 hover:text-white shadow-xl flex items-center gap-2"
+                  >
+                    <Play size={20} fill="currentColor" /> Видео хичээл үзэх
+                  </button>
+                </div>
               )}
             </div>
             {isTeacher && (
-              <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 flex gap-2 shadow-sm items-center">
+              <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 flex gap-2 shadow-sm items-center animate-in fade-in duration-500">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-slate-50 text-xs outline-none focus:border-[#312C85]"
+                  className="flex-1 p-3 rounded-xl border bg-slate-50 text-xs outline-none focus:border-[#312C85] font-bold"
                   value={canvaInput}
                   onChange={(e) => setCanvaInput(e.target.value)}
-                  placeholder="Canva Embed холбоос..."
+                  placeholder="Canva Embed Link эсвэл iframe код..."
                 />
                 <button
                   onClick={() =>
                     handleSave("presentation", { url: canvaInput })
                   }
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-black transition-all shadow-lg text-xs"
                 >
                   <Save size={18} /> ХАДГАЛАХ
                 </button>
@@ -639,7 +664,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
             )}
           </div>
 
-          {/* Experiments Sidebar */}
+          {/* Right: Experiments Sidebar */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
               <Beaker size={14} /> ТУРШИЛТУУД
@@ -658,13 +683,13 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
                       <div className="absolute top-2 left-2 z-10 flex gap-1">
                         <button
                           onClick={() => handleEdit("exp", exp)}
-                          className="p-1 bg-white/90 rounded text-[#312C85]"
+                          className="p-1 bg-white/90 rounded text-[#312C85] shadow-sm"
                         >
                           <Edit2 size={10} />
                         </button>
                         <button
                           onClick={() => askDelete("exp", exp._id)}
-                          className="p-1 bg-white/90 rounded text-red-500"
+                          className="p-1 bg-white/90 rounded text-red-500 shadow-sm"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -673,14 +698,14 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
                     <Link href={exp.href || "#"} target="_blank">
                       <div className="h-28 rounded-xl bg-slate-50 overflow-hidden relative">
                         <img
-                          src={exp.img || "https://via.placeholder.com/400x300"}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          src={exp.img || "/placeholder.png"}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                         <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg">
                           <ExternalLink size={14} className="text-[#312C85]" />
                         </div>
                       </div>
-                      <div className="py-2 px-1 font-bold text-[12px] text-slate-700 truncate uppercase">
+                      <div className="py-2 px-1 font-black text-[12px] text-slate-700 truncate uppercase">
                         {exp.title}
                       </div>
                     </Link>
@@ -691,7 +716,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
         </div>
 
         {/* THEORY SECTION */}
-        <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden">
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 mt-12 relative overflow-hidden font-black">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#312C85]/5 rounded-bl-full" />
           <h2 className="text-center text-xl md:text-3xl font-black uppercase mb-12 text-[#312C85] tracking-tighter">
             Онолын Мэдээлэл
@@ -737,7 +762,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
                     ).map((text, j) => (
                       <p
                         key={j}
-                        className="text-sm text-slate-600 border-l-2 border-[#312C85]/10 pl-4 leading-relaxed font-medium"
+                        className="text-sm text-slate-600 border-l-2 border-[#312C85]/10 pl-4 leading-relaxed font-bold"
                       >
                         {text}
                       </p>
@@ -793,7 +818,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
         </div>
       )}
 
-      {/* --- ШИНЭ: БАТАЛГААЖУУЛАХ МОДАЛ --- */}
+      {/* --- БАТАЛГААЖУУЛАХ МОДАЛ --- */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
@@ -828,7 +853,7 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
         </div>
       )}
 
-      {/* --- ШИНЭ: STATUS (SUCCESS/ERROR) МОДАЛ --- */}
+      {/* --- STATUS (SUCCESS/ERROR) МОДАЛ --- */}
       {statusModal.show && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div

@@ -26,7 +26,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import NavAll from "./NavAll";
-import NavH from "./NavH";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LessonTemplate({ pageId, config }) {
@@ -34,7 +33,7 @@ export default function LessonTemplate({ pageId, config }) {
   const isTeacher = user?.role === "teacher";
   const userClassCode = user?.classCode || "";
 
-  // --- Үндсэн States ---
+  // --- States ---
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(config?.page?.videoUrl || "");
   const [dbExperiments, setDbExperiments] = useState([]);
@@ -45,22 +44,20 @@ export default function LessonTemplate({ pageId, config }) {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // --- Мэдэгдлийн (Status Modal) States ---
+  // Status & Confirmation Modals
   const [statusModal, setStatusModal] = useState({
     show: false,
     message: "",
     type: "success",
   });
-
-  // --- Устгах баталгаажуулах (Confirm Modal) States ---
   const [confirmModal, setConfirmModal] = useState({
     show: false,
     type: "",
     id: null,
   });
-
-  // --- Админ Panel States ---
   const [activePanel, setActivePanel] = useState(null);
+
+  // Input States for Editing/Adding
   const [videoInput, setVideoInput] = useState("");
   const [canvaInput, setCanvaInput] = useState("");
   const [newExp, setNewExp] = useState({ title: "", href: "", img: "" });
@@ -79,11 +76,14 @@ export default function LessonTemplate({ pageId, config }) {
     theory: null,
   });
 
+  // Жишээ презентаци эсвэл DB-ийн презентацийн алийг харуулахыг шийдэх
+  const finalDisplayUrl = displayUrl || config?.page?.presentationUrl;
+
   const closeStatus = () => setStatusModal({ ...statusModal, show: false });
   const closeConfirm = () =>
     setConfirmModal({ show: false, type: "", id: null });
 
-  // --- Өгөгдөл татах ---
+  // --- Data Fetching ---
   const fetchData = async () => {
     if (!pageId || !userClassCode) return;
     setLoading(true);
@@ -107,7 +107,6 @@ export default function LessonTemplate({ pageId, config }) {
       if (videoRes.ok) {
         const d = await videoRes.json();
         setVideoUrl(d?.url || config?.page?.videoUrl || "");
-        setVideoInput(d?.url || "");
       }
       if (expRes.ok) setDbExperiments(await expRes.json());
       if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
@@ -124,35 +123,35 @@ export default function LessonTemplate({ pageId, config }) {
     fetchData();
     setShowAll(false);
     setActivePanel(null);
+    window.scrollTo(0, 0);
   }, [pageId, userClassCode]);
 
-  // --- Хадгалах функц ---
+  // --- CRUD Operations ---
   const handleSave = async (type, data, editId = null) => {
     let finalData = { ...data, classCode: userClassCode, pageId: pageId };
 
     if (type === "video" && data.url) {
-      let videoId = "";
-      if (data.url.includes("v=")) {
-        videoId = data.url.split("v=")[1].split("&")[0];
-      } else if (data.url.includes("youtu.be/")) {
-        videoId = data.url.split("youtu.be/")[1].split("?")[0];
-      }
-      if (videoId) {
-        finalData.url = `https://www.youtube.com/embed/${videoId}`;
-      }
+      let videoId = data.url.includes("v=")
+        ? data.url.split("v=")[1].split("&")[0]
+        : data.url.includes("youtu.be/")
+          ? data.url.split("youtu.be/")[1].split("?")[0]
+          : "";
+      if (videoId) finalData.url = `https://www.youtube.com/embed/${videoId}`;
     }
 
     if (type === "presentation" && data.url && data.url.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
-      if (srcMatch && srcMatch[1]) {
-        finalData.url = srcMatch[1];
-      }
+      if (srcMatch && srcMatch[1]) finalData.url = srcMatch[1];
     }
 
-    let apiPath = type;
-    if (type === "cards") apiPath = "card";
-    if (type === "exp") apiPath = "experiment";
-    if (type === "theory") apiPath = "lessons";
+    let apiPath =
+      type === "cards"
+        ? "card"
+        : type === "exp"
+          ? "experiment"
+          : type === "theory"
+            ? "lessons"
+            : type;
 
     try {
       const res = await fetch(`/api/${apiPath}`, {
@@ -185,36 +184,34 @@ export default function LessonTemplate({ pageId, config }) {
     }
   };
 
-  // --- Устгах функцийг Modal-тай холбох ---
-  const handleDeleteConfirm = (type, id) => {
+  const handleDeleteConfirm = (type, id) =>
     setConfirmModal({ show: true, type, id });
-  };
 
   const executeDelete = async () => {
     const { type, id } = confirmModal;
     closeConfirm();
-
-    let apiPath = type === "cards" ? "card" : type;
+    let apiPath =
+      type === "cards"
+        ? "card"
+        : type === "experiment"
+          ? "experiment"
+          : type === "lessons"
+            ? "lessons"
+            : type;
     try {
       const res = await fetch(`/api/${apiPath}?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         setStatusModal({
           show: true,
-          message: "Мэдээлэл амжилттай устлаа.",
+          message: "Амжилттай устлаа.",
           type: "success",
         });
         fetchData();
-      } else {
-        setStatusModal({
-          show: true,
-          message: "Устгахад алдаа гарлаа.",
-          type: "error",
-        });
       }
     } catch (err) {
       setStatusModal({
         show: true,
-        message: "Хүсэлт илгээхэд алдаа гарлаа.",
+        message: "Устгахад алдаа гарлаа.",
         type: "error",
       });
     }
@@ -225,8 +222,7 @@ export default function LessonTemplate({ pageId, config }) {
     setEditIds({ test: null, card: null, exp: null, theory: null });
     if (type === "test")
       setNewTest({ question: "", options: ["", "", ""], answer: "" });
-    if (type === "cards" || type === "card")
-      setNewCard({ question: "", answer: "" });
+    if (type === "cards") setNewCard({ question: "", answer: "" });
     if (type === "exp") setNewExp({ title: "", href: "", img: "" });
     if (type === "theory") setNewTheory({ title: "", content: "" });
     if (type === "video") setVideoInput("");
@@ -239,7 +235,7 @@ export default function LessonTemplate({ pageId, config }) {
       setNewTest({
         question: item.question,
         options: item.options,
-        answer: item.answer.trim(),
+        answer: item.answer,
       });
     } else if (type === "card") {
       setEditIds((p) => ({ ...p, card: item._id }));
@@ -259,13 +255,12 @@ export default function LessonTemplate({ pageId, config }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!config || !config.page) {
+  if (!config || loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-[#312C85]" size={40} />
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen px-4 md:px-8 pb-16 bg-[#F8FAFC]">
@@ -315,13 +310,13 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       </section>
 
-      <div className="max-w-[1400px] mx-auto mt-6">
+      <div className="max-w-[1400px] mx-auto">
         {/* --- Teacher Admin Panels --- */}
         {isTeacher && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             {/* Video Panel */}
-            <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm text-center">
-              <div className="flex justify-between items-center mb-2 text-left">
+            <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 shadow-sm">
+              <div className="flex justify-between items-center mb-2">
                 <p className="text-[11px] font-black text-[#312C85] uppercase flex items-center gap-2">
                   <Video size={16} /> Видео
                 </p>
@@ -335,7 +330,7 @@ export default function LessonTemplate({ pageId, config }) {
                 </button>
               </div>
               {activePanel === "video" && (
-                <div className="flex gap-1 animate-in slide-in-from-top-1 duration-200">
+                <div className="flex gap-1 animate-in slide-in-from-top-1">
                   <input
                     className="flex-1 p-2 rounded-lg border text-xs"
                     value={videoInput}
@@ -377,35 +372,30 @@ export default function LessonTemplate({ pageId, config }) {
                       setNewTest({ ...newTest, question: e.target.value })
                     }
                   />
-                  {newTest.options.map((opt, idx) => (
-                    <div key={idx} className="flex gap-1">
-                      <input
-                        className="flex-1 p-1.5 rounded-md border text-[10px]"
-                        placeholder={`Хувилбар ${idx + 1}`}
-                        value={opt}
-                        onChange={(e) => {
-                          const ops = [...newTest.options];
-                          ops[idx] = e.target.value;
-                          setNewTest({ ...newTest, options: ops });
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (opt.trim() !== "") {
-                            setNewTest({ ...newTest, answer: opt });
+                  <div className="grid gap-1">
+                    {newTest.options.map((opt, idx) => (
+                      <div key={idx} className="flex gap-1">
+                        <input
+                          className="flex-1 p-1.5 rounded-md border text-[10px]"
+                          placeholder={`Хувилбар ${idx + 1}`}
+                          value={opt}
+                          onChange={(e) => {
+                            const ops = [...newTest.options];
+                            ops[idx] = e.target.value;
+                            setNewTest({ ...newTest, options: ops });
+                          }}
+                        />
+                        <button
+                          onClick={() =>
+                            setNewTest({ ...newTest, answer: opt })
                           }
-                        }}
-                        className={`p-1.5 rounded-md border transition-all ${
-                          newTest.answer === opt && opt !== ""
-                            ? "bg-[#312C85] text-white border-[#312C85]"
-                            : "bg-white text-slate-300 border-slate-200"
-                        }`}
-                      >
-                        <Check size={14} />
-                      </button>
-                    </div>
-                  ))}
+                          className={`p-1.5 rounded-md border ${newTest.answer === opt ? "bg-[#312C85] text-white" : "bg-white"}`}
+                        >
+                          <Check size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                   <button
                     onClick={() => handleSave("test", newTest, editIds.test)}
                     className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black uppercase"
@@ -414,6 +404,7 @@ export default function LessonTemplate({ pageId, config }) {
                   </button>
                 </div>
               )}
+              {/* Test List Mini */}
               <div className="mt-2 max-h-32 overflow-y-auto border-t pt-2 space-y-1">
                 {dbTests.map((t) => (
                   <div
@@ -477,7 +468,7 @@ export default function LessonTemplate({ pageId, config }) {
                   />
                   <button
                     onClick={() => handleSave("cards", newCard, editIds.card)}
-                    className="w-full bg-slate-800 text-white py-2 rounded-lg text-[10px] font-black uppercase"
+                    className="w-full bg-[#312C85] text-white py-2 rounded-lg text-[10px] font-black uppercase"
                   >
                     Хадгалах
                   </button>
@@ -606,7 +597,7 @@ export default function LessonTemplate({ pageId, config }) {
                         editIds.theory,
                       )
                     }
-                    className="w-full bg-slate-800 text-white py-2 rounded text-[10px] font-black uppercase"
+                    className="w-full bg-[#312C85] text-white py-2 rounded text-[10px] font-black uppercase"
                   >
                     Хадгалах
                   </button>
@@ -616,13 +607,14 @@ export default function LessonTemplate({ pageId, config }) {
           </div>
         )}
 
-        {/* --- Main Content --- */}
+        {/* --- Main Content Section --- */}
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left: Presentation Area */}
           <div className="w-full lg:w-[75%] space-y-4">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 aspect-video relative group">
-              {displayUrl ? (
+              {finalDisplayUrl ? (
                 <iframe
-                  src={displayUrl}
+                  src={finalDisplayUrl}
                   className="w-full h-full border-none"
                   allowFullScreen
                 />
@@ -633,16 +625,16 @@ export default function LessonTemplate({ pageId, config }) {
             {isTeacher && (
               <div className="bg-white p-4 rounded-2xl border border-[#312C85]/20 flex gap-2 shadow-sm items-center">
                 <input
-                  className="flex-1 p-3 rounded-xl border bg-slate-50 text-xs outline-none focus:border-[#312C85]"
+                  className="flex-1 p-3 rounded-xl border bg-slate-50 text-xs focus:border-[#312C85] outline-none"
                   value={canvaInput}
                   onChange={(e) => setCanvaInput(e.target.value)}
-                  placeholder="Canva Embed Link..."
+                  placeholder="Canva Embed Link (Эсвэл iframe код)..."
                 />
                 <button
                   onClick={() =>
                     handleSave("presentation", { url: canvaInput })
                   }
-                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all"
+                  className="bg-[#312C85] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-md"
                 >
                   <Save size={18} /> Хадгалах
                 </button>
@@ -650,6 +642,7 @@ export default function LessonTemplate({ pageId, config }) {
             )}
           </div>
 
+          {/* Right: Experiments Side Panel */}
           <div className="w-full lg:w-[25%] flex flex-col gap-4">
             <h3 className="font-black text-slate-800 text-[10px] uppercase tracking-widest opacity-60 flex items-center gap-2 px-1">
               <Beaker size={14} /> Туршилтууд
@@ -668,7 +661,7 @@ export default function LessonTemplate({ pageId, config }) {
                       <div className="absolute top-2 left-2 z-10 flex gap-1">
                         <button
                           onClick={() => handleEdit("exp", exp)}
-                          className="p-1 bg-white/90 rounded shadow-sm text-[#312C85]"
+                          className="p-1 bg-white/90 rounded shadow-sm text-[#312C85] hover:bg-white"
                         >
                           <Edit2 size={10} />
                         </button>
@@ -676,7 +669,7 @@ export default function LessonTemplate({ pageId, config }) {
                           onClick={() =>
                             handleDeleteConfirm("experiment", exp._id)
                           }
-                          className="p-1 bg-white/90 rounded shadow-sm text-red-500"
+                          className="p-1 bg-white/90 rounded shadow-sm text-red-500 hover:bg-white"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -689,7 +682,7 @@ export default function LessonTemplate({ pageId, config }) {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           alt={exp.title}
                         />
-                        <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg">
+                        <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg shadow-sm">
                           <ExternalLink size={14} className="text-[#312C85]" />
                         </div>
                       </div>
@@ -760,6 +753,7 @@ export default function LessonTemplate({ pageId, config }) {
                 </div>
               ))}
           </div>
+          {/* Show More Button */}
           <div className="flex justify-center mt-12">
             <button
               onClick={() => setShowAll(!showAll)}
@@ -782,6 +776,7 @@ export default function LessonTemplate({ pageId, config }) {
       </div>
 
       {/* --- Modals --- */}
+      {/* Video Modal */}
       {isModalOpen && (
         <div
           className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
@@ -807,6 +802,7 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       )}
 
+      {/* Success/Error Status Modal */}
       {statusModal.show && (
         <div className="fixed bottom-10 right-10 z-[3000] animate-in slide-in-from-right-10">
           <div
@@ -828,6 +824,7 @@ export default function LessonTemplate({ pageId, config }) {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div

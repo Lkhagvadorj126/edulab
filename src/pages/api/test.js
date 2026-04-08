@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 export default async function handler(req, res) {
   const client = await clientPromise;
   const db = client.db("physics_db");
-  const { pageId, classCode, id } = req.query;
+  const { pageId, classCode, id, subject } = req.query;
 
   try {
     // --- УНШИХ (GET) ---
@@ -14,10 +14,14 @@ export default async function handler(req, res) {
           .status(400)
           .json({ error: "pageId болон classCode шаардлагатай" });
       }
-      const data = await db
-        .collection("tests")
-        .find({ pageId, classCode })
-        .toArray();
+
+      // Шүүлтүүр: classCode, pageId болон subject (байвал)
+      let query = { pageId, classCode };
+      if (subject) {
+        query.subject = subject;
+      }
+
+      const data = await db.collection("tests").find(query).toArray();
       return res.status(200).json(data);
     }
 
@@ -31,19 +35,23 @@ export default async function handler(req, res) {
           .json({ error: "Мэдээлэл дутуу байна (classCode, pageId)" });
       }
 
+      // Subject байхгүй бол default-оор "physics" гэж хадгална (бусад хуудаснуудад алдаа гаргахгүйн тулд)
+      const finalData = {
+        ...data,
+        subject: data.subject || "physics",
+        updatedAt: new Date(),
+      };
+
       if (editId) {
         // Засах
         await db
           .collection("tests")
-          .updateOne(
-            { _id: new ObjectId(editId) },
-            { $set: { ...data, updatedAt: new Date() } },
-          );
-        return res.status(200).json({ message: "Тест амжилттай шинэчлэгдлээ" });
+          .updateOne({ _id: new ObjectId(editId) }, { $set: finalData });
+        return res.status(200).json({ message: "Амжилттай шинэчлэгдлээ" });
       } else {
         // Шинээр нэмэх
         const result = await db.collection("tests").insertOne({
-          ...data,
+          ...finalData,
           createdAt: new Date(),
         });
         return res.status(200).json(result);
@@ -54,9 +62,12 @@ export default async function handler(req, res) {
     if (req.method === "DELETE") {
       if (!id) return res.status(400).json({ error: "ID шаардлагатай" });
       await db.collection("tests").deleteOne({ _id: new ObjectId(id) });
-      return res.status(200).json({ message: "Тест устгагдлаа" });
+      return res.status(200).json({ message: "Амжилттай устгагдлаа" });
     }
+
+    return res.status(405).json({ message: "Method not allowed" });
   } catch (err) {
+    console.error("API Error:", err);
     res.status(500).json({ error: err.message });
   }
 }
