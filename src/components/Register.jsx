@@ -39,6 +39,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTeacherCode, setShowTeacherCode] = useState(false);
 
   const [modal, setModal] = useState({
     show: false,
@@ -56,6 +57,14 @@ export default function Register() {
 
   const showAlert = (type, title, message) => {
     setModal({ show: true, type, title, message });
+  };
+
+  const handleCloseModal = () => {
+    setModal({ ...modal, show: false });
+    if (modal.type === "success") {
+      // Бүртгэл амжилттай бол Dashboard руу хүчээр шилжүүлнэ
+      window.location.href = "/dashboard";
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -82,6 +91,7 @@ export default function Register() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
+          teacherCode: formData.teacherCode,
           school: formData.role === "teacher" ? "Захиргаа" : formData.school,
           grade: formData.role === "teacher" ? "Teacher" : formData.grade,
         }),
@@ -89,25 +99,22 @@ export default function Register() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        if (data.user) {
-          await login(data.user);
-          localStorage.setItem("userId", data.user.id || data.user._id);
-          localStorage.setItem("userRole", data.user.role);
+      if (res.ok && data.user) {
+        // Мэдээллийг хадгалах
+        await login(data.user);
+        localStorage.setItem("userId", data.user.id || data.user._id);
+        localStorage.setItem("userRole", data.user.role);
 
-          showAlert(
-            "success",
-            "Баяр хүргэе!",
-            "Бүртгэл амжилттай. Систем рүү нэвтэрч байна...",
-          );
+        showAlert(
+          "success",
+          "Баяр хүргэе!",
+          "Бүртгэл амжилттай. Систем рүү нэвтэрч байна...",
+        );
 
-          setTimeout(() => {
-            router.push("/dashboard");
-            router.refresh();
-          }, 1500);
-        } else {
-          router.push("/");
-        }
+        // 1.5 секундын дараа автоматаар шилжих (хэрэв хэрэглэгч Ойлголоо-г дарахгүй бол)
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1500);
       } else {
         showAlert(
           "error",
@@ -132,7 +139,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-900 font-sans relative">
       {modal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center">
             <div
               className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${modal.type === "success" ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}`}
             >
@@ -147,10 +154,7 @@ export default function Register() {
               {modal.message}
             </p>
             <button
-              onClick={() => {
-                setModal({ ...modal, show: false });
-                if (modal.type === "success") router.push("/dashboard");
-              }}
+              onClick={handleCloseModal}
               className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-[#312C85] text-white"
             >
               Ойлголоо
@@ -168,10 +172,6 @@ export default function Register() {
             Edulab <br />
             <span className="opacity-80">Science</span>
           </h1>
-          <p className="mb-12 text-blue-100/70 text-sm max-w-xs z-10">
-            Шинжлэх ухааны интерактив ертөнцөд нэгдэж, мэдлэгээ
-            баталгаажуулаарай.
-          </p>
           <div className="grid grid-cols-2 gap-4 w-full z-10">
             {items.map((item, index) => (
               <div
@@ -193,6 +193,7 @@ export default function Register() {
             <h2 className="text-3xl font-black text-slate-900 mb-6 uppercase italic">
               Бүртгүүлэх
             </h2>
+
             <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
               {["student", "teacher"].map((r) => (
                 <button
@@ -229,6 +230,7 @@ export default function Register() {
                   />
                 </div>
               </div>
+
               <div className="space-y-1">
                 <label className={labelStyle}>И-мэйл хаяг</label>
                 <input
@@ -242,8 +244,8 @@ export default function Register() {
                 />
               </div>
 
-              {formData.role === "student" && (
-                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+              {formData.role === "student" ? (
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className={labelStyle}>Сургууль</label>
                     <input
@@ -267,10 +269,8 @@ export default function Register() {
                     />
                   </div>
                 </div>
-              )}
-
-              {formData.role === "teacher" && (
-                <div className="space-y-1 animate-in slide-in-from-left-2">
+              ) : (
+                <div className="space-y-1">
                   <label className={labelStyle}>Багшийн код</label>
                   <div className="relative">
                     <ShieldCheck
@@ -278,10 +278,11 @@ export default function Register() {
                       size={18}
                     />
                     <input
-                      type="password"
+                      type={showTeacherCode ? "text" : "password"}
                       required
                       className={`${inputStyle} pl-12 border-blue-100`}
-                      placeholder="Нууц код"
+                      placeholder="Багшийн нууц код"
+                      value={formData.teacherCode}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -289,6 +290,17 @@ export default function Register() {
                         })
                       }
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowTeacherCode(!showTeacherCode)}
+                      className="absolute right-5 top-[18px] text-slate-400"
+                    >
+                      {showTeacherCode ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
@@ -318,7 +330,7 @@ export default function Register() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     required
-                    className={`${inputStyle} ${formData.confirmPassword && formData.password !== formData.confirmPassword ? "border-red-400" : ""}`}
+                    className={inputStyle}
                     placeholder="••••"
                     onChange={(e) =>
                       setFormData({
@@ -352,7 +364,9 @@ export default function Register() {
                 )}
               </button>
             </form>
-            <p className="mt-8 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">
+
+            {/* Нэвтрэх хэсэг нэмсэн */}
+            <p className="mt-8 text-center text-[11px] text-slate-400 font-bold uppercase tracking-widest">
               Бүртгэлтэй юу?{" "}
               <Link href="/" className="text-[#312C85] hover:underline ml-1">
                 Нэвтрэх

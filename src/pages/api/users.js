@@ -9,17 +9,10 @@ export default async function handler(req, res) {
     const { userId } = req.query;
     try {
       if (userId) {
-        const user = await db
-          .collection("users")
-          .findOne({ _id: new ObjectId(userId) });
+        const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
         return res.status(200).json(user);
       }
-      const leaders = await db
-        .collection("users")
-        .find({ role: "student" })
-        .sort({ totalXp: -1 })
-        .limit(50)
-        .toArray();
+      const leaders = await db.collection("users").find({ role: "student" }).sort({ totalXp: -1 }).limit(50).toArray();
       return res.status(200).json(leaders);
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -28,47 +21,31 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     try {
-      const {
-        userId,
-        xpToAdd,
-        email,
-        password,
-        role,
-        name,
-        school,
-        grade,
-        classCode,
-        teacherCode,
-      } = req.body;
+      const { userId, xpToAdd, email, password, role, name, school, grade, classCode, teacherCode } = req.body;
 
       // 1. ОНОО НЭМЭХ
       if (userId && xpToAdd !== undefined) {
         const result = await db.collection("users").findOneAndUpdate(
           { _id: new ObjectId(userId) },
-          {
-            $inc: { totalXp: parseInt(xpToAdd) },
-            $set: { lastPlayed: new Date() },
-          },
-          { returnDocument: "after" },
+          { $inc: { totalXp: parseInt(xpToAdd) }, $set: { lastPlayed: new Date() } },
+          { returnDocument: "after" }
         );
         return res.status(200).json({ success: true, totalXp: result.totalXp });
       }
 
       // 2. ШИНЭ БҮРТГЭЛ
       if (email) {
+        // Багшийн кодыг шалгах
         if (role === "teacher" && teacherCode !== "teacher2026") {
-          return res
-            .status(400)
-            .json({ message: "Багшийн баталгаажуулах код буруу!" });
+          return res.status(400).json({ message: "Багшийн баталгаажуулах код буруу!" });
         }
 
         const existingUser = await db.collection("users").findOne({ email });
-        if (existingUser)
-          return res.status(400).json({ message: "И-мэйл бүртгэлтэй байна." });
+        if (existingUser) return res.status(400).json({ message: "И-мэйл бүртгэлтэй байна." });
 
         const newUser = {
           email,
-          password,
+          password, // Бодит төсөл дээр bcrypt ашиглаж нууцлахыг зөвлөе
           name: name || "Хэрэглэгч",
           role: role || "student",
           classCode: classCode || "NO_CLASS",
@@ -79,14 +56,20 @@ export default async function handler(req, res) {
         };
 
         const registerResult = await db.collection("users").insertOne(newUser);
-        return res
-          .status(201)
-          .json({ success: true, userId: registerResult.insertedId });
+        
+        // ЗАСВАР: Бүртгэл дууссаны дараа хэрэглэгчийн өгөгдлийг буцааж фронтенд дээр шууд нэвтрүүлнэ
+        const createdUser = {
+            _id: registerResult.insertedId,
+            ...newUser
+        };
+
+        return res.status(201).json({ 
+            success: true, 
+            user: createdUser 
+        });
       }
     } catch (err) {
-      return res
-        .status(500)
-        .json({ message: "Серверийн алдаа", error: err.message });
+      return res.status(500).json({ message: "Серверийн алдаа", error: err.message });
     }
   }
 }

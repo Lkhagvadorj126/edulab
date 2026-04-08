@@ -13,7 +13,10 @@ import {
   FaUsers,
   FaTrophy,
   FaTrash,
+  FaQrcode, // 'c' үсгийг жижиг болгож засав
+  FaListUl,
 } from "react-icons/fa";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/context/AuthContext";
 import NavAll from "./NavAll";
 import Link from "next/link";
@@ -62,7 +65,8 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isChangingClass, setIsChangingClass] = useState(false); // ШИНЭ: Анги солих төлөв
+  const [isChangingClass, setIsChangingClass] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studentCode, setStudentCode] = useState("");
@@ -81,9 +85,9 @@ export default function Dashboard() {
       try {
         const res = await fetch(`/api/classes?classCode=${user.classCode}`);
         const data = await res.json();
-        setClassMembers(data);
+        setClassMembers(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Алдаа гарлаа");
+        console.error("Fetch members error:", err);
       }
     }
   }, [user?.classCode, hasClass]);
@@ -118,11 +122,16 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        if (user.role === "teacher") setGeneratedCode(data.code);
-        else window.location.reload();
-      } else alert(data.message);
+        if (user.role === "teacher") {
+          setGeneratedCode(data.code);
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert(data.message || "Алдаа гарлаа");
+      }
     } catch (err) {
-      alert("Алдаа гарлаа");
+      alert("Сервертэй холбогдоход алдаа гарлаа");
     } finally {
       setIsSubmitting(false);
     }
@@ -140,23 +149,26 @@ export default function Dashboard() {
           classCode: user.classCode,
         }),
       });
-      if ((await res.json()).success) fetchMembers();
+      const data = await res.json();
+      if (data.success) fetchMembers();
     } catch (err) {
-      alert("Алдаа гарлаа");
+      alert("Устгахад алдаа гарлаа");
     }
   };
 
-  if (loading || !user)
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-12 h-12 border-4 border-[#312C85] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
 
   return (
     <main className="min-h-screen bg-white font-sans antialiased relative">
       <NavAll />
 
+      {/* Modal Section */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
@@ -164,6 +176,7 @@ export default function Dashboard() {
             onClick={() => {
               setIsModalOpen(false);
               setIsChangingClass(false);
+              setShowQr(false);
             }}
           />
           <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 overflow-hidden">
@@ -172,71 +185,97 @@ export default function Dashboard() {
                 setIsModalOpen(false);
                 setGeneratedCode("");
                 setIsChangingClass(false);
+                setShowQr(false);
               }}
               className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 z-20"
             >
               <FaTimes size={20} />
             </button>
 
-            {/* Ангитай БӨГӨӨД солих товч дараагүй үед жагсаалт харуулна */}
             {hasClass && !isChangingClass ? (
               <div className="space-y-6">
-                <div className="text-center">
+                <div className="text-center relative">
+                  <button
+                    onClick={() => setShowQr(!showQr)}
+                    className="absolute left-0 top-0 p-2 bg-slate-50 rounded-xl text-[#312C85] hover:bg-slate-100 transition-colors"
+                  >
+                    {showQr ? <FaListUl size={16} /> : <FaQrcode size={16} />}
+                  </button>
+
                   <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center justify-center gap-3">
-                    <FaUsers className="text-[#312C85]" /> Ангийнхан
+                    {showQr ? "Ангийн QR код" : "Ангийнхан"}
                   </h2>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
                     КОД: {user.classCode}
                   </p>
                 </div>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  {classMembers.map((member, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${member.role === "teacher" ? "bg-amber-100 text-amber-600" : "bg-indigo-100 text-[#312C85]"}`}
-                        >
-                          {member.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-slate-800">
-                            {member.name}{" "}
-                            {member.role === "teacher" && (
-                              <span className="text-[8px] bg-amber-500 text-white px-1 py-0.5 rounded ml-1">
-                                БАГШ
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">
-                            {member.email.split("@")[0]}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-black text-[#312C85]">
-                            {member.totalXp}
-                          </span>
-                          <FaTrophy className="text-amber-400" size={10} />
-                        </div>
-                        {user.role === "teacher" && member._id !== user._id && (
-                          <button
-                            onClick={() =>
-                              handleRemoveMember(member._id, member.name)
-                            }
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                          >
-                            <FaTrash size={12} />
-                          </button>
-                        )}
-                      </div>
+
+                {showQr ? (
+                  <div className="flex flex-col items-center justify-center py-6 space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="p-6 bg-white border-2 border-slate-100 rounded-[2rem] shadow-sm">
+                      <QRCodeSVG
+                        value={user.classCode}
+                        size={200}
+                        fgColor="#312C85"
+                        level="H"
+                      />
                     </div>
-                  ))}
-                </div>
-                {/* Энд setHasClass-ын оронд setIsChangingClass(true) болгов */}
+                    <p className="text-slate-500 text-sm font-medium text-center px-4">
+                      Сурагчид энэхүү QR кодыг уншуулж эсвэл кодыг шууд бичиж
+                      ангидаа нэгдэх боломжтой.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {classMembers.map((member, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${member.role === "teacher" ? "bg-amber-100 text-amber-600" : "bg-indigo-100 text-[#312C85]"}`}
+                          >
+                            {member.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-800">
+                              {member.name}
+                              {member.role === "teacher" && (
+                                <span className="text-[8px] bg-amber-500 text-white px-1 py-0.5 rounded ml-1">
+                                  БАГШ
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">
+                              {member.email?.split("@")[0]}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-[#312C85]">
+                              {member.totalXp || 0}
+                            </span>
+                            <FaTrophy className="text-amber-400" size={10} />
+                          </div>
+                          {user.role === "teacher" &&
+                            member._id !== user._id && (
+                              <button
+                                onClick={() =>
+                                  handleRemoveMember(member._id, member.name)
+                                }
+                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <button
                   onClick={() => setIsChangingClass(true)}
                   className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-[#312C85] mt-4"
@@ -254,17 +293,25 @@ export default function Dashboard() {
                     Мэдээллээ оруулна уу
                   </p>
                 </div>
+
                 {generatedCode ? (
                   <div className="space-y-6 text-center">
-                    <div className="bg-[#312C85]/5 border-2 border-dashed border-[#312C85]/30 rounded-3xl p-10">
+                    <div className="bg-[#312C85]/5 border-2 border-dashed border-[#312C85]/30 rounded-3xl p-10 flex flex-col items-center gap-6">
                       <div className="text-5xl font-black text-[#312C85] tracking-widest">
                         {generatedCode}
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl shadow-sm">
+                        <QRCodeSVG
+                          value={generatedCode}
+                          size={140}
+                          fgColor="#312C85"
+                        />
                       </div>
                     </div>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(generatedCode);
-                        alert("Хуулагдлаа!");
+                        alert("Код хуулагдлаа!");
                       }}
                       className="flex items-center justify-center gap-2 w-full text-[#312C85] font-bold underline"
                     >
@@ -311,7 +358,7 @@ export default function Dashboard() {
                           }
                         />
                         <input
-                          placeholder="Ангийн нэр (10Б...)"
+                          placeholder="Ангийн нэр (Жишээ нь: 10Б)"
                           className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 outline-none focus:border-[#312C85] font-bold text-sm"
                           value={formData.className}
                           onChange={(e) =>
@@ -326,7 +373,7 @@ export default function Dashboard() {
                       <input
                         type="text"
                         maxLength={6}
-                        placeholder="КОД"
+                        placeholder="АНГИЙН КОД"
                         className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 outline-none focus:border-[#312C85] font-black text-3xl text-center"
                         value={studentCode}
                         onChange={(e) =>
@@ -349,6 +396,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Hero Section */}
       <section className="py-24 lg:py-40 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
@@ -363,7 +411,8 @@ export default function Dashboard() {
                 </h1>
                 <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-lg">
                   Шинжлэх ухааныг интерактив хэлбэрээр судалж, мэдлэгээ
-                  тэлээрэй.
+                  тэлээрэй. Бид танд хамгийн сонирхолтой туршилтуудыг санал
+                  болгож байна.
                 </p>
               </div>
               <button
@@ -372,24 +421,24 @@ export default function Dashboard() {
               >
                 {hasClass ? (
                   <>
-                    {" "}
-                    <FaUsers size={18} /> <span>Ангийнхан харах</span>{" "}
+                    <FaUsers size={18} /> <span>Ангийнхан харах</span>
                   </>
                 ) : (
                   <>
-                    {" "}
                     {user.role === "teacher" ? (
                       <FaPlusCircle size={18} />
                     ) : (
                       <FaSignInAlt size={18} />
-                    )}{" "}
+                    )}
                     <span>
                       {user.role === "teacher" ? "Анги үүсгэх" : "Ангид нэгдэх"}
-                    </span>{" "}
+                    </span>
                   </>
                 )}
               </button>
             </div>
+
+            {/* Course Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {courses.map((course, idx) => (
                 <Link

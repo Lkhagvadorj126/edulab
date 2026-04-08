@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -12,31 +12,29 @@ import {
   Dna,
   TreePine,
   Zap,
-  Leaf,
-  LayoutGrid,
   Activity,
+  LayoutGrid,
 } from "lucide-react";
 import NavAll from "@/components/NavAll";
 import { useAuth } from "@/context/AuthContext";
 import NavbarBio from "./NavbarBio";
 
-// 1. Биологийн үндсэн тогтмол хичээлүүд (Статик)
 const biologyPlaceholders = [
   {
     _id: "b1",
     title: "Бие махбодын зохицуулга",
     desc: "Дотоод орчны тогтмол байдал (гомеостаз) ба мэдрэл, шингэний зохицуулгын механизм.",
-    icon: <Activity />, // Зохицуулга, тэнцвэрт байдлыг Activity эсвэл Shield икон илүү сайн илэрхийлнэ
+    icon: <Activity />,
     isStatic: true,
-    href: "/biology/es", // Сэдэвтэйгээ нийцүүлэн замыг шинэчлэв
+    href: "/biology/es",
   },
   {
     _id: "b2",
     title: "Рекомбинант инсулин",
     desc: "Генетик инженерчлэлийн аргаар бактерийн эсэд хүний инсулин үйлдвэрлэх биотехнологийн процесс.",
-    icon: <Dna />, // Инсулины сэдэвт ДНХ (Dna) эсвэл Тариур (Syringe) икон илүү тохиромжтой
+    icon: <Dna />,
     isStatic: true,
-    href: "/biology/urgamal", // Өмнөх /urgamal замыг шинэ сэдэвтэй нь нийцүүлж өөрчлөв
+    href: "/biology/urgamal",
   },
   {
     _id: "b3",
@@ -49,10 +47,9 @@ const biologyPlaceholders = [
 ];
 
 export default function BiologyPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  // State-үүд
   const [dynamicTopics, setDynamicTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,62 +57,82 @@ export default function BiologyPage() {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ title: "", desc: "" });
 
-  // Мэдээлэл татах (Category: biology)
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
+    // Хэрэглэгчийн мэдээлэл ачаалж дуусаагүй бол хүлээх
+    if (authLoading) return;
+
+    // Ангигүй бол динамик дата татахгүй
+    if (!user?.classCode || user.classCode === "NO_CLASS") {
+      setDynamicTopics([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await fetch(
-        `/api/physics-topics?category=biology&t=${Date.now()}`,
-      );
+      // Кэшээс сэргийлж timestamp (t=...) болон classCode ашиглав
+      const url = `/api/physics-topics?category=biology&classCode=${user.classCode}&t=${Date.now()}`;
+      const res = await fetch(url, { cache: "no-store" });
+
       if (res.ok) {
         const data = await res.json();
-        setDynamicTopics(data);
+        setDynamicTopics(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.classCode, authLoading]);
 
   useEffect(() => {
     fetchTopics();
-  }, []);
+  }, [fetchTopics]);
 
-  // Сэдэв хадгалах (Нэмэх болон Засах)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.desc) return;
+    if (!formData.title || !formData.desc)
+      return alert("Бүх талбарыг бөглөнө үү!");
+    if (!user?.classCode || user.classCode === "NO_CLASS")
+      return alert("Анги олдсонгүй!");
 
     setIsSubmitting(true);
     try {
       const url = editingId
         ? `/api/physics-topics?id=${editingId}`
         : "/api/physics-topics";
+
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, category: "biology" }),
+        body: JSON.stringify({
+          ...formData,
+          category: "biology",
+          classCode: user.classCode,
+        }),
       });
 
       if (res.ok) {
         await fetchTopics();
         closeModal();
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Алдаа гарлаа");
       }
     } catch (error) {
-      alert("Алдаа гарлаа.");
+      alert("Сервертэй холбогдоход алдаа гарлаа.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Устгах үйлдэл
   const handleDelete = async (id) => {
     if (!confirm("Энэ сэдвийг устгахдаа итгэлтэй байна уу?")) return;
     try {
       const res = await fetch(`/api/physics-topics?id=${id}`, {
         method: "DELETE",
       });
-      if (res.ok) fetchTopics();
+      if (res.ok) await fetchTopics();
     } catch (error) {
       console.error("Delete error:", error);
     }
@@ -127,7 +144,6 @@ export default function BiologyPage() {
     setFormData({ title: "", desc: "" });
   };
 
-  // ЭРЭМБЭ: Динамик (Багшийн нэмсэн) эхэнд, Статик ард нь
   const displayTopics = [...dynamicTopics, ...biologyPlaceholders];
 
   return (
@@ -143,7 +159,6 @@ export default function BiologyPage() {
       </div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 md:pt-32 pb-16 relative z-20">
-        {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 mb-12">
           <div className="flex items-center gap-4 text-[#312C85]">
             <Link
@@ -154,7 +169,9 @@ export default function BiologyPage() {
             </Link>
             <div className="text-left">
               <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] opacity-70">
-                {isTeacher ? "Багшийн хяналт" : "Биологийн Хөтөлбөр"}
+                {user?.classCode && user.classCode !== "NO_CLASS"
+                  ? `Анги: ${user.classCode}`
+                  : "Биологийн Хөтөлбөр"}
               </h2>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
                 Биологи
@@ -163,7 +180,6 @@ export default function BiologyPage() {
             </div>
           </div>
 
-          {/* Баруун талын удирдлага (Responsive) */}
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 relative z-50 self-end xl:self-auto w-full xl:w-auto">
             <NavbarBio />
             {isTeacher && (
@@ -177,93 +193,82 @@ export default function BiologyPage() {
           </div>
         </div>
 
-        {/* Topics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {loading && dynamicTopics.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-20">
               <Loader2 className="animate-spin text-[#312C85]" size={48} />
+              <p className="mt-4 text-slate-400 font-medium italic">
+                Биологийн хичээлүүд ачаалж байна...
+              </p>
             </div>
           ) : (
             displayTopics.map((topic, index) => (
               <div key={topic._id || index} className="relative group h-full">
-                <Link
-                  href={
-                    topic.isStatic ? topic.href || "#" : `/lesson/${topic._id}`
-                  }
-                  className={`block h-full bg-white p-8 md:p-10 rounded-[35px] md:rounded-[40px] border-2 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl text-left ${
-                    topic.isStatic
-                      ? "border-slate-100"
-                      : "border-[#312C85]/20 bg-gradient-to-br from-white to-green-50/10 shadow-sm"
-                  } hover:border-[#312C85]/40`}
+                <div
+                  className={`block h-full bg-white p-8 md:p-10 rounded-[35px] md:rounded-[40px] border-2 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl text-left ${topic.isStatic ? "border-slate-100" : "border-[#312C85]/20 bg-gradient-to-br from-white to-green-50/10 shadow-sm"} hover:border-[#312C85]/40`}
                 >
-                  {/* Багшийн нэмсэн Badge */}
-                  {!topic.isStatic && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#312C85] text-white text-[9px] font-black uppercase tracking-wider mb-5 shadow-sm">
-                      <Zap size={10} fill="currentColor" />
-                      Багшийн нэмсэн
+                  <Link
+                    href={
+                      topic.isStatic
+                        ? topic.href || "#"
+                        : `/lesson/${topic._id}`
+                    }
+                    className="block h-full"
+                  >
+                    {!topic.isStatic && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#312C85] text-white text-[9px] font-black uppercase tracking-wider mb-5 shadow-sm">
+                        <Zap size={10} fill="currentColor" /> Манай анги
+                      </div>
+                    )}
+                    <div className="mb-6 p-5 bg-[#312C85]/5 rounded-3xl w-fit text-[#312C85] group-hover:rotate-[12deg] transition-transform duration-500">
+                      {topic.icon && typeof topic.icon !== "string" ? (
+                        React.cloneElement(topic.icon, {
+                          size: 28,
+                          strokeWidth: 2.5,
+                        })
+                      ) : (
+                        <Activity size={28} strokeWidth={2.5} />
+                      )}
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-[#312C85] transition-colors">
+                      {topic.title}
+                    </h2>
+                    <p className="text-slate-500 text-sm mb-6 line-clamp-2 leading-relaxed font-medium">
+                      {topic.desc}
+                    </p>
+                    <div className="flex items-center text-sm font-bold text-[#312C85] opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0 transition-all">
+                      Хичээл үзэх <ArrowRightCircle className="ml-2 w-5 h-5" />
+                    </div>
+                  </Link>
+
+                  {isTeacher && !topic.isStatic && (
+                    <div className="absolute bottom-8 right-8 flex gap-2 z-30">
+                      <button
+                        onClick={() => {
+                          setEditingId(topic._id);
+                          setFormData({ title: topic.title, desc: topic.desc });
+                          setIsModalOpen(true);
+                        }}
+                        className="p-3 bg-white text-[#312C85] rounded-xl border shadow-sm hover:bg-[#312C85] hover:text-white transition-all active:scale-90"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(topic._id)}
+                        className="p-3 bg-white text-red-500 rounded-xl border shadow-sm hover:bg-red-500 hover:text-white transition-all active:scale-90"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   )}
-
-                  <div className="mb-6 p-5 bg-[#312C85]/5 rounded-3xl w-fit text-[#312C85] group-hover:rotate-[12deg] transition-transform duration-500">
-                    {topic.icon ? (
-                      React.cloneElement(topic.icon, {
-                        size: 28,
-                        strokeWidth: 2.5,
-                      })
-                    ) : (
-                      <TreePine size={28} strokeWidth={2.5} />
-                    )}
-                  </div>
-
-                  {topic.isStatic && (
-                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full mb-3 inline-block uppercase tracking-wider">
-                      Үндсэн хичээл
-                    </span>
-                  )}
-
-                  <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-[#312C85] transition-colors">
-                    {topic.title}
-                  </h2>
-                  <p className="text-slate-500 text-sm mb-6 line-clamp-2 leading-relaxed font-medium">
-                    {topic.desc}
-                  </p>
-
-                  <div className="flex items-center text-sm font-bold text-[#312C85] opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0 transition-all">
-                    {isTeacher && !topic.isStatic
-                      ? "Агуулга засах"
-                      : "Хичээл үзэх"}
-                    <ArrowRightCircle className="ml-2 w-5 h-5" />
-                  </div>
-                </Link>
-
-                {/* Багшийн үйлдлүүд */}
-                {isTeacher && !topic.isStatic && (
-                  <div className="absolute bottom-8 right-8 flex gap-2 z-30">
-                    <button
-                      onClick={() => {
-                        setEditingId(topic._id);
-                        setFormData({ title: topic.title, desc: topic.desc });
-                        setIsModalOpen(true);
-                      }}
-                      className="p-3 bg-white text-[#312C85] rounded-xl border shadow-sm hover:bg-[#312C85] hover:text-white transition-all active:scale-90"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(topic._id)}
-                      className="p-3 bg-white text-red-500 rounded-xl border shadow-sm hover:bg-red-500 hover:text-white transition-all active:scale-90"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                )}
+                </div>
               </div>
             ))
           )}
         </div>
       </section>
 
-      {/* Modal - Сэдэв нэмэх / Засах */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#312C85]/40 backdrop-blur-md flex items-center justify-center z-[100] p-4 text-left">
           <div className="bg-white rounded-[40px] p-8 md:p-10 w-full max-w-lg relative animate-in zoom-in-95 duration-200 border border-white/20 shadow-2xl">
@@ -284,7 +289,7 @@ export default function BiologyPage() {
                 <input
                   required
                   className="w-full p-5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-[#312C85] outline-none font-bold transition-all text-slate-900"
-                  placeholder="Гарчиг оруулах..."
+                  placeholder="Жишээ: Амьсгал авах механизм"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
@@ -298,7 +303,7 @@ export default function BiologyPage() {
                 <textarea
                   required
                   className="w-full p-5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-[#312C85] outline-none h-32 resize-none font-medium transition-all text-slate-900"
-                  placeholder="Товч тайлбар..."
+                  placeholder="Сэдвийн талаар товч..."
                   value={formData.desc}
                   onChange={(e) =>
                     setFormData({ ...formData, desc: e.target.value })
