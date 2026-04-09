@@ -29,13 +29,9 @@ import {
 import Slider from "./Slider";
 import NavAll from "./NavAll";
 import { useAuth } from "@/context/AuthContext";
-
-/**
- * LessonTemplateB - Биологийн болон бусад шинжлэх ухааны хичээлийн загвар.
- * Canva Presentation, Зурагтай Тест, Интерактив туршилтууд болон онолын хэсэгтэй.
- */
 export default function LessonTemplateB({ pageId, config }) {
   const { user } = useAuth();
+  const subject = "biology";
   const isTeacher = user?.role === "teacher";
   const userClassCode = user?.classCode || "10B";
 
@@ -152,7 +148,12 @@ export default function LessonTemplateB({ pageId, config }) {
       return;
     }
 
-    let finalData = { ...data, classCode: userClassCode, pageId: pageId };
+    let finalData = {
+      ...data,
+      classCode: userClassCode,
+      pageId: pageId,
+      subject: subject,
+    };
 
     // YouTube URL цэвэрлэх
     if (type === "video" && data.url) {
@@ -312,12 +313,22 @@ export default function LessonTemplateB({ pageId, config }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
-            <Link
-              href={`/testBiology?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:scale-105 transition-transform"
-            >
-              <Award size={16} /> ТЕСТ ӨГӨХ
-            </Link>
+            {isTeacher ? (
+              <Link
+                href={`/stats?pageId=${pageId}&classCode=${userClassCode}&subject=biology`}
+                className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:scale-105 transition-transform"
+              >
+                <Users size={16} /> СУРАГЧДЫН ДҮН
+              </Link>
+            ) : (
+              /* Хэрэв сурагч бол ТЕСТ ӨГӨХ товчийг харуулна */
+              <Link
+                href={`/testBiology?pageId=${pageId}&subject=biology`}
+                className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:scale-105 transition-transform"
+              >
+                <Award size={16} /> ТЕСТ ӨГӨХ
+              </Link>
+            )}
             <Link
               href={`/cartBiology?pageId=${pageId}`}
               className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl font-black shadow-md text-xs flex items-center gap-2 hover:scale-105 transition-transform"

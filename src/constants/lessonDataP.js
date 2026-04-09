@@ -3,133 +3,116 @@
 export const PHYSICS_CONFIG = {
   motion: {
     page: {
-      title: "Уурших ба хайлах",
-      subtitle: "Бодисын төлөвийн өөрчлөлт, дулааны үзэгдэл",
-      videoUrl: "https://www.youtube.com/embed/G6jWl_vAAsU",
-      presentationUrl:
-        "https://www.canva.com/design/DAHGIf043Zs/hTaf7hEG76WgVrnnJ3XhWw/view?embed",
+      title: "Гэрлийн хугарал ба ойлт",
+      subtitle: "Оптик ба гэрлийн физик шинж чанар",
+      videoUrl: "https://www.youtube.com/embed/ir4n9v_266s",
+      presentationUrl: "https://www.canva.com/design/example/view?embed",
     },
-    slider: [
-      {
-        image: "https://physic-dmts.vercel.app/pre1.png",
-        alt: "Heat and States of Matter",
-      },
-    ],
+    // 3 ТУРШИЛТ (PHET SIMULATIONS)
     experiments: [
       {
-        title: "Бодисын төлөв",
-        href: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_all.html",
-        img: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics-600.png",
+        title: "Гэрлийн хугарал ба ойлт",
+        href: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html?locale=mn",
+        img: "https://phet.colorado.edu/sims/html/bending-light/latest/bending-light-600.png",
       },
       {
-        title: "Дулааны энерги",
-        href: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_all.html",
-        img: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes-600.png",
+        title: "Геометр оптик (Линз)",
+        href: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics_all.html?locale=mn",
+        img: "https://phet.colorado.edu/sims/html/geometric-optics/latest/geometric-optics-600.png",
       },
       {
-        title: "Хийн шинж чанар",
-        href: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties_all.html",
-        img: "https://phet.colorado.edu/sims/html/gas-properties/latest/gas-properties-600.png",
+        title: "Өнгө холилт",
+        href: "https://phet.colorado.edu/sims/html/color-vision/latest/color-vision_all.html?locale=mn",
+        img: "https://phet.colorado.edu/sims/html/color-vision/latest/color-vision-600.png",
       },
     ],
+    // 7 ОНОЛЫН ХЭСЭГ
     theory: [
       {
-        title: "Бодисын төлөв шилжих",
+        title: "Гэрлийн ойлт",
         content: [
-          "Бодис нэг төлөвөөс нөгөө төлөвт шилжих үзэгдлийг төлөвийн шилжилт гэнэ.",
-          "Хайлах, уурших, царцах, конденсацлах зэрэг нь үүнд хамаарна.",
+          "Гэрэл нэг орчноос нөгөө орчны хил дээр тусаад буцаж ойх үзэгдэл.",
+          "Хууль: α = β.",
         ],
       },
       {
-        title: "Хайлах үзэгдэл",
+        title: "Гэрлийн хугарал",
         content: [
-          "Бодис хатуу төлөвөөс шингэн төлөвт шилжих процесс.",
-          "Хайлах үед бодис гаднаас дулаан шингээдэг.",
-          "Томьёо: Q = λ * m.",
+          "Гэрэл нэг орчноос өөр нягттай орчинд шилжихдээ чиглэлээ өөрчлөх үзэгдэл.",
+          "Томьёо: n1 * sin(α) = n2 * sin(β).",
         ],
       },
       {
-        title: "Уурших үзэгдэл",
+        title: "Бүрэн дотоод ойлт",
         content: [
-          "Бодис шингэн төлөвөөс хийн төлөвт шилжих процесс.",
-          "Ууршилт нь шингэний гадаргуу дээр ямар ч температурт явагдана.",
-          "Томьёо: Q = L * m.",
+          "Гэрэл оптик нягт ихтэй орчноос багатай руу тусахдаа хил дээр бүрэн буцаж ойх үзэгдэл.",
         ],
       },
       {
-        title: "Буцлах үзэгдэл",
+        title: "Гэрлийн дисперси",
         content: [
-          "Шингэний бүх эзэлхүүн дотор явагдах эрчимтэй ууршилт.",
-          "Тодорхой тогтмол температурт (буцлах температур) явагддаг.",
+          "Цагаан гэрэл призмээр нэвтрэхдээ долоон өнгө болон задрах үзэгдэл (Солонго үүсэх).",
         ],
       },
       {
-        title: "Дулааны тоо хэмжээ",
+        title: "Линз ба түүний төрөл",
         content: [
-          "Биеийг халаах эсвэл хөргөхөд авсан буюу алдсан энерги.",
-          "Томьёо: Q = c * m * Δt.",
+          "Цогцруулагч (гүдгэр) ба сарниулагч (хүнхэр) гэж хоёр үндсэн төрөлд хуваагдана.",
         ],
       },
       {
-        title: "Дотоод энерги",
+        title: "Линзний оптик хүч",
         content: [
-          "Биеийг бүрдүүлэгч молекулуудын хөдөлгөөний ба харилцан үйлчлэлийн энерги.",
+          "Линзний фокусын зайн урвуу хэмжигдэхүүн. Нэгж нь Диоптр (дптр). D = 1/F.",
         ],
       },
       {
-        title: "Энерги хадгалагдах хууль",
+        title: "Нүдний оптик систем",
         content: [
-          "Дулааны тэнцвэрийн үед: Авсан дулаан = Алдсан дулаан (Q_авсан = Q_алдсан).",
+          "Хүний нүд нь өөрөө цогцруулагч линзний систем юм. Харааны гажигт ойрын ба холын хараа орно.",
         ],
       },
     ],
+    // 5 ТЕСТ
     tests: [
       {
-        question:
-          "Бодис хатуу төлөвөөс шингэн төлөвт шилжих процессыг юу гэх вэ?",
-        options: ["Уурших", "Хайлах", "Царцах"],
-        answer: "Хайлах",
+        question: "Гэрэл ойх үед тусгалын өнцөг 60° бол ойлтын өнцөг хэд вэ?",
+        options: ["30°", "60°", "120°"],
+        answer: "60°",
       },
       {
-        question:
-          "Шингэний бүх эзэлхүүн дотор явагдах эрчимтэй ууршилтыг юу гэх вэ?",
-        options: ["Буцлах", "Конденсацлах", "Хайлах"],
-        answer: "Буцлах",
+        question: "Вакуум дахь гэрлийн хурд хэд вэ?",
+        options: ["300,000 км/с", "300,000 м/с", "150,000 км/с"],
+        answer: "300,000 км/с",
       },
       {
-        question: "Хайлах үзэгдлийн үед бодис дулааныг яадаг вэ?",
-        options: ["Дулаан алддаг", "Дулаан шингээдэг", "Өөрчлөгддөггүй"],
-        answer: "Дулаан шингээдэг",
+        question: "Аль нь сарниулагч линз вэ?",
+        options: ["Гүдгэр", "Хүнхэр", "Хавтгай"],
+        answer: "Хүнхэр",
       },
       {
-        question: "Ууршилтын дулааны тоо хэмжээг олох зөв томьёо?",
-        options: ["Q = λ * m", "Q = c * m * Δt", "Q = L * m"],
-        answer: "Q = L * m",
+        question: "Солонго үүсэх нь гэрлийн ямар үзэгдэл вэ?",
+        options: ["Дисперси", "Хугарал", "Ойлт"],
+        answer: "Дисперси",
       },
       {
-        question: "Дулааны тэнцвэрийн үед авсан ба алдсан дулааны хамаарал?",
-        options: [
-          "Q_авсан > Q_алдсан",
-          "Q_авсан = Q_алдсан",
-          "Q_авсан < Q_алдсан",
-        ],
-        answer: "Q_авсан = Q_алдсан",
+        question: "Линзний фокусын зай 20см бол оптик хүч нь хэд вэ?",
+        options: ["5 дптр", "0.05 дптр", "2 дптр"],
+        answer: "5 дптр",
       },
     ],
+    // 5 ФЛАШКАРТ
     cards: [
-      { question: "Хайлахын хувийн дулааны томьёо?", answer: "Q = λ * m" },
-      { question: "Ууршихын хувийн дулааны томьёо?", answer: "Q = L * m" },
       {
-        question: "Дулааны тоо хэмжээний үндсэн томьёо?",
-        answer: "Q = c * m * Δt",
+        question: "Гэрэл ойх хууль?",
+        answer: "α = β (Тусгалын өнцөг = Ойлтын өнцөг)",
       },
+      { question: "Линзний томьёо?", answer: "1/F = 1/d + 1/f" },
+      { question: "Оптик хүчний нэгж?", answer: "Диоптр (дптр)" },
+      { question: "Гэрлийн хугарлын илтгэгч?", answer: "n = c / v" },
       {
-        question: "Конденсацлах гэж юу вэ?",
-        answer: "Хийн төлөвөөс шингэн төлөвт шилжих процесс",
-      },
-      {
-        question: "Дотоод энерги юунаас тогтох вэ?",
-        answer: "Молекулуудын хөдөлгөөний ба харилцан үйлчлэлийн энерги",
+        question: "Цагаан гэрэл хэдэн өнгөнөөс тогтдог вэ?",
+        answer: "7 үндсэн өнгө",
       },
     ],
   },

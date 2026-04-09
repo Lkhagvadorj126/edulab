@@ -24,6 +24,8 @@ import {
   AlertCircle,
   HelpCircle,
   Presentation,
+  BarChart3,
+  TrendingUp,
 } from "lucide-react";
 
 // Components
@@ -34,7 +36,8 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
   const userClassCode = user?.classCode || "10B";
-
+  user?.role?.toString().toLowerCase().trim() === "teacher" ||
+    user?.role?.toString().toLowerCase().trim() === "багш";
   // --- ҮНДСЭН STATE-ҮҮД ---
   const [displayUrl, setDisplayUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState(config?.page?.videoUrl || "");
@@ -295,13 +298,28 @@ export default function LessonTemplateP({ pageId, config, backUrl }) {
               </p>
             </div>
           </div>
+
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
-            <Link
-              href={`/testPhysics?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
-            >
-              <Award size={16} /> ТЕСТ ӨГӨХ
-            </Link>
+            {/* 2-р алхам: Багш болон Сурагчийн товчлуурыг ялгах */}
+            {isTeacher ? (
+              <>
+                <Link
+                  href={`/stats?pageId=${pageId}&classCode=${userClassCode}`}
+                  className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-[#1e1a5a] transition-all shadow-lg font-black uppercase"
+                >
+                  <BarChart3 size={16} /> СУРАГЧДЫН ДҮН
+                </Link>
+              </>
+            ) : (
+              /* СУРАГЧИЙН ХЭСЭГ - ТЕСТ ӨГӨХ */
+              <Link
+                href={`/testPhysics?pageId=${pageId}`}
+                className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
+              >
+                <Award size={16} /> ТЕСТ ӨГӨХ
+              </Link>
+            )}
+
             <Link
               href={`/cartPhysics?pageId=${pageId}`}
               className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"

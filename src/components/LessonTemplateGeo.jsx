@@ -24,17 +24,23 @@ import {
   AlertCircle,
   HelpCircle,
   Presentation,
+  BarChart3,
+  TrendingUp,
   Globe,
 } from "lucide-react";
 
 // Components
 import NavAll from "./NavAll";
-import NavH from "./NavH";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LessonTemplateGeo({ pageId, config }) {
   const { user } = useAuth();
-  const isTeacher = user?.role === "teacher";
+
+  // Багш мөн эсэхийг шалгах (P кодод байсан логик)
+  const isTeacher =
+    user?.role?.toString().toLowerCase().trim() === "teacher" ||
+    user?.role?.toString().toLowerCase().trim() === "багш";
+
   const userClassCode = user?.classCode || "10B";
 
   // --- ҮНДСЭН STATE-ҮҮД ---
@@ -149,12 +155,9 @@ export default function LessonTemplateGeo({ pageId, config }) {
 
   // --- ХАДГАЛАХ ЛОГИК ---
   const handleSave = async (type, data, editId = null) => {
-    // handleSave функц дотор:
-    const dataToSave = {
+    let dataToSave = {
       ...data,
-      classCode: user?.classCode || "10B",
-      pageId: pageId,
-      subject: "geography", // Энэ мөр заавал байх ёстой
+      subject: "geography", // Газарзүй гэдгийг тодотгох
     };
 
     if (type === "test") {
@@ -170,12 +173,7 @@ export default function LessonTemplateGeo({ pageId, config }) {
       dataToSave.answer = selectedValue;
     }
 
-    let finalData = {
-      ...dataToSave,
-      classCode: userClassCode,
-      pageId: pageId,
-      subject: "geography", // Ингэснээр багшийн нэмсэн дата Физик рүү орохгүй
-    };
+    let finalData = { ...dataToSave, classCode: userClassCode, pageId: pageId };
 
     if (type === "presentation" && data.url?.includes("<iframe")) {
       const srcMatch = data.url.match(/src="([^"]+)"/);
@@ -192,13 +190,10 @@ export default function LessonTemplateGeo({ pageId, config }) {
             : type;
 
     try {
-      const apiPath = type === "cards" ? "card" : "test";
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          editId ? { ...dataToSave, id: editId } : dataToSave,
-        ),
+        body: JSON.stringify(editId ? { ...finalData, id: editId } : finalData),
       });
 
       if (res.ok) {
@@ -311,13 +306,25 @@ export default function LessonTemplateGeo({ pageId, config }) {
               </p>
             </div>
           </div>
+
           <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto">
-            <Link
-              href={`/testGeo?pageId=${pageId}`}
-              className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
-            >
-              <Award size={16} /> ТЕСТ ӨГӨХ
-            </Link>
+            {/* БАГШ БОЛОН СУРАГЧИЙН ТОВЧЛУУРЫН ЯЛГАА */}
+            {isTeacher ? (
+              <Link
+                href={`/stats?pageId=${pageId}&classCode=${userClassCode}`}
+                className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-[#1e1a5a] transition-all shadow-lg font-black uppercase"
+              >
+                <BarChart3 size={16} /> СУРАГЧДЫН ДҮН
+              </Link>
+            ) : (
+              <Link
+                href={`/testGeo?pageId=${pageId}`}
+                className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
+              >
+                <Award size={16} /> ТЕСТ ӨГӨХ
+              </Link>
+            )}
+
             <Link
               href={`/cartGeo?pageId=${pageId}`}
               className="bg-[#312C85] text-white px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:bg-black transition-all shadow-lg font-black uppercase"
