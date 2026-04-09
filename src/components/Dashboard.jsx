@@ -13,10 +13,12 @@ import {
   FaUsers,
   FaTrophy,
   FaTrash,
-  FaQrcode, // 'c' үсгийг жижиг болгож засав
+  FaQrcode,
   FaListUl,
+  FaCamera,
 } from "react-icons/fa";
 import { QRCodeSVG } from "qrcode.react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { useAuth } from "@/context/AuthContext";
 import NavAll from "./NavAll";
 import Link from "next/link";
@@ -67,6 +69,7 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isChangingClass, setIsChangingClass] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studentCode, setStudentCode] = useState("");
@@ -99,6 +102,37 @@ export default function Dashboard() {
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
+
+  // QR Scanner logic - Зөвхөн сурагч дээр ажиллана
+  useEffect(() => {
+    let scanner;
+    if (showScanner && isModalOpen && user?.role === "student") {
+      scanner = new Html5QrcodeScanner("reader", {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      });
+
+      scanner.render(
+        (decodedText) => {
+          setStudentCode(decodedText.toUpperCase());
+          setShowScanner(false);
+          scanner.clear();
+        },
+        (error) => {
+          // Scanning...
+        },
+      );
+    }
+
+    return () => {
+      if (scanner) {
+        scanner
+          .clear()
+          .catch((error) => console.error("Failed to clear scanner", error));
+      }
+    };
+  }, [showScanner, isModalOpen, user?.role]);
 
   const handleAction = async () => {
     if (!user?._id) return;
@@ -177,6 +211,7 @@ export default function Dashboard() {
               setIsModalOpen(false);
               setIsChangingClass(false);
               setShowQr(false);
+              setShowScanner(false);
             }}
           />
           <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl relative z-10 animate-in fade-in zoom-in duration-300 overflow-hidden">
@@ -186,6 +221,7 @@ export default function Dashboard() {
                 setGeneratedCode("");
                 setIsChangingClass(false);
                 setShowQr(false);
+                setShowScanner(false);
               }}
               className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 z-20"
             >
@@ -195,6 +231,7 @@ export default function Dashboard() {
             {hasClass && !isChangingClass ? (
               <div className="space-y-6">
                 <div className="text-center relative">
+                  {/* Багшийн зүгээс QR харуулах товчлуур */}
                   <button
                     onClick={() => setShowQr(!showQr)}
                     className="absolute left-0 top-0 p-2 bg-slate-50 rounded-xl text-[#312C85] hover:bg-slate-100 transition-colors"
@@ -221,8 +258,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-slate-500 text-sm font-medium text-center px-4">
-                      Сурагчид энэхүү QR кодыг уншуулж эсвэл кодыг шууд бичиж
-                      ангидаа нэгдэх боломжтой.
+                      Сурагчид энэхүү QR кодыг уншуулж ангидаа нэгдэнэ.
                     </p>
                   </div>
                 ) : (
@@ -295,6 +331,7 @@ export default function Dashboard() {
                 </div>
 
                 {generatedCode ? (
+                  /* Багшийн зүгээс үүсгэсэн код болон QR шууд харагдах хэсэг */
                   <div className="space-y-6 text-center">
                     <div className="bg-[#312C85]/5 border-2 border-dashed border-[#312C85]/30 rounded-3xl p-10 flex flex-col items-center gap-6">
                       <div className="text-5xl font-black text-[#312C85] tracking-widest">
@@ -327,6 +364,7 @@ export default function Dashboard() {
                 ) : (
                   <div className="space-y-4">
                     {user.role === "teacher" ? (
+                      /* Багш мэдээлэл оруулах хэсэг */
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <input
@@ -370,21 +408,49 @@ export default function Dashboard() {
                         />
                       </>
                     ) : (
-                      <input
-                        type="text"
-                        maxLength={6}
-                        placeholder="АНГИЙН КОД"
-                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 outline-none focus:border-[#312C85] font-black text-3xl text-center"
-                        value={studentCode}
-                        onChange={(e) =>
-                          setStudentCode(e.target.value.toUpperCase())
-                        }
-                      />
+                      /* Сурагч код оруулах болон QR уншуулах хэсэг */
+                      <div className="space-y-4">
+                        {showScanner ? (
+                          <div className="space-y-4">
+                            <div
+                              id="reader"
+                              className="overflow-hidden rounded-3xl border-2 border-slate-100 bg-slate-50"
+                            ></div>
+                            <button
+                              onClick={() => setShowScanner(false)}
+                              className="w-full py-3 bg-red-50 text-red-500 rounded-2xl font-bold text-sm"
+                            >
+                              Камер хаах
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              maxLength={6}
+                              placeholder="АНГИЙН КОД"
+                              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-5 outline-none focus:border-[#312C85] font-black text-3xl text-center uppercase"
+                              value={studentCode}
+                              onChange={(e) =>
+                                setStudentCode(e.target.value.toUpperCase())
+                              }
+                            />
+                            {/* QR SVG дүрс дээр дарахад камер нээгдэнэ */}
+                            <button
+                              onClick={() => setShowScanner(true)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-4 bg-white shadow-xl rounded-xl text-[#312C85] hover:scale-105 transition-transform"
+                              title="QR уншуулах"
+                            >
+                              <FaQrcode size={24} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <button
                       onClick={handleAction}
-                      disabled={isSubmitting}
-                      className="w-full bg-[#312C85] text-white py-4 rounded-2xl font-black active:scale-95 transition-all"
+                      disabled={isSubmitting || showScanner}
+                      className="w-full bg-[#312C85] text-white py-4 rounded-2xl font-black active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100"
                     >
                       {isSubmitting ? "Уншиж байна..." : "БАТАЛГААЖУУЛАХ"}
                     </button>
