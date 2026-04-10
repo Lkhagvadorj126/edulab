@@ -9,9 +9,7 @@ import {
   RefreshCcw,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  XCircle,
-  BarChart3,
+  Dna,
 } from "lucide-react";
 
 // Тохиргооны файлууд
@@ -27,7 +25,7 @@ function TestContent() {
   const router = useRouter();
 
   const pageId = searchParams.get("pageId") || "default";
-  const subject = searchParams.get("subject") || "biology"; // Default нь биологи
+  const subject = searchParams.get("subject") || "biology";
   const userClassCode = user?.classCode || "10B";
 
   const [questions, setQuestions] = useState([]);
@@ -41,7 +39,6 @@ function TestContent() {
   const loadTests = useCallback(async () => {
     setLoading(true);
     try {
-      // Хичээлийн төрлөөс хамаарч дата эх сурвалжийг сонгох
       let configSource;
       if (subject === "biology") configSource = BIOLOGY_CONFIG;
       else if (subject === "chemistry") configSource = LESSONS_CONFIG;
@@ -60,7 +57,7 @@ function TestContent() {
         dbData = await res.json();
       }
 
-      // Хоёр датаг нэгтгэх (Багшийн нэмснийг эхэнд нь)
+      // Хоёр датаг нэгтгэх
       const combined = [...dbData].reverse().concat(staticData);
       setQuestions(combined);
     } catch (err) {
@@ -80,19 +77,31 @@ function TestContent() {
       const total = questions.length;
       const percent = Math.round((finalScore / total) * 100);
 
-      await fetch("/api/test-results", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userName: user?.name || "Зочин",
-          classCode: userClassCode,
-          pageId: pageId,
-          subject: subject,
-          score: finalScore,
-          totalQuestions: total,
-          percentage: percent,
-        }),
-      });
+      // Өмнө нь хадгалагдсан эсэхийг шалгах
+      const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&subject=${subject}&pageId=${pageId}&classCode=${userClassCode}`;
+      const checkRes = await fetch(checkUrl);
+
+      let canSave = true;
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.count > 0) canSave = false;
+      }
+
+      if (canSave) {
+        await fetch("/api/test-results", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userName: user?.name || "Зочин",
+            classCode: userClassCode,
+            pageId: pageId,
+            subject: subject,
+            score: finalScore,
+            totalQuestions: total,
+            percentage: percent,
+          }),
+        });
+      }
     } catch (err) {
       console.error("Дүн хадгалахад алдаа гарлаа:", err);
     }
@@ -116,31 +125,31 @@ function TestContent() {
         setSelected(null);
       } else {
         setFinished(true);
-        saveResult(newScore); // Тест дуусахад дүн хадгалах
+        saveResult(newScore);
       }
-    }, 800);
+    }, 1000);
   };
 
   if (loading)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
         <Loader2 className="animate-spin text-[#312C85] mb-4" size={48} />
-        <p className="text-slate-400 font-black text-xs uppercase tracking-widest">
-          Ачаалж байна...
+        <p className="text-[#312C85] font-black text-[10px] uppercase tracking-[0.2em] animate-pulse">
+          Асуултуудыг бэлдэж байна...
         </p>
       </div>
     );
 
   if (questions.length === 0)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#F8FAFC] p-6 text-center">
-        <AlertCircle className="text-slate-200" size={80} />
-        <h2 className="font-black text-slate-800 text-xl uppercase tracking-tighter">
-          Тест олдсонгүй
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
+        <AlertCircle className="text-slate-200 mb-6" size={80} />
+        <h2 className="font-black text-slate-800 text-xl uppercase tracking-tighter mb-6">
+          Энэ сэдэвт одоогоор тест алга
         </h2>
         <button
           onClick={() => router.back()}
-          className="px-10 py-3 bg-[#312C85] text-white rounded-2xl font-black text-xs uppercase"
+          className="px-10 py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-transform"
         >
           Буцах
         </button>
@@ -150,12 +159,17 @@ function TestContent() {
   const currentQ = questions[current];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden font-sans">
+      {/* Background Icon (Biology focus) */}
+      <div className="absolute -bottom-20 -right-20 opacity-[0.03] text-[#312C85] rotate-12 pointer-events-none">
+        <Dna size={450} />
+      </div>
+
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400 z-20 hover:text-[#312C85] transition-all border border-slate-100"
+        className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-sm text-slate-400 z-20 hover:text-[#312C85] transition-all border border-slate-50"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={24} strokeWidth={3} />
       </button>
 
       <AnimatePresence mode="wait">
@@ -165,18 +179,18 @@ function TestContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-2xl bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-slate-100 relative z-10"
+            className="w-full max-w-2xl bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white relative z-10"
           >
-            <div className="mb-10 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="bg-slate-100 text-slate-500 px-5 py-2 rounded-full italic">
-                {subject} • {current + 1}/{questions.length}
+            <div className="mb-12 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+              <span className="bg-slate-100 text-slate-500 px-6 py-2.5 rounded-full border border-slate-200">
+                {subject} | {current + 1}/{questions.length}
               </span>
-              <span className="text-emerald-600 bg-emerald-50 px-5 py-2 rounded-full">
-                Зөв: {score}
+              <span className="text-[#312C85] bg-indigo-50 px-6 py-2.5 rounded-full border border-indigo-100">
+                Оноо: {score}
               </span>
             </div>
 
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-10 leading-snug">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
               {currentQ.question}
             </h2>
 
@@ -186,22 +200,26 @@ function TestContent() {
                   key={i}
                   disabled={selected !== null}
                   onClick={() => handleAnswer(i)}
-                  className={`p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${
+                  className={`p-6 rounded-3xl border-2 text-left font-bold transition-all flex items-center gap-5 group relative overflow-hidden ${
                     selected === null
-                      ? "border-slate-50 bg-slate-50 hover:border-indigo-200 hover:bg-white"
+                      ? "border-slate-50 bg-slate-50 hover:border-indigo-200 hover:bg-white text-slate-600"
                       : opt === currentQ.answer
                         ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                         : selected === i
-                          ? "border-red-500 bg-red-50 text-red-700"
-                          : "opacity-40 border-slate-100"
+                          ? "border-rose-500 bg-rose-50 text-rose-700"
+                          : "opacity-40 border-slate-50"
                   }`}
                 >
                   <span
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shadow-sm ${selected === i ? "bg-white" : "bg-white border"}`}
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 transition-colors shadow-sm ${
+                      selected !== null && opt === currentQ.answer
+                        ? "bg-emerald-500 text-white"
+                        : "bg-white text-slate-400"
+                    }`}
                   >
                     {String.fromCharCode(65 + i)}
                   </span>
-                  <span className="flex-1 text-sm md:text-base">{opt}</span>
+                  <span className="flex-1 text-base md:text-lg">{opt}</span>
                 </button>
               ))}
             </div>
@@ -210,36 +228,42 @@ function TestContent() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full border border-indigo-50 z-10"
+            className="bg-white p-12 rounded-[4rem] shadow-2xl text-center max-w-md w-full border border-white z-10"
           >
-            <div className="w-24 h-24 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-amber-100">
-              <Award size={48} />
+            <div className="w-24 h-24 bg-amber-50 text-amber-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner border border-amber-100">
+              <Award size={48} strokeWidth={2.5} />
             </div>
+
             <h2 className="text-3xl font-black mb-2 text-slate-800 uppercase tracking-tighter">
               ДУУСЛАА!
             </h2>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">
+              Таны гүйцэтгэл
+            </p>
 
-            <div className="bg-slate-50 rounded-3xl p-8 mb-10 border border-slate-100">
-              <div className="flex items-end justify-center gap-1">
-                <span className="text-6xl font-black text-[#312C85]">
-                  {Math.round((score / questions.length) * 100)}%
+            <div className="bg-[#F8FAFC] rounded-[3rem] p-10 mb-10 border border-slate-50">
+              <span className="text-7xl font-black text-[#312C85] tracking-tighter">
+                {Math.round((score / questions.length) * 100)}%
+              </span>
+              <div className="flex justify-center gap-4 mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span>
+                  Зөв: <span className="text-emerald-500">{score}</span>
                 </span>
+                <span>•</span>
+                <span>Нийт: {questions.length}</span>
               </div>
-              <p className="text-slate-400 font-bold mt-3 text-xs uppercase tracking-widest">
-                Зөв: {score} / {questions.length}
-              </p>
             </div>
 
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => window.location.reload()}
-                className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2"
+                className="w-full py-5 bg-[#312C85] text-white rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 hover:scale-[1.02] active:scale-95 transition-all"
               >
-                <RefreshCcw size={16} /> ДАХИН ЭХЛЭХ
+                <RefreshCcw size={18} strokeWidth={3} /> ДАХИН ЭХЛЭХ
               </button>
               <button
                 onClick={() => router.back()}
-                className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase"
+                className="w-full py-5 bg-slate-100 text-slate-600 rounded-3xl font-black text-[10px] uppercase hover:bg-slate-200 transition-colors"
               >
                 Буцах
               </button>

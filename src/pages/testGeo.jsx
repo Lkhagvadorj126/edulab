@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +25,7 @@ function TestContent() {
   const { user } = useAuth();
 
   const pageId = searchParams.get("pageId") || "default";
-  const subject = searchParams.get("subject") || "geography"; // Үндсэн утга нь Газарзүй
+  const subject = searchParams.get("subject") || "geography";
   const userClassCode = user?.classCode || "10B";
 
   const [questions, setQuestions] = useState([]);
@@ -83,9 +84,8 @@ function TestContent() {
 
         try {
           // Өмнө нь өгсөн эсэхийг шалгах
-          const checkRes = await fetch(
-            `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&subject=${subject}&pageId=${pageId}&classCode=${userClassCode}`,
-          );
+          const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&subject=${subject}&pageId=${pageId}&classCode=${userClassCode}`;
+          const checkRes = await fetch(checkUrl);
 
           let canSave = true;
           if (checkRes.ok) {
@@ -119,22 +119,27 @@ function TestContent() {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <Loader2 className="animate-spin text-[#312C85]" size={40} />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-[#312C85]" size={48} />
+          <p className="font-black text-[10px] text-[#312C85] uppercase tracking-widest animate-pulse">
+            Ачаалж байна...
+          </p>
+        </div>
       </div>
     );
 
   if (questions.length === 0)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
-        <AlertCircle size={80} className="text-slate-200 mb-4" />
-        <h2 className="font-black text-slate-400 mb-6 uppercase tracking-widest">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
+        <AlertCircle size={80} className="text-slate-200 mb-6" />
+        <h2 className="text-xl font-black text-slate-800 mb-4 uppercase">
           Тест олдсонгүй
         </h2>
         <button
           onClick={() => router.back()}
-          className="px-10 py-3 bg-white border border-slate-200 rounded-2xl font-black text-xs shadow-sm"
+          className="px-10 py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-transform"
         >
-          БУЦАХ
+          Буцах
         </button>
       </div>
     );
@@ -142,8 +147,8 @@ function TestContent() {
   const currentQ = questions[current];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background Icon */}
+    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden font-sans">
+      {/* Background Icon Decor */}
       <div className="absolute -bottom-20 -right-20 opacity-[0.03] text-[#312C85] -rotate-12 pointer-events-none">
         <Globe size={400} />
       </div>
@@ -151,62 +156,62 @@ function TestContent() {
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] transition-all z-20"
+        className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] transition-all border border-slate-50 z-20"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={24} strokeWidth={3} />
       </button>
 
       <AnimatePresence mode="wait">
         {!finished ? (
           <motion.div
             key={current}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="w-full max-w-2xl bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-slate-100 z-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-2xl bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white z-10"
           >
-            {/* Header */}
-            <div className="mb-10 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="bg-slate-100 text-slate-500 px-5 py-2 rounded-full border border-slate-200">
+            {/* Header / Info */}
+            <div className="mb-12 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+              <span className="bg-slate-100 text-slate-500 px-6 py-2.5 rounded-full border border-slate-200">
                 {subject} | {current + 1}/{questions.length}
               </span>
-              <span className="text-indigo-600 bg-indigo-50 px-5 py-2 rounded-full border border-indigo-100">
-                Зөв: {score}
+              <span className="text-[#312C85] bg-indigo-50 px-6 py-2.5 rounded-full border border-indigo-100">
+                Оноо: {score}
               </span>
             </div>
 
-            {/* Question */}
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-10 leading-relaxed">
+            {/* Question Text */}
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
               {currentQ?.question}
             </h2>
 
-            {/* Options */}
+            {/* Answer Options */}
             <div className="grid gap-4">
               {currentQ?.options?.map((opt, i) => (
                 <button
                   key={i}
                   disabled={selected !== null}
                   onClick={() => handleAnswer(i)}
-                  className={`p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${
+                  className={`p-6 rounded-3xl border-2 text-left font-bold transition-all flex items-center gap-5 group relative overflow-hidden ${
                     selected !== null
                       ? opt === currentQ.answer
-                        ? "border-green-500 bg-green-50 text-green-700"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                         : selected === i
-                          ? "border-red-500 bg-red-50 text-red-700"
-                          : "opacity-40 border-slate-100"
-                      : "border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-white"
+                          ? "border-rose-500 bg-rose-50 text-rose-700"
+                          : "border-slate-50 opacity-40"
+                      : "border-slate-50 bg-slate-50 hover:border-indigo-200 hover:bg-white text-slate-600"
                   }`}
                 >
                   <span
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black transition-colors ${
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 transition-colors ${
                       selected !== null && opt === currentQ.answer
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-200 text-slate-500"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-white text-slate-400"
                     }`}
                   >
                     {String.fromCharCode(65 + i)}
                   </span>
-                  <span className="flex-1">{opt}</span>
+                  <span className="flex-1 text-base md:text-lg">{opt}</span>
                 </button>
               ))}
             </div>
@@ -216,36 +221,44 @@ function TestContent() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full border border-slate-100 z-10"
+            className="bg-white p-12 rounded-[4rem] shadow-2xl text-center max-w-md w-full border border-white z-10"
           >
-            <div className="w-24 h-24 bg-indigo-50 text-[#312C85] rounded-full flex items-center justify-center mx-auto mb-8">
-              <Award size={50} />
+            <div className="w-24 h-24 bg-indigo-50 text-[#312C85] rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <Award size={48} strokeWidth={2.5} />
             </div>
-            <h2 className="text-3xl font-black mb-6 text-slate-800 uppercase tracking-tighter">
+
+            <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">
               Амжилттай!
             </h2>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">
+              Таны гүйцэтгэл
+            </p>
 
-            <div className="bg-slate-50 rounded-3xl p-8 mb-8 border border-slate-100">
-              <span className="text-6xl font-black text-[#312C85]">
+            <div className="bg-[#F8FAFC] rounded-[3rem] p-10 mb-10 border border-slate-50">
+              <span className="text-7xl font-black text-[#312C85] tracking-tighter">
                 {Math.round((score / questions.length) * 100)}%
               </span>
-              <p className="text-slate-400 font-bold mt-2 uppercase text-[10px] tracking-widest">
-                Зөв хариулт: {score} / {questions.length}
-              </p>
+              <div className="flex justify-center gap-4 mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span>
+                  Зөв: <span className="text-emerald-500">{score}</span>
+                </span>
+                <span>•</span>
+                <span>Нийт: {questions.length}</span>
+              </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={() => router.back()}
-                className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] hover:bg-slate-200 transition-all"
+                className="flex-1 py-5 bg-slate-100 text-slate-600 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
               >
                 Гарах
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="flex-[2] py-4 bg-[#312C85] text-white rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-[#252166] transition-all shadow-lg shadow-indigo-100"
+                className="flex-[1.5] py-5 bg-[#312C85] text-white rounded-3xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 hover:scale-105 active:scale-95 transition-all"
               >
-                <RefreshCcw size={16} /> Дахин эхлэх
+                <RefreshCcw size={16} strokeWidth={3} /> Дахин эхлэх
               </button>
             </div>
           </motion.div>
@@ -259,8 +272,8 @@ export default function UnifiedGeographyTest() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="animate-spin" />
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <Loader2 className="animate-spin text-[#312C85]" size={40} />
         </div>
       }
     >

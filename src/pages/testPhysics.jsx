@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,13 +9,13 @@ import {
   RefreshCcw,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+
+// Хичээлүүдийн асуултуудын дата (Config)
 import { GEOGRAPHY_CONFIG } from "@/constants/lessonDataGeo";
 import { BIOLOGY_CONFIG } from "@/constants/lessonDataBio";
-import { LESSONS_CONFIG } from "@/constants/lessonsData";
+import { LESSONS_CONFIG } from "@/constants/lessonsData"; // Chemistry
 import { PHYSICS_CONFIG } from "@/constants/lessonDataP";
 
 function TestContent() {
@@ -22,6 +23,7 @@ function TestContent() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // URL-аас параметрүүдийг авах
   const pageId = searchParams.get("pageId") || "default";
   const subject = searchParams.get("subject") || "physics";
   const userClassCode = user?.classCode || "10B";
@@ -33,6 +35,7 @@ function TestContent() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Хичээл болон сэдвийн дагуу асуултуудыг ачаалах
   useEffect(() => {
     const loadTests = async () => {
       setLoading(true);
@@ -46,7 +49,7 @@ function TestContent() {
         const configData = configSource[pageId]?.tests || [];
         setQuestions(configData);
       } catch (err) {
-        console.error("Асуулт ачаалахад алдаа:", err);
+        console.error("Асуулт ачаалахад алдаа гарлаа:", err);
       } finally {
         setLoading(false);
       }
@@ -55,7 +58,7 @@ function TestContent() {
   }, [pageId, subject]);
 
   const handleAnswer = (index) => {
-    if (selected !== null) return;
+    if (selected !== null) return; // Дахин дарахыг хориглоно
     setSelected(index);
 
     const isCorrect =
@@ -63,6 +66,7 @@ function TestContent() {
     const nextScore = isCorrect ? score + 1 : score;
     if (isCorrect) setScore(nextScore);
 
+    // 1 секунд хүлээгээд дараагийн асуулт руу шилжих эсвэл дуусгах
     setTimeout(async () => {
       if (current + 1 < questions.length) {
         setCurrent((prev) => prev + 1);
@@ -70,127 +74,178 @@ function TestContent() {
       } else {
         const finalPercent = Math.round((nextScore / questions.length) * 100);
 
-        // 1. Өмнөх дүнг нь шалгах
-        const checkRes = await fetch(
-          `/api/test-results?userName=${user?.name}&pageId=${pageId}&subject=${subject}&classCode=${userClassCode}`,
-        );
-        const checkData = await checkRes.json();
+        try {
+          // 1. Өмнө нь дүн хадгалагдсан эсэхийг шалгах (Давхардуулахгүй тулд)
+          const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&pageId=${pageId}&subject=${subject}&classCode=${userClassCode}`;
+          const checkRes = await fetch(checkUrl);
+          const checkData = await checkRes.json();
 
-        // 2. Хэрэв баазад энэ сурагчийн дүн байхгүй бол (count === 0) хадгална
-        if (checkData.count === 0) {
-          await fetch("/api/test-results", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userName: user?.name || "Зочин",
-              classCode: userClassCode,
-              pageId: pageId,
-              subject: subject,
-              score: nextScore,
-              totalQuestions: questions.length,
-              percentage: finalPercent,
-            }),
-          });
+          // 2. Хэрэв дүн байхгүй бол (count === 0) баазад хадгалах
+          if (checkData.count === 0) {
+            await fetch("/api/test-results", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userName: user?.name || "Зочин",
+                classCode: userClassCode,
+                pageId: pageId,
+                subject: subject,
+                score: nextScore,
+                totalQuestions: questions.length,
+                percentage: finalPercent,
+              }),
+            });
+          }
+        } catch (dbError) {
+          console.error("Дүн хадгалахад алдаа гарлаа:", dbError);
         }
         setFinished(true);
       }
     }, 1000);
   };
 
-  if (loading)
+  // Loading төлөв
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#312C85]" size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-[#312C85]" size={48} />
+          <p className="font-black text-[10px] text-[#312C85] uppercase tracking-widest animate-pulse">
+            Асуултуудыг бэлдэж байна...
+          </p>
+        </div>
       </div>
     );
-  if (questions.length === 0)
+  }
+
+  // Асуулт олдоогүй төлөв
+  if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <AlertCircle size={80} className="text-slate-200 mb-4" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
+        <AlertCircle size={80} className="text-slate-200 mb-6" />
+        <h2 className="text-xl font-black text-slate-800 mb-4 uppercase">
+          Энэ сэдэвт одоогоор тест алга
+        </h2>
         <button
           onClick={() => router.back()}
-          className="px-8 py-3 bg-white border rounded-xl font-bold"
+          className="px-10 py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-transform"
         >
-          БУЦАХ
+          Буцах
         </button>
       </div>
     );
+  }
 
   const currentQ = questions[current];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative">
+    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative font-sans">
+      {/* Буцах товч */}
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400"
+        className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] transition-colors border border-slate-50"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={24} strokeWidth={3} />
       </button>
 
       <AnimatePresence mode="wait">
         {!finished ? (
           <motion.div
             key={current}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="w-full max-w-2xl bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-slate-100"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-2xl bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white"
           >
-            <div className="mb-10 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="bg-slate-100 text-slate-500 px-5 py-2 rounded-full">
+            {/* Төлөв мэдээлэл */}
+            <div className="mb-12 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+              <span className="bg-slate-100 text-slate-500 px-6 py-2.5 rounded-full">
                 {subject} | {current + 1}/{questions.length}
               </span>
-              <span className="text-indigo-600 bg-indigo-50 px-5 py-2 rounded-full">
-                Зөв: {score}
+              <span className="text-[#312C85] bg-indigo-50 px-6 py-2.5 rounded-full">
+                Оноо: {score}
               </span>
             </div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-10">
+
+            {/* Асуулт */}
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
               {currentQ.question}
             </h2>
+
+            {/* Хариултууд */}
             <div className="grid gap-4">
               {currentQ.options?.map((opt, i) => (
                 <button
                   key={i}
                   disabled={selected !== null}
                   onClick={() => handleAnswer(i)}
-                  className={`p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${selected !== null ? (opt === currentQ.answer ? "border-green-500 bg-green-50" : selected === i ? "border-red-500 bg-red-50" : "opacity-40") : "border-slate-100 bg-slate-50"}`}
+                  className={`p-6 rounded-3xl border-2 text-left font-bold transition-all flex items-center gap-5 group relative overflow-hidden ${
+                    selected !== null
+                      ? opt === currentQ.answer
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : selected === i
+                          ? "border-rose-500 bg-rose-50 text-rose-700"
+                          : "border-slate-50 opacity-40"
+                      : "border-slate-50 bg-slate-50 hover:border-indigo-200 hover:bg-white text-slate-600"
+                  }`}
                 >
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black bg-slate-200">
+                  <span
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 transition-colors ${
+                      selected !== null && opt === currentQ.answer
+                        ? "bg-emerald-500 text-white"
+                        : "bg-white text-slate-400"
+                    }`}
+                  >
                     {String.fromCharCode(65 + i)}
                   </span>
-                  <span className="flex-1">{opt}</span>
+                  <span className="flex-1 text-base md:text-lg">{opt}</span>
                 </button>
               ))}
             </div>
           </motion.div>
         ) : (
+          /* Төгсгөл - Үр дүн харуулах */
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full border"
+            className="bg-white p-12 rounded-[4rem] shadow-2xl text-center max-w-md w-full border border-white"
           >
-            <Award size={64} className="mx-auto mb-6 text-amber-500" />
-            <h2 className="text-3xl font-black mb-6">АМЖИЛТТАЙ!</h2>
-            <div className="bg-slate-50 rounded-3xl p-8 mb-8">
-              <span className="text-6xl font-black text-[#312C85]">
+            <div className="w-24 h-24 bg-amber-50 text-amber-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <Award size={48} strokeWidth={2.5} />
+            </div>
+
+            <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">
+              Амжилттай дууслаа!
+            </h2>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">
+              Таны гүйцэтгэл
+            </p>
+
+            <div className="bg-[#F8FAFC] rounded-[3rem] p-10 mb-10 border border-slate-50">
+              <span className="text-7xl font-black text-[#312C85] tracking-tighter">
                 {Math.round((score / questions.length) * 100)}%
               </span>
-              <p className="text-slate-400 font-bold mt-2">
-                Зөв: {score} / {questions.length}
-              </p>
+              <div className="flex justify-center gap-4 mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span>
+                  Зөв: <span className="text-emerald-500">{score}</span>
+                </span>
+                <span>•</span>
+                <span>Нийт: {questions.length}</span>
+              </div>
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex gap-4">
               <button
                 onClick={() => router.back()}
-                className="flex-1 py-4 bg-slate-100 rounded-2xl font-black uppercase text-[10px]"
+                className="flex-1 py-5 bg-slate-100 text-slate-600 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-colors"
               >
                 Гарах
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="flex-[2] py-4 bg-[#312C85] text-white rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-2"
+                className="flex-[1.5] py-5 bg-[#312C85] text-white rounded-3xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 hover:scale-105 active:scale-95 transition-all"
               >
-                <RefreshCcw size={16} /> Дахин эхлэх
+                <RefreshCcw size={16} strokeWidth={3} /> Дахин эхлэх
               </button>
             </div>
           </motion.div>
@@ -200,9 +255,16 @@ function TestContent() {
   );
 }
 
+// Next.js SearchParams ашиглаж байгаа үед Suspense заавал хэрэгтэй
 export default function UnifiedTest() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <Loader2 className="animate-spin text-[#312C85]" size={40} />
+        </div>
+      }
+    >
       <TestContent />
     </Suspense>
   );
