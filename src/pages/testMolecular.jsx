@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -35,37 +35,27 @@ function TestContent() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Асуулт ачаалах логик (Local Config + API Database)
-  const loadTests = useCallback(async () => {
-    setLoading(true);
-    try {
-      let configSource;
-      if (subject === "geography") configSource = GEOGRAPHY_CONFIG;
-      else if (subject === "biology") configSource = BIOLOGY_CONFIG;
-      else if (subject === "chemistry") configSource = LESSONS_CONFIG;
-      else configSource = PHYSICS_CONFIG;
-
-      // 1. Дотоод файлаас асуулт авах
-      const localTests = configSource[pageId]?.tests || [];
-
-      // 2. API-аас нэмэлт асуулт татах
-      const res = await fetch(
-        `/api/test?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}`,
-      );
-      const dbData = res.ok ? await res.json() : [];
-
-      // Хоёр эх сурвалжийг нэгтгэх
-      setQuestions([...dbData, ...localTests]);
-    } catch (err) {
-      console.error("Дата уншихад алдаа гарлаа:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [pageId, userClassCode, subject]);
-
+  // Хичээл болон сэдвийн дагуу асуултуудыг ачаалах
   useEffect(() => {
+    const loadTests = async () => {
+      setLoading(true);
+      try {
+        let configSource;
+        if (subject === "geography") configSource = GEOGRAPHY_CONFIG;
+        else if (subject === "biology") configSource = BIOLOGY_CONFIG;
+        else if (subject === "chemistry") configSource = LESSONS_CONFIG;
+        else configSource = PHYSICS_CONFIG;
+
+        const configData = configSource[pageId]?.tests || [];
+        setQuestions(configData);
+      } catch (err) {
+        console.error("Асуулт ачаалахад алдаа гарлаа:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadTests();
-  }, [loadTests]);
+  }, [pageId, subject]);
 
   const handleAnswer = (index) => {
     if (selected !== null || !questions[current]) return;
@@ -76,44 +66,44 @@ function TestContent() {
     const nextScore = isCorrect ? score + 1 : score;
     if (isCorrect) setScore(nextScore);
 
-    // 1 секунд хүлээгээд дараагийн асуулт руу шилжих эсвэл дуусгах
     setTimeout(async () => {
       if (current + 1 < questions.length) {
         setCurrent((prev) => prev + 1);
         setSelected(null);
       } else {
-        const total = questions.length;
-        const finalPercent = Math.round((nextScore / total) * 100);
+        const finalPercent = Math.round((nextScore / questions.length) * 100);
 
         try {
-          // 1. Өмнө нь дүн хадгалагдсан эсэхийг шалгах
-          const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&pageId=${pageId}&subject=${subject}&classCode=${userClassCode}`;
-          const checkRes = await fetch(checkUrl);
+          // ДҮН ХАДГАЛАХ ХЭСЭГ - Нэг ч мөр орхилгүй бүрэн
+          const resultData = {
+            userName: user?.name || "Зочин",
+            classCode: user?.classCode || userClassCode || "10B",
+            pageId: pageId,
+            subject: subject,
+            score: nextScore,
+            totalQuestions: questions.length,
+            percentage: finalPercent,
+            createdAt: new Date(),
+          };
 
-          let canSave = true;
-          if (checkRes.ok) {
-            const checkData = await checkRes.json();
-            if (checkData.count > 0) canSave = false;
-          }
+          const response = await fetch("/api/test-results", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(resultData),
+          });
 
-          // 2. Хэрэв дүн байхгүй бол хадгалах
-          if (canSave) {
-            await fetch("/api/test-results", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userName: user?.name || "Зочин",
-                classCode: userClassCode,
-                pageId: pageId,
-                subject: subject,
-                score: nextScore,
-                totalQuestions: total,
-                percentage: finalPercent,
-              }),
-            });
+          const resJson = await response.json();
+
+          if (!response.ok) {
+            console.error(
+              "Сервер дээр хадгалахад алдаа гарлаа:",
+              resJson.message,
+            );
+          } else {
+            console.log("Дүн амжилттай хадгалагдлаа:", resJson.data);
           }
-        } catch (err) {
-          console.error("Дүн хадгалахад алдаа гарлаа:", err);
+        } catch (dbError) {
+          console.error("DB холболтын алдаа:", dbError);
         }
         setFinished(true);
       }

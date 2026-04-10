@@ -35,7 +35,7 @@ function TestContent() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Тестүүдийг ачаалах (Статик + Динамик нийлүүлэлт)
+  // 1. Тестүүдийг ачаалах
   const loadTests = useCallback(async () => {
     setLoading(true);
     try {
@@ -48,7 +48,6 @@ function TestContent() {
 
       const staticData = configSource[pageId]?.tests || [];
 
-      // Датабаазаас багшийн нэмсэн тестүүдийг авах
       const res = await fetch(
         `/api/test?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}`,
       );
@@ -57,7 +56,6 @@ function TestContent() {
         dbData = await res.json();
       }
 
-      // Хоёр датаг нэгтгэх
       const combined = [...dbData].reverse().concat(staticData);
       setQuestions(combined);
     } catch (err) {
@@ -71,37 +69,31 @@ function TestContent() {
     loadTests();
   }, [loadTests]);
 
-  // 2. Дүн хадгалах функц
+  // 2. Дүн хадгалах функц - ШАЛГАХ ЛОГИКИЙГ УСТГАВ
   const saveResult = async (finalScore) => {
     try {
       const total = questions.length;
       const percent = Math.round((finalScore / total) * 100);
 
-      // Өмнө нь хадгалагдсан эсэхийг шалгах
-      const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&subject=${subject}&pageId=${pageId}&classCode=${userClassCode}`;
-      const checkRes = await fetch(checkUrl);
+      // ШУУД ХАДГАЛАХ (Нэг хэрэглэгч олон удаа өгсөн ч бүгд хадгалагдана)
+      const resultData = {
+        userName: user?.name || "Зочин",
+        classCode: user?.classCode || userClassCode || "10B",
+        pageId: pageId,
+        subject: subject,
+        score: finalScore,
+        totalQuestions: total,
+        percentage: percent,
+        createdAt: new Date(),
+      };
 
-      let canSave = true;
-      if (checkRes.ok) {
-        const checkData = await checkRes.json();
-        if (checkData.count > 0) canSave = false;
-      }
+      await fetch("/api/test-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resultData),
+      });
 
-      if (canSave) {
-        await fetch("/api/test-results", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userName: user?.name || "Зочин",
-            classCode: userClassCode,
-            pageId: pageId,
-            subject: subject,
-            score: finalScore,
-            totalQuestions: total,
-            percentage: percent,
-          }),
-        });
-      }
+      console.log("Дүн амжилттай хадгалагдлаа.");
     } catch (err) {
       console.error("Дүн хадгалахад алдаа гарлаа:", err);
     }
@@ -125,7 +117,7 @@ function TestContent() {
         setSelected(null);
       } else {
         setFinished(true);
-        saveResult(newScore);
+        saveResult(newScore); // Сүүлийн оноог дамжуулна
       }
     }, 1000);
   };
@@ -135,7 +127,7 @@ function TestContent() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
         <Loader2 className="animate-spin text-[#312C85] mb-4" size={48} />
         <p className="text-[#312C85] font-black text-[10px] uppercase tracking-[0.2em] animate-pulse">
-          Асуултуудыг бэлдэж байна...
+          Ачаалж байна...
         </p>
       </div>
     );
@@ -145,7 +137,7 @@ function TestContent() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <AlertCircle className="text-slate-200 mb-6" size={80} />
         <h2 className="font-black text-slate-800 text-xl uppercase tracking-tighter mb-6">
-          Энэ сэдэвт одоогоор тест алга
+          Тест олдсонгүй
         </h2>
         <button
           onClick={() => router.back()}
@@ -160,7 +152,6 @@ function TestContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden font-sans">
-      {/* Background Icon (Biology focus) */}
       <div className="absolute -bottom-20 -right-20 opacity-[0.03] text-[#312C85] rotate-12 pointer-events-none">
         <Dna size={450} />
       </div>
@@ -191,11 +182,11 @@ function TestContent() {
             </div>
 
             <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
-              {currentQ.question}
+              {currentQ?.question}
             </h2>
 
             <div className="grid gap-4">
-              {currentQ.options?.map((opt, i) => (
+              {currentQ?.options?.map((opt, i) => (
                 <button
                   key={i}
                   disabled={selected !== null}

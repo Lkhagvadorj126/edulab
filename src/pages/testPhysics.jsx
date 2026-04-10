@@ -58,7 +58,7 @@ function TestContent() {
   }, [pageId, subject]);
 
   const handleAnswer = (index) => {
-    if (selected !== null) return; // Дахин дарахыг хориглоно
+    if (selected !== null) return;
     setSelected(index);
 
     const isCorrect =
@@ -66,7 +66,6 @@ function TestContent() {
     const nextScore = isCorrect ? score + 1 : score;
     if (isCorrect) setScore(nextScore);
 
-    // 1 секунд хүлээгээд дараагийн асуулт руу шилжих эсвэл дуусгах
     setTimeout(async () => {
       if (current + 1 < questions.length) {
         setCurrent((prev) => prev + 1);
@@ -75,29 +74,38 @@ function TestContent() {
         const finalPercent = Math.round((nextScore / questions.length) * 100);
 
         try {
-          // 1. Өмнө нь дүн хадгалагдсан эсэхийг шалгах (Давхардуулахгүй тулд)
-          const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&pageId=${pageId}&subject=${subject}&classCode=${userClassCode}`;
-          const checkRes = await fetch(checkUrl);
-          const checkData = await checkRes.json();
+          // 1. ШАЛГАХ ХЭСГИЙГ АВЧ ХАЯАД ШУУД ХАДГАЛАХ ХЭСЭГТ ОЧНО
+          // Ингэснээр хүүхэд бүрийн дүн шинээр нэмэгдэж орно.
 
-          // 2. Хэрэв дүн байхгүй бол (count === 0) баазад хадгалах
-          if (checkData.count === 0) {
-            await fetch("/api/test-results", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userName: user?.name || "Зочин",
-                classCode: userClassCode,
-                pageId: pageId,
-                subject: subject,
-                score: nextScore,
-                totalQuestions: questions.length,
-                percentage: finalPercent,
-              }),
-            });
+          const resultData = {
+            userName: user?.name || "Зочин",
+            classCode: user?.classCode || userClassCode || "10B", // Илүү баталгаатай болгох
+            pageId: pageId,
+            subject: subject,
+            score: nextScore,
+            totalQuestions: questions.length,
+            percentage: finalPercent,
+            createdAt: new Date(), // Хадгалсан хугацааг нэмэх
+          };
+
+          const response = await fetch("/api/test-results", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(resultData),
+          });
+
+          const resJson = await response.json();
+
+          if (!response.ok) {
+            console.error(
+              "Сервер дээр хадгалахад алдаа гарлаа:",
+              resJson.message,
+            );
+          } else {
+            console.log("Дүн амжилттай хадгалагдлаа:", resJson.data);
           }
         } catch (dbError) {
-          console.error("Дүн хадгалахад алдаа гарлаа:", dbError);
+          console.error("DB холболтын алдаа:", dbError);
         }
         setFinished(true);
       }

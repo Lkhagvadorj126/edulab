@@ -83,31 +83,25 @@ function TestContent() {
         const finalPercent = Math.round((nextScore / total) * 100);
 
         try {
-          // Өмнө нь өгсөн эсэхийг шалгах
-          const checkUrl = `/api/test-results?userName=${encodeURIComponent(user?.name || "Зочин")}&subject=${subject}&pageId=${pageId}&classCode=${userClassCode}`;
-          const checkRes = await fetch(checkUrl);
+          // ШАЛГАХ ЛОГИКИЙГ АВЧ ХАЯАД ШУУД POST ХИЙНЭ
+          const resultData = {
+            userName: user?.name || "Зочин",
+            classCode: user?.classCode || userClassCode || "10B",
+            pageId: pageId,
+            subject: subject,
+            score: nextScore,
+            totalQuestions: total,
+            percentage: finalPercent,
+            createdAt: new Date(),
+          };
 
-          let canSave = true;
-          if (checkRes.ok) {
-            const checkData = await checkRes.json();
-            if (checkData.count > 0) canSave = false;
-          }
+          await fetch("/api/test-results", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(resultData),
+          });
 
-          if (canSave) {
-            await fetch("/api/test-results", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userName: user?.name || "Зочин",
-                classCode: userClassCode,
-                pageId: pageId,
-                subject: subject,
-                score: nextScore,
-                totalQuestions: total,
-                percentage: finalPercent,
-              }),
-            });
-          }
+          console.log("Дүн амжилттай илгээгдлээ.");
         } catch (err) {
           console.error("Дүн хадгалахад алдаа гарлаа:", err);
         }
@@ -148,12 +142,10 @@ function TestContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative overflow-hidden font-sans">
-      {/* Background Icon Decor */}
       <div className="absolute -bottom-20 -right-20 opacity-[0.03] text-[#312C85] -rotate-12 pointer-events-none">
         <Globe size={400} />
       </div>
 
-      {/* Back Button */}
       <button
         onClick={() => router.back()}
         className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] transition-all border border-slate-50 z-20"
@@ -170,7 +162,6 @@ function TestContent() {
             exit={{ opacity: 0, y: -20 }}
             className="w-full max-w-2xl bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white z-10"
           >
-            {/* Header / Info */}
             <div className="mb-12 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
               <span className="bg-slate-100 text-slate-500 px-6 py-2.5 rounded-full border border-slate-200">
                 {subject} | {current + 1}/{questions.length}
@@ -180,12 +171,10 @@ function TestContent() {
               </span>
             </div>
 
-            {/* Question Text */}
             <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
               {currentQ?.question}
             </h2>
 
-            {/* Answer Options */}
             <div className="grid gap-4">
               {currentQ?.options?.map((opt, i) => (
                 <button
@@ -217,7 +206,6 @@ function TestContent() {
             </div>
           </motion.div>
         ) : (
-          /* Result Card */
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
