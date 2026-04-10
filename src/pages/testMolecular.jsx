@@ -36,6 +36,7 @@ function TestContent() {
   const [loading, setLoading] = useState(true);
 
   // Хичээл болон сэдвийн дагуу асуултуудыг ачаалах
+  // TestContent доторх useEffect-ийг ингэж засаарай:
   useEffect(() => {
     const loadTests = async () => {
       setLoading(true);
@@ -46,8 +47,21 @@ function TestContent() {
         else if (subject === "chemistry") configSource = LESSONS_CONFIG;
         else configSource = PHYSICS_CONFIG;
 
+        // 1. Статик датаг авах
         const configData = configSource[pageId]?.tests || [];
-        setQuestions(configData);
+
+        // 2. Дата баазаас (DB) нэмэлтээр татах
+        const res = await fetch(
+          `/api/test?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}&t=${Date.now()}`,
+        );
+
+        let dbData = [];
+        if (res.ok) {
+          dbData = await res.json();
+        }
+
+        // 3. ХОЁР ДАТАГ НЭГТГЭХ (DB-ээс ирсэн нь хамгийн эхэнд харагдана)
+        setQuestions([...dbData, ...configData]);
       } catch (err) {
         console.error("Асуулт ачаалахад алдаа гарлаа:", err);
       } finally {
@@ -55,7 +69,7 @@ function TestContent() {
       }
     };
     loadTests();
-  }, [pageId, subject]);
+  }, [pageId, subject, userClassCode]); // userClassCode-ийг хамаарал болгож нэмлээ
 
   const handleAnswer = (index) => {
     if (selected !== null || !questions[current]) return;

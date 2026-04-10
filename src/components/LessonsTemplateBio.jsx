@@ -96,7 +96,9 @@ export default function LessonTemplateB({ pageId, config }) {
     if (!pageId || !userClassCode) return;
     setLoading(true);
     try {
-      const query = `?pageId=${pageId}&classCode=${userClassCode}`;
+      // timestamp (t) нэмснээр хөтөч хуучин датаг (cache) харуулахгүй, үргэлж шинэ дата татна
+      const query = `?pageId=${pageId}&classCode=${userClassCode}&t=${Date.now()}`;
+
       const [canvaRes, expRes, lessonRes, testRes, cardRes, videoRes] =
         await Promise.all([
           fetch(`/api/presentation${query}`),
@@ -114,15 +116,18 @@ export default function LessonTemplateB({ pageId, config }) {
           setCanvaInput(d.url);
         }
       }
+
+      // Дата бүрийг шинэ массив болгож (spread operator) оноож өгвөл React өөрчлөлтийг сайн мэдэрнэ
+      if (expRes.ok) setDbExperiments([...(await expRes.json())]);
+      if (lessonRes.ok) setDynamicLessons([...(await lessonRes.json())]);
+      if (testRes.ok) setDbTests([...(await testRes.json())]);
+      if (cardRes.ok) setDbCards([...(await cardRes.json())]);
+
       if (videoRes.ok) {
         const d = await videoRes.json();
         setVideoUrl(d?.url || config?.page?.videoUrl);
         setVideoInput(d?.url || "");
       }
-      if (expRes.ok) setDbExperiments(await expRes.json());
-      if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
-      if (testRes.ok) setDbTests(await testRes.json());
-      if (cardRes.ok) setDbCards(await cardRes.json());
     } catch (err) {
       console.error("Data fetch error:", err);
     } finally {
@@ -179,7 +184,6 @@ export default function LessonTemplateB({ pageId, config }) {
           : type === "experiment"
             ? "experiment"
             : type;
-
     try {
       const res = await fetch(`/api/${apiPath}`, {
         method: "POST",
@@ -188,12 +192,18 @@ export default function LessonTemplateB({ pageId, config }) {
       });
 
       if (res.ok) {
+        // Backend-ээс хариу иртэл хүлээх
+        await res.json();
+
         setStatusModal({
           show: true,
           message: "Амжилттай хадгалагдлаа!",
           type: "success",
         });
-        fetchData();
+
+        // ХАМГИЙН ЧУХАЛ: Датаг дахин татахдаа await хийж дуустал нь хүлээнэ
+        await fetchData();
+
         resetForm(type);
       } else {
         setStatusModal({

@@ -111,11 +111,13 @@ export default function LessonTemplate({
   };
 
   // --- ӨГӨГДӨЛ ТАТАХ ---
+  // --- ӨГӨГДӨЛ ТАТАХ (ЗАСАР) ---
   const fetchData = useCallback(async () => {
     if (!pageId || !userClassCode) return;
     setLoading(true);
     try {
-      const query = `?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}`;
+      // ХӨТӨЧ ЦЭВЭРЛЭХ (Cache-аас сэргийлэх)
+      const query = `?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}&t=${Date.now()}`;
 
       const [canvaRes, expRes, lessonRes, testRes, cardRes, videoRes] =
         await Promise.all([
@@ -127,15 +129,17 @@ export default function LessonTemplate({
           fetch(`/api/video${query}`),
         ]);
 
-      // Үр дүнгүүдийг State-д оноох
       if (canvaRes.ok) {
         const data = await canvaRes.json();
         if (data.length > 0) setDisplayUrl(data[0].url);
       }
-      if (expRes.ok) setDbExperiments(await expRes.json());
-      if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
-      if (testRes.ok) setDbTests(await testRes.json());
-      if (cardRes.ok) setDbCards(await cardRes.json()); // ЭНЭ ХЭСЭГ ДУТУУ БАЙСАН
+
+      // Spread operator ашиглан шинэ массив болгож state-ийг шинэчлэх
+      if (expRes.ok) setDbExperiments([...(await expRes.json())]);
+      if (lessonRes.ok) setDynamicLessons([...(await lessonRes.json())]);
+      if (testRes.ok) setDbTests([...(await testRes.json())]); // ЗАСАР: Шинэ массив
+      if (cardRes.ok) setDbCards([...(await cardRes.json())]);
+
       if (videoRes.ok) {
         const data = await videoRes.json();
         if (data.length > 0) setVideoUrl(data[0].url);
@@ -145,7 +149,7 @@ export default function LessonTemplate({
     } finally {
       setLoading(false);
     }
-  }, [pageId, userClassCode, subject]); // subject-ийг хамаарал болгож нэмэв
+  }, [pageId, userClassCode, subject]);
 
   useEffect(() => {
     fetchData();

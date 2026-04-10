@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,13 +9,16 @@ import {
   RefreshCcw,
   Loader2,
   AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Trophy,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-// Хичээлүүдийн асуултуудын дата (Config)
+// Дата (Config)
 import { GEOGRAPHY_CONFIG } from "@/constants/lessonDataGeo";
 import { BIOLOGY_CONFIG } from "@/constants/lessonDataBio";
-import { LESSONS_CONFIG } from "@/constants/lessonsData"; // Chemistry
+import { LESSONS_CONFIG } from "@/constants/lessonsData";
 import { PHYSICS_CONFIG } from "@/constants/lessonDataP";
 
 function TestContent() {
@@ -23,7 +26,6 @@ function TestContent() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // URL-аас параметрүүдийг авах
   const pageId = searchParams.get("pageId") || "default";
   const subject = searchParams.get("subject") || "physics";
   const userClassCode = user?.classCode || "10B";
@@ -35,27 +37,34 @@ function TestContent() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Хичээл болон сэдвийн дагуу асуултуудыг ачаалах
-  useEffect(() => {
-    const loadTests = async () => {
-      setLoading(true);
-      try {
-        let configSource;
-        if (subject === "geography") configSource = GEOGRAPHY_CONFIG;
-        else if (subject === "biology") configSource = BIOLOGY_CONFIG;
-        else if (subject === "chemistry") configSource = LESSONS_CONFIG;
-        else configSource = PHYSICS_CONFIG;
+  const loadTests = useCallback(async () => {
+    setLoading(true);
+    try {
+      let configSource;
+      if (subject === "geography") configSource = GEOGRAPHY_CONFIG;
+      else if (subject === "biology") configSource = BIOLOGY_CONFIG;
+      else if (subject === "chemistry") configSource = LESSONS_CONFIG;
+      else configSource = PHYSICS_CONFIG;
 
-        const configData = configSource[pageId]?.tests || [];
-        setQuestions(configData);
-      } catch (err) {
-        console.error("Асуулт ачаалахад алдаа гарлаа:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const staticData = configSource[pageId]?.tests || [];
+      const res = await fetch(
+        `/api/test?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}`,
+      );
+
+      let dbData = [];
+      if (res.ok) dbData = await res.json();
+
+      setQuestions([...dbData.reverse(), ...staticData]);
+    } catch (err) {
+      console.error("Алдаа:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [pageId, subject, userClassCode]);
+
+  useEffect(() => {
     loadTests();
-  }, [pageId, subject]);
+  }, [loadTests]);
 
   const handleAnswer = (index) => {
     if (selected !== null) return;
@@ -72,188 +81,198 @@ function TestContent() {
         setSelected(null);
       } else {
         const finalPercent = Math.round((nextScore / questions.length) * 100);
-
         try {
-          // 1. ШАЛГАХ ХЭСГИЙГ АВЧ ХАЯАД ШУУД ХАДГАЛАХ ХЭСЭГТ ОЧНО
-          // Ингэснээр хүүхэд бүрийн дүн шинээр нэмэгдэж орно.
-
-          const resultData = {
-            userName: user?.name || "Зочин",
-            classCode: user?.classCode || userClassCode || "10B", // Илүү баталгаатай болгох
-            pageId: pageId,
-            subject: subject,
-            score: nextScore,
-            totalQuestions: questions.length,
-            percentage: finalPercent,
-            createdAt: new Date(), // Хадгалсан хугацааг нэмэх
-          };
-
-          const response = await fetch("/api/test-results", {
+          await fetch("/api/test-results", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(resultData),
+            body: JSON.stringify({
+              userName: user?.name || "Зочин",
+              classCode: user?.classCode || userClassCode,
+              pageId,
+              subject,
+              score: nextScore,
+              totalQuestions: questions.length,
+              percentage: finalPercent,
+              createdAt: new Date(),
+            }),
           });
-
-          const resJson = await response.json();
-
-          if (!response.ok) {
-            console.error(
-              "Сервер дээр хадгалахад алдаа гарлаа:",
-              resJson.message,
-            );
-          } else {
-            console.log("Дүн амжилттай хадгалагдлаа:", resJson.data);
-          }
         } catch (dbError) {
-          console.error("DB холболтын алдаа:", dbError);
+          console.error(dbError);
         }
         setFinished(true);
       }
-    }, 1000);
+    }, 800);
   };
 
-  // Loading төлөв
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin text-[#312C85]" size={48} />
-          <p className="font-black text-[10px] text-[#312C85] uppercase tracking-widest animate-pulse">
-            Асуултуудыг бэлдэж байна...
-          </p>
-        </div>
+        <Loader2 className="animate-spin text-[#312C85]" size={48} />
       </div>
     );
-  }
 
-  // Асуулт олдоогүй төлөв
-  if (questions.length === 0) {
+  if (questions.length === 0)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <AlertCircle size={80} className="text-slate-200 mb-6" />
-        <h2 className="text-xl font-black text-slate-800 mb-4 uppercase">
-          Энэ сэдэвт одоогоор тест алга
+        <h2 className="text-2xl font-black text-slate-800 mb-6 uppercase">
+          Тест олдсонгүй
         </h2>
         <button
           onClick={() => router.back()}
-          className="px-10 py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-transform"
+          className="px-12 py-4 bg-[#312C85] text-white rounded-2xl font-bold shadow-xl shadow-[#312C85]/20 hover:scale-105 transition-transform"
         >
-          Буцах
+          БУЦАХ
         </button>
       </div>
     );
-  }
 
   const currentQ = questions[current];
+  const progress = ((current + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 flex flex-col items-center justify-center relative font-sans">
-      {/* Буцах товч */}
-      <button
-        onClick={() => router.back()}
-        className="absolute top-8 left-8 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] transition-colors border border-slate-50"
-      >
-        <ChevronLeft size={24} strokeWidth={3} />
-      </button>
+    <div className="min-h-screen bg-[#F9FAFB] text-slate-900 font-sans p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Background Decorative Circles */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#312C85]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[30%] h-[30%] bg-[#312C85]/5 rounded-full blur-3xl" />
+
+      {/* Top Bar */}
+      <div className="fixed top-0 left-0 w-full p-6 md:p-10 flex items-center justify-between z-50">
+        <button
+          onClick={() => router.back()}
+          className="p-4 bg-white hover:bg-slate-50 rounded-2xl shadow-sm border border-slate-100 transition-all active:scale-95"
+        >
+          <ChevronLeft size={24} className="text-[#312C85]" />
+        </button>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+            Одоогийн оноо
+          </span>
+          <span className="text-xl font-black text-[#312C85] tabular-nums">
+            {score}
+          </span>
+        </div>
+      </div>
 
       <AnimatePresence mode="wait">
         {!finished ? (
           <motion.div
             key={current}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-2xl bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="w-full max-w-2xl z-10"
           >
-            {/* Төлөв мэдээлэл */}
-            <div className="mb-12 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="bg-slate-100 text-slate-500 px-6 py-2.5 rounded-full">
-                {subject} | {current + 1}/{questions.length}
-              </span>
-              <span className="text-[#312C85] bg-indigo-50 px-6 py-2.5 rounded-full">
-                Оноо: {score}
-              </span>
-            </div>
-
-            {/* Асуулт */}
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight">
-              {currentQ.question}
-            </h2>
-
-            {/* Хариултууд */}
-            <div className="grid gap-4">
-              {currentQ.options?.map((opt, i) => (
-                <button
-                  key={i}
-                  disabled={selected !== null}
-                  onClick={() => handleAnswer(i)}
-                  className={`p-6 rounded-3xl border-2 text-left font-bold transition-all flex items-center gap-5 group relative overflow-hidden ${
-                    selected !== null
-                      ? opt === currentQ.answer
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : selected === i
-                          ? "border-rose-500 bg-rose-50 text-rose-700"
-                          : "border-slate-50 opacity-40"
-                      : "border-slate-50 bg-slate-50 hover:border-indigo-200 hover:bg-white text-slate-600"
-                  }`}
-                >
-                  <span
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 transition-colors ${
-                      selected !== null && opt === currentQ.answer
-                        ? "bg-emerald-500 text-white"
-                        : "bg-white text-slate-400"
-                    }`}
-                  >
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <span className="flex-1 text-base md:text-lg">{opt}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          /* Төгсгөл - Үр дүн харуулах */
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-12 rounded-[4rem] shadow-2xl text-center max-w-md w-full border border-white"
-          >
-            <div className="w-24 h-24 bg-amber-50 text-amber-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
-              <Award size={48} strokeWidth={2.5} />
-            </div>
-
-            <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">
-              Амжилттай дууслаа!
-            </h2>
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">
-              Таны гүйцэтгэл
-            </p>
-
-            <div className="bg-[#F8FAFC] rounded-[3rem] p-10 mb-10 border border-slate-50">
-              <span className="text-7xl font-black text-[#312C85] tracking-tighter">
-                {Math.round((score / questions.length) * 100)}%
-              </span>
-              <div className="flex justify-center gap-4 mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <span>
-                  Зөв: <span className="text-emerald-500">{score}</span>
+            {/* Progress Bar */}
+            <div className="mb-8 px-2">
+              <div className="flex justify-between items-end mb-3">
+                <span className="text-[11px] font-black uppercase text-[#312C85] tracking-tighter">
+                  Асуулт {current + 1} / {questions.length}
                 </span>
-                <span>•</span>
-                <span>Нийт: {questions.length}</span>
+                <span className="text-[11px] font-black text-slate-400">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+              <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  className="h-full bg-[#312C85] rounded-full"
+                />
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                onClick={() => router.back()}
-                className="flex-1 py-5 bg-slate-100 text-slate-600 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-colors"
-              >
-                Гарах
-              </button>
+            <div className="bg-white rounded-[3rem] p-8 md:p-14 shadow-2xl shadow-slate-200/60 border border-white">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-12 leading-tight tracking-tight">
+                {currentQ?.question}
+              </h2>
+
+              <div className="grid gap-4">
+                {currentQ?.options?.map((opt, i) => {
+                  const isCorrect = opt === currentQ.answer;
+                  const isSelected = selected === i;
+
+                  let btnStyle =
+                    "bg-slate-50 border-slate-50 hover:bg-white hover:border-slate-200";
+                  if (selected !== null) {
+                    if (isCorrect)
+                      btnStyle =
+                        "bg-emerald-50 border-emerald-500 text-emerald-700";
+                    else if (isSelected)
+                      btnStyle = "bg-rose-50 border-rose-500 text-rose-700";
+                    else btnStyle = "bg-slate-50 border-slate-50 opacity-40";
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      disabled={selected !== null}
+                      onClick={() => handleAnswer(i)}
+                      className={`group p-5 md:p-6 rounded-[2rem] border-2 text-left font-bold transition-all duration-300 flex items-center gap-5 relative overflow-hidden ${btnStyle}`}
+                    >
+                      <span
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black transition-all ${isSelected ? "bg-white shadow-md" : "bg-white shadow-sm"}`}
+                      >
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                      <span className="flex-1 text-base md:text-lg">{opt}</span>
+                      {selected !== null && isCorrect && (
+                        <CheckCircle2 className="text-emerald-500" size={24} />
+                      )}
+                      {selected !== null && isSelected && !isCorrect && (
+                        <XCircle className="text-rose-500" size={24} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white p-10 md:p-16 rounded-[4rem] text-center max-w-md w-full shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] border border-white z-10"
+          >
+            <div className="w-24 h-24 bg-amber-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8">
+              <Trophy size={48} className="text-amber-500" />
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 mb-2">
+              Гайхалтай!
+            </h2>
+            <p className="text-slate-400 font-bold uppercase text-[11px] tracking-widest mb-10">
+              Таны гүйцэтгэл {Math.round((score / questions.length) * 100)}%
+            </p>
+
+            <div className="grid grid-cols-2 gap-8 mb-12">
+              <div>
+                <p className="text-2xl font-black text-[#312C85]">{score}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400">
+                  Зөв хариулт
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-slate-800">
+                  {questions.length}
+                </p>
+                <p className="text-[10px] font-black uppercase text-slate-400">
+                  Нийт асуулт
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
               <button
                 onClick={() => window.location.reload()}
-                className="flex-[1.5] py-5 bg-[#312C85] text-white rounded-3xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-indigo-100 hover:scale-105 active:scale-95 transition-all"
+                className="w-full py-5 bg-[#312C85] text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#312C85]/20 hover:scale-[1.02] active:scale-95 transition-all"
               >
-                <RefreshCcw size={16} strokeWidth={3} /> Дахин эхлэх
+                Дахин эхлэх
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="w-full py-5 bg-slate-50 text-slate-400 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
+              >
+                Гарах
               </button>
             </div>
           </motion.div>
@@ -263,12 +282,11 @@ function TestContent() {
   );
 }
 
-// Next.js SearchParams ашиглаж байгаа үед Suspense заавал хэрэгтэй
 export default function UnifiedTest() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="h-screen flex items-center justify-center">
           <Loader2 className="animate-spin text-[#312C85]" size={40} />
         </div>
       }

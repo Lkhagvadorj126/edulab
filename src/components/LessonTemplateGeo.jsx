@@ -106,11 +106,14 @@ export default function LessonTemplateGeo({ pageId, config }) {
     setConfirmModal({ show: false, type: "", id: null });
 
   // --- ӨГӨГДӨЛ ТАТАХ ---
+  // --- ӨГӨГДӨЛ ТАТАХ (ЗАСАР ОРСОН) ---
   const fetchData = useCallback(async () => {
     if (!pageId || !userClassCode) return;
     setLoading(true);
     try {
-      const query = `?pageId=${pageId}&classCode=${userClassCode}`;
+      // timestamp (t) нэмснээр хөтөч заавал дата баазаас шинэ датаг нэхэх болно
+      const query = `?pageId=${pageId}&classCode=${userClassCode}&t=${Date.now()}`;
+
       const [canvaRes, expRes, lessonRes, testRes, cardRes, videoRes] =
         await Promise.all([
           fetch(`/api/presentation${query}`),
@@ -136,10 +139,11 @@ export default function LessonTemplateGeo({ pageId, config }) {
         setVideoInput(d?.url || "");
       }
 
-      if (expRes.ok) setDbExperiments(await expRes.json());
-      if (lessonRes.ok) setDynamicLessons(await lessonRes.json());
-      if (testRes.ok) setDbTests(await testRes.json());
-      if (cardRes.ok) setDbCards(await cardRes.json());
+      // Spread operator [...] ашиглан шинэ массив болгож оноовол React өөрчлөлтийг илүү сайн мэдэрнэ
+      if (expRes.ok) setDbExperiments([...(await expRes.json())]);
+      if (lessonRes.ok) setDynamicLessons([...(await lessonRes.json())]);
+      if (testRes.ok) setDbTests([...(await testRes.json())]);
+      if (cardRes.ok) setDbCards([...(await cardRes.json())]);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {

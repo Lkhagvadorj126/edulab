@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +12,12 @@ import {
   ChevronRight,
   Award,
 } from "lucide-react";
+
+// Бүх хичээлийн конфиг
 import { GEOGRAPHY_CONFIG } from "@/constants/lessonDataGeo";
+import { PHYSICS_CONFIG } from "@/constants/lessonDataP";
+import { BIOLOGY_CONFIG } from "@/constants/lessonDataBio";
+import { LESSONS_CONFIG } from "@/constants/lessonsData";
 import { useAuth } from "@/context/AuthContext";
 
 function CartContentGeo() {
@@ -19,7 +25,8 @@ function CartContentGeo() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const pageId = searchParams.get("pageId") || "eh_gazar";
+  const pageId = searchParams.get("pageId") || "default";
+  const subject = searchParams.get("subject") || "geography"; // Default нь geography
   const userClassCode = user?.classCode || "10B";
 
   const [cards, setCards] = useState([]);
@@ -27,16 +34,24 @@ function CartContentGeo() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadCards = useCallback(async () => {
+  // Дата ачаалах функц
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Статик картууд ( lessonDataGeo.js-ээс)
-      const configCards = GEOGRAPHY_CONFIG[pageId]?.cards || [];
+      // 1. Хичээлийн дагуу статик датаг сонгох
+      let configSource;
+      if (subject === "geography") configSource = GEOGRAPHY_CONFIG;
+      else if (subject === "physics") configSource = PHYSICS_CONFIG;
+      else if (subject === "biology") configSource = BIOLOGY_CONFIG;
+      else if (subject === "chemistry") configSource = LESSONS_CONFIG;
+      else configSource = GEOGRAPHY_CONFIG;
 
-      // 2. Баазаас багшийн нэмсэн картууд (subject=geography)
-      const res = await fetch(
-        `/api/card?pageId=${pageId}&classCode=${userClassCode}&subject=geography`,
-      );
+      const staticCards =
+        configSource[pageId]?.cards || configSource[pageId]?.tests || [];
+
+      // 2. Дата баазаас (DB) татах
+      const query = `?pageId=${pageId}&classCode=${userClassCode}&subject=${subject}&t=${Date.now()}`;
+      const res = await fetch(`/api/card${query}`);
 
       let dbData = [];
       if (res.ok) {
@@ -44,17 +59,17 @@ function CartContentGeo() {
       }
 
       // 3. Нэгтгэх
-      setCards([...dbData, ...configCards]);
+      setCards([...dbData, ...staticCards]);
     } catch (err) {
-      console.error("Cards fetch error:", err);
+      console.error("Картуудыг ачаалахад алдаа гарлаа:", err);
     } finally {
       setLoading(false);
     }
-  }, [pageId, userClassCode]);
+  }, [pageId, subject, userClassCode]);
 
   useEffect(() => {
-    loadCards();
-  }, [loadCards]);
+    loadData();
+  }, [loadData]);
 
   const handleNext = () => {
     setIsFlipped(false);
@@ -74,7 +89,7 @@ function CartContentGeo() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
         <Loader2 className="animate-spin text-[#312C85]" size={40} />
-        <p className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+        <p className="font-black text-[#312C85] uppercase text-[10px] tracking-widest animate-pulse">
           Картуудыг ачаалж байна...
         </p>
       </div>
@@ -82,14 +97,14 @@ function CartContentGeo() {
 
   if (cards.length === 0)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#F8FAFC]">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#F8FAFC] p-6 text-center">
         <AlertCircle className="text-slate-200" size={80} />
         <h2 className="font-black text-slate-800 text-xl uppercase tracking-tighter">
           Карт олдсонгүй
         </h2>
         <button
           onClick={() => router.back()}
-          className="px-10 py-3 bg-white border border-slate-200 rounded-2xl text-[#312C85] font-black text-xs"
+          className="px-10 py-4 bg-[#312C85] text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:scale-105 transition-transform"
         >
           БУЦАХ
         </button>
@@ -106,78 +121,87 @@ function CartContentGeo() {
 
       <button
         onClick={() => router.back()}
-        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] z-20 transition-colors"
+        className="absolute top-6 left-6 p-4 bg-white rounded-2xl shadow-sm text-slate-400 hover:text-[#312C85] z-20 transition-all border border-slate-50"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={24} strokeWidth={3} />
       </button>
 
-      <div className="w-full max-w-md z-10" style={{ perspective: "1000px" }}>
-        <div className="mb-8 text-center">
-          <span className="bg-blue-50 text-[#312C85] px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100 shadow-sm">
+      <div className="w-full max-w-md z-10" style={{ perspective: "2000px" }}>
+        <div className="mb-10 text-center">
+          <span className="bg-indigo-50 text-[#312C85] px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-100 shadow-sm">
             Карт {currentIndex + 1} / {cards.length}
           </span>
         </div>
 
-        {/* Карт эргэх хөдөлгөөнт хэсэг */}
-        <motion.div
-          className="relative w-full h-[450px] cursor-pointer"
-          onClick={() => setIsFlipped(!isFlipped)}
-          animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{
-            duration: 0.6,
-            type: "spring",
-            stiffness: 260,
-            damping: 20,
-          }}
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {/* Нүүр тал (Асуулт) */}
-          <div
-            className="absolute inset-0 w-full h-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col items-center justify-center p-10"
-            style={{ backfaceVisibility: "hidden" }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, scale: 0.9, x: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, x: -20 }}
+            className="relative w-full h-[480px] cursor-pointer"
+            onClick={() => setIsFlipped(!isFlipped)}
           >
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-8">
-              <Globe className="text-[#312C85]" size={32} />
-            </div>
-            <h3 className="text-2xl font-black text-center text-slate-800 leading-snug">
-              {currentCard?.question || currentCard?.front}
-            </h3>
-            <div className="absolute bottom-10 flex items-center gap-2 text-slate-300 font-black text-[10px] uppercase tracking-widest">
-              <RotateCw size={12} />
-              Дарж хариултыг харна уу
-            </div>
-          </div>
+            <motion.div
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{
+                duration: 0.7,
+                type: "spring",
+                stiffness: 200,
+                damping: 25,
+              }}
+              className="w-full h-full relative"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              {/* Нүүр тал (Асуулт) */}
+              <div
+                className="absolute inset-0 w-full h-full bg-white rounded-[4rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] border border-white flex flex-col items-center justify-center p-12"
+                style={{ backfaceVisibility: "hidden" }}
+              >
+                <div className="w-16 h-16 bg-blue-50 rounded-[1.5rem] flex items-center justify-center mb-10 shadow-inner">
+                  <Globe className="text-[#312C85]" size={32} />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-black text-center text-slate-800 leading-tight">
+                  {currentCard?.question}
+                </h3>
+                <div className="absolute bottom-12 flex items-center gap-2 text-slate-300 font-black text-[9px] uppercase tracking-[0.2em]">
+                  <RotateCw size={12} strokeWidth={3} />
+                  Дарж хариултыг харна уу
+                </div>
+              </div>
 
-          {/* Ар тал (Хариулт) */}
-          <div
-            className="absolute inset-0 w-full h-full bg-[#312C85] rounded-[3rem] shadow-2xl flex flex-col items-center justify-center p-10"
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-            }}
-          >
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8">
-              <Award className="text-white" size={32} />
-            </div>
-            <p className="text-xl font-bold text-center text-white leading-relaxed">
-              {currentCard?.answer || currentCard?.back}
-            </p>
-            <div className="absolute bottom-10 text-white/40 font-black text-[10px] uppercase tracking-widest">
-              Зөв хариулт
-            </div>
-          </div>
-        </motion.div>
+              {/* Ар тал (Хариулт) */}
+              <div
+                className="absolute inset-0 w-full h-full bg-[#312C85] rounded-[4rem] shadow-2xl flex flex-col items-center justify-center p-12 text-white"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              >
+                <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] flex items-center justify-center mb-10">
+                  <Award className="text-white" size={32} />
+                </div>
+                <p className="text-2xl md:text-4xl font-black text-center leading-tight tracking-tight">
+                  {currentCard?.answer}
+                </p>
+                <div className="absolute bottom-12 text-white/30 font-black text-[9px] uppercase tracking-[0.3em]">
+                  Зөв хариулт
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Удирдах товчлуурууд */}
-        <div className="mt-12 flex items-center justify-between gap-4">
+        <div className="mt-12 flex items-center justify-between gap-5">
           <button
             onClick={(e) => {
               e.stopPropagation();
               handlePrev();
             }}
-            className="p-5 bg-white shadow-lg rounded-2xl text-slate-400 hover:text-[#312C85] transition-all active:scale-90"
+            className="p-6 bg-white shadow-lg rounded-3xl text-slate-400 hover:text-[#312C85] transition-all active:scale-90 border border-slate-50"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={28} strokeWidth={3} />
           </button>
 
           <button
@@ -185,9 +209,9 @@ function CartContentGeo() {
               e.stopPropagation();
               setIsFlipped(!isFlipped);
             }}
-            className="flex-1 py-5 bg-white shadow-lg rounded-2xl font-black text-[#312C85] text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-slate-50"
+            className="flex-1 py-6 bg-white shadow-lg rounded-3xl font-black text-[#312C85] text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 border border-slate-50 hover:-translate-y-1 transition-all active:scale-95"
           >
-            <RotateCw size={16} /> Эргүүлэх
+            <RotateCw size={16} strokeWidth={3} /> Эргүүлэх
           </button>
 
           <button
@@ -195,9 +219,9 @@ function CartContentGeo() {
               e.stopPropagation();
               handleNext();
             }}
-            className="p-5 bg-white shadow-lg rounded-2xl text-slate-400 hover:text-[#312C85] transition-all active:scale-90"
+            className="p-6 bg-[#312C85] shadow-lg rounded-3xl text-white hover:bg-black transition-all active:scale-90"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={28} strokeWidth={3} />
           </button>
         </div>
       </div>
@@ -210,7 +234,7 @@ export default function CartGeography() {
     <Suspense
       fallback={
         <div className="h-screen flex items-center justify-center bg-[#F8FAFC]">
-          <Loader2 className="animate-spin text-[#312C85]" size={32} />
+          <Loader2 className="animate-spin text-[#312C85]" size={40} />
         </div>
       }
     >

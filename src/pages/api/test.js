@@ -2,72 +2,104 @@ import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 export default async function handler(req, res) {
-  const client = await clientPromise;
-  const db = client.db("physics_db");
-  const { pageId, classCode, id, subject } = req.query;
-
   try {
-    // --- УНШИХ (GET) ---
+    const client = await clientPromise;
+    const db = client.db("physics_db");
+
+    // 1. ТЕСТ ТАТАХ (GET)
     if (req.method === "GET") {
+      const { pageId, classCode, subject } = req.query;
+
       if (!pageId || !classCode) {
         return res
           .status(400)
           .json({ error: "pageId болон classCode шаардлагатай" });
       }
 
-      // Шүүлтүүр: classCode, pageId болон subject (байвал)
       let query = { pageId, classCode };
-      if (subject) {
-        query.subject = subject;
-      }
+      if (subject) query.subject = subject;
 
-      const data = await db.collection("tests").find(query).toArray();
+      const data = await db
+        .collection("tests")
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
+
       return res.status(200).json(data);
     }
 
-    // --- ХАДГАЛАХ БОЛОН ЗАСАХ (POST) ---
+    // 2. ТЕСТ НЭМЭХ БОЛОН ЗАСАХ (POST)
     if (req.method === "POST") {
-      const { id: editId, ...data } = req.body;
+      // POST хүсэлтийн body-г шалгах
+      const { id, question, options, answer, classCode, pageId, subject } =
+        req.body;
 
-      if (!data.classCode || !data.pageId) {
+      if (!question || !options || answer === null || !classCode || !pageId) {
         return res
           .status(400)
-          .json({ error: "Мэдээлэл дутуу байна (classCode, pageId)" });
+          .json({ error: "Мэдээлэл дутуу байна. Бүх талбарыг бөглөнө үү." });
       }
 
-      // Subject байхгүй бол default-оор "physics" гэж хадгална (бусад хуудаснуудад алдаа гаргахгүйн тулд)
-      const finalData = {
-        ...data,
-        subject: data.subject || "physics",
+      const testData = {
+        question,
+        options,
+        answer,
+        classCode,
+        pageId,
+        subject: subject || "physics",
         updatedAt: new Date(),
       };
 
-      if (editId) {
-        // Засах
-        await db
+      if (id) {
+        // ЗАСАХ (UPDATE)
+        const result = await db
           .collection("tests")
-          .updateOne({ _id: new ObjectId(editId) }, { $set: finalData });
-        return res.status(200).json({ message: "Амжилттай шинэчлэгдлээ" });
+          .updateOne({ _id: new ObjectId(id) }, { $set: testData });
+        return res
+          .status(200)
+          .json({ message: "Амжилттай шинэчлэгдлээ", result });
       } else {
-        // Шинээр нэмэх
+        // ШИНЭЭР НЭМЭХ (INSERT)
         const result = await db.collection("tests").insertOne({
-          ...finalData,
+          ...testData,
           createdAt: new Date(),
         });
-        return res.status(200).json(result);
+        return res
+          .status(200)
+          .json({ message: "Амжилттай хадгалагдлаа", result });
       }
     }
 
-    // --- УСТГАХ (DELETE) ---
+    // 3. ТЕСТ УСТГАХ (DELETE)
     if (req.method === "DELETE") {
-      if (!id) return res.status(400).json({ error: "ID шаардлагатай" });
-      await db.collection("tests").deleteOne({ _id: new ObjectId(id) });
-      return res.status(200).json({ message: "Амжилттай устгагдлаа" });
+      const { id } = req.query;
+
+      if (!id) {
+        return res
+          .status(400)
+          .json({ error: "Устгах тестийн ID шаардлагатай" });
+      }
+
+      const result = await db.collection("tests").deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      if (result.deletedCount === 1) {
+        return res.status(200).json({ message: "Амжилттай устгагдлаа" });
+      } else {
+        return res.status(404).json({ error: "Устгах дата олдсонгүй" });
+      }
     }
 
-    return res.status(405).json({ message: "Method not allowed" });
-  } catch (err) {
-    console.error("API Error:", err);
-    res.status(500).json({ error: err.message });
+    // Бусад Method-ийг зөвшөөрөхгүй байх
+    res.setHeader("Allow", ["GET", "POST", "DELETE"]);
+    return res
+      .status(405)
+      .json({ message: `Method ${req.method} Not Allowed` });
+  } catch (error) {
+    console.error("API Error:", error);
+    return res
+      .status(500)
+      .json({ error: "Сервер дээр алдаа гарлаа: " + error.message });
   }
 }
